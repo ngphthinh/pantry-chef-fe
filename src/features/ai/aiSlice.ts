@@ -3,12 +3,16 @@ import { aiService, mealPlanService } from "@/core/di/container";
 import { unauthenticated } from "@/features/auth/authSlice";
 import type { AppThunk } from "@/store/hooks";
 import type {
+  AdaptRecipeRequest,
   AiMealPlanRequest,
   AiMealPlanResponse,
   PickedImage,
   RecipeIdeaResponse,
   RecipeIdeasRequest,
+  AiRecipeDetailResponse,
   RecognizedIngredientResponse,
+  SubstitutionRequest,
+  SubstitutionResponse,
 } from "@/types";
 
 export type AiStatus = "idle" | "loading";
@@ -25,6 +29,18 @@ interface AiState {
   status: AiStatus;
   /** Đã bấm tạo ít nhất một lần, để phân biệt "chưa tạo" với "tạo xong nhưng rỗng". */
   generated: boolean;
+
+  /** Nguyên liệu thay thế từ POST /v1/ai/substitutions (tối đa 3). */
+  substitutions: SubstitutionResponse[];
+  /** Trạng thái tải riêng, không dùng chung với phần gợi ý món. */
+  substitutionStatus: AiStatus;
+  /** Đã tìm ít nhất một lần, để phân biệt "chưa tìm" với "tìm xong nhưng rỗng". */
+  substitutionsSearched: boolean;
+
+  /** Công thức đã điều chỉnh từ POST /v1/ai/adapt-recipe. */
+  adaptedRecipe: AiRecipeDetailResponse | null;
+  /** Trạng thái tải riêng của phần điều chỉnh công thức. */
+  adaptStatus: AiStatus;
 }
 
 const initialState: AiState = {
@@ -33,6 +49,11 @@ const initialState: AiState = {
   ideas: [],
   status: "idle",
   generated: false,
+  substitutions: [],
+  substitutionStatus: "idle",
+  substitutionsSearched: false,
+  adaptedRecipe: null,
+  adaptStatus: "idle",
 };
 
 const aiSlice = createSlice({
@@ -74,6 +95,30 @@ const aiSlice = createSlice({
       state.ideas = [];
       state.generated = false;
     },
+
+    // --- Nguyên liệu thay thế ---
+    substitutionStatusChanged(state, action: PayloadAction<AiStatus>) {
+      state.substitutionStatus = action.payload;
+    },
+    substitutionsLoaded(state, action: PayloadAction<SubstitutionResponse[]>) {
+      state.substitutions = action.payload;
+      state.substitutionsSearched = true;
+    },
+    substitutionsCleared(state) {
+      state.substitutions = [];
+      state.substitutionsSearched = false;
+    },
+
+    // --- Công thức đã điều chỉnh ---
+    adaptStatusChanged(state, action: PayloadAction<AiStatus>) {
+      state.adaptStatus = action.payload;
+    },
+    adaptedRecipeLoaded(state, action: PayloadAction<AiRecipeDetailResponse>) {
+      state.adaptedRecipe = action.payload;
+    },
+    adaptedRecipeCleared(state) {
+      state.adaptedRecipe = null;
+    },
   },
   // Đăng xuất thì bỏ toàn bộ dữ liệu AI, tránh lộ sang tài khoản khác
   extraReducers: (builder) => {
@@ -90,6 +135,12 @@ export const {
   statusChanged,
   ideasLoaded,
   ideasCleared,
+  substitutionStatusChanged,
+  substitutionsLoaded,
+  substitutionsCleared,
+  adaptStatusChanged,
+  adaptedRecipeLoaded,
+  adaptedRecipeCleared,
 } = aiSlice.actions;
 export default aiSlice.reducer;
 
@@ -129,5 +180,30 @@ export const generateIdeas =
       dispatch(ideasLoaded(await aiService.recipeIdeas(input)));
     } finally {
       dispatch(statusChanged("idle"));
+    }
+  };
+
+/** Tìm nguyên liệu thay thế (POST /v1/ai/substitutions). */
+export const fetchSubstitutions =
+  (input: SubstitutionRequest): AppThunk<Promise<void>> =>
+  async (dispatch) => {
+    dispatch(substitutionStatusChanged("loading"));
+    try {
+      dispatch(substitutionsLoaded(await aiService.substitutions(input)));
+    } finally {
+      dispatch(substitutionStatusChanged("idle"));
+    }
+  };
+
+/** Điều chỉnh công thức theo nguyên liệu loại trừ (POST /v1/ai/adapt-recipe). */
+export const adaptRecipe =
+  (recipeId: string): AppThunk<Promise<void>> =>
+  async (dispatch) => {
+    const input: AdaptRecipeRequest = { recipeId };
+    dispatch(adaptStatusChanged("loading"));
+    try {
+      dispatch(adaptedRecipeLoaded(await aiService.adaptRecipe(input)));
+    } finally {
+      dispatch(adaptStatusChanged("idle"));
     }
   };

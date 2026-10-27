@@ -1,17 +1,32 @@
 import type { AxiosInstance } from "axios";
 import { buildImageForm } from "@/core/http/multipart";
 import type {
+  AdaptRecipeRequest,
   AiMealPlanRequest,
   AiMealPlanResponse,
+  AiRecipeDetailResponse,
   PickedImage,
   RecipeIdeaResponse,
   RecipeIdeasRequest,
   RecognizedIngredientResponse,
+  SubstitutionRequest,
+  SubstitutionResponse,
 } from "@/types";
-import type { IAiMealPlanApi, IAiRecognizeApi, IRecipeIdeasApi } from "./types";
+import type {
+  IAdaptRecipeApi,
+  IAiMealPlanApi,
+  IAiRecognizeApi,
+  IRecipeIdeasApi,
+  ISubstitutionApi,
+} from "./types";
 
 export class HttpAiRepository
-  implements IAiMealPlanApi, IAiRecognizeApi, IRecipeIdeasApi
+  implements
+    IAiMealPlanApi,
+    IAiRecognizeApi,
+    IRecipeIdeasApi,
+    ISubstitutionApi,
+    IAdaptRecipeApi
 {
   constructor(private readonly privateHttp: AxiosInstance) {}
 
@@ -49,5 +64,27 @@ export class HttpAiRepository
       { timeout: 60000 },
     );
     return response.data;
+  };
+
+  substitutions = async (
+    input: SubstitutionRequest,
+  ): Promise<SubstitutionResponse[]> => {
+    const { data } = await this.privateHttp.post<SubstitutionResponse[]>(
+      "/v1/ai/substitutions",
+      input,
+      { timeout: 60000 },
+    );
+    return data;
+  };
+
+  adaptRecipe = async (
+    input: AdaptRecipeRequest,
+  ): Promise<AiRecipeDetailResponse> => {
+    const { data } = await this.privateHttp.post<AiRecipeDetailResponse>(
+      "/v1/ai/adapt-recipe",
+      input,
+      { timeout: 60000 },
+    );
+    return data;
   };
 }

@@ -13,4 +13,12 @@ export const aiValidators = {
       ? null
       : "Thời gian nấu phải từ 5 đến 480 phút";
   },
+  missingIngredient: (v: string) => {
+    const t = v.trim();
+    if (!t) return "Vui lòng nhập nguyên liệu cần thay thế";
+    return t.length <= 100 ? null : "Tối đa 100 ký tự";
+  },
+  // Tuỳ chọn
+  recipeTitle: (v: string) =>
+    v.trim().length <= 200 ? null : "Tên món tối đa 200 ký tự",
 };

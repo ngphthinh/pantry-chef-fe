@@ -33,7 +33,7 @@ export function useAiIdeas() {
         key: `${idea.name}-${index}`,
         name: idea.name,
         description: idea.description ?? "",
-        timeLabel: `${idea.estimatedMinutes ?? 0} phút`,
+        timeLabel: idea.estimatedMinutes ? `${idea.estimatedMinutes} phút` : "",
         matchLabel: `${Math.round((idea.confidence ?? 0) * 100)}% phù hợp`,
         used: idea.usedIngredients ?? [],
         missing: idea.missingIngredients ?? [],

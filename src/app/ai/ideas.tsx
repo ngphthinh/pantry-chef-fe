@@ -97,7 +97,9 @@ export default function AiIdeasScreen() {
               <View className="flex-1">
                 <AppText variant="heading">{item.name}</AppText>
                 <AppText variant="caption">
-                  {item.timeLabel} · {item.matchLabel}
+                  {[item.timeLabel, item.matchLabel]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </AppText>
               </View>
             </View>
@@ -124,13 +126,30 @@ export default function AiIdeasScreen() {
             {item.missing.length > 0 ? (
               <View className="gap-1">
                 <AppText variant="label">Còn thiếu</AppText>
+                <AppText variant="caption">
+                  Chạm vào nguyên liệu để xem gợi ý thay thế
+                </AppText>
                 <View className="flex-row flex-wrap gap-2">
                   {item.missing.map((name) => (
-                    <View
+                    <Pressable
                       key={name}
-                      className="rounded-full border border-border bg-surface px-3 py-1">
+                      onPress={() =>
+                        router.push({
+                          pathname: "/ai/substitutions",
+                          params: {
+                            recipeTitle: item.name,
+                            missingIngredient: name,
+                          },
+                        })
+                      }
+                      className="flex-row items-center gap-1 rounded-full border border-border bg-surface px-3 py-1">
                       <AppText variant="caption">{name}</AppText>
-                    </View>
+                      <Ionicons
+                        name="swap-horizontal-outline"
+                        size={14}
+                        color={brand.DEFAULT}
+                      />
+                    </Pressable>
                   ))}
                 </View>
               </View>

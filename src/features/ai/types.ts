@@ -1,10 +1,15 @@
 import type {
+  AdaptRecipeRequest,
   AiMealPlanRequest,
   AiMealPlanResponse,
+  AiRecipeDetailResponse,
   PickedImage,
+  RecipeDetailResponse,
   RecipeIdeaResponse,
   RecipeIdeasRequest,
   RecognizedIngredientResponse,
+  SubstitutionRequest,
+  SubstitutionResponse,
 } from "@/types";
 
 export interface IAiMealPlanApi {
@@ -19,4 +24,12 @@ export interface IAiRecognizeApi {
 
 export interface IRecipeIdeasApi {
   recipeIdeas(input: RecipeIdeasRequest): Promise<RecipeIdeaResponse[]>;
+}
+
+export interface ISubstitutionApi {
+  substitutions(input: SubstitutionRequest): Promise<SubstitutionResponse[]>;
+}
+
+export interface IAdaptRecipeApi {
+  adaptRecipe(input: AdaptRecipeRequest): Promise<AiRecipeDetailResponse>;
 }
