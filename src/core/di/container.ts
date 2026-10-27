@@ -18,6 +18,8 @@ import { HttpMealPlanRepository } from "@/features/mealplan/httpMealPlanReposito
 import { MealPlanService } from "@/features/mealplan/mealPlanService";
 import { HttpShoppingRepository } from "@/features/shopping/httpShoppingRepository";
 import { ShoppingService } from "@/features/shopping/shoppingService";
+import { HttpRecipeRepository } from "@/features/recipe/httpRecipeRepository";
+import { RecipeService } from "@/features/recipe/recipeService";
 
 export const kvStorage = new AsyncKeyValueStorage();
 export const tokenStorage = new SecureTokenStorage();
@@ -50,3 +52,6 @@ export const mealPlanService = new MealPlanService(mealPlanRepository);
 
 const shoppingRepository = new HttpShoppingRepository(privateHttp);
 export const shoppingService = new ShoppingService(shoppingRepository);
+
+const recipeRepository = new HttpRecipeRepository(privateHttp);
+export const recipeService = new RecipeService(recipeRepository);
