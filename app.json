@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Pantry Chef",
+    "slug": "pantry-chef",
+    "scheme": "pantrychef",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-splash-screen",
+      "expo-status-bar",
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}
