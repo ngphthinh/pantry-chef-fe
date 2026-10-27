@@ -3,6 +3,8 @@ import authReducer from "@/features/auth/authSlice";
 import userReducer from "@/features/auth/userSlice";
 import themeReducer from "@/core/theme/themeSlice";
 import aiReducer from "@/features/ai/aiSlice";
+import pantryReducer from "@/features/pantry/pantrySlice";
+import mealPlanReducer from "@/features/mealplan/mealPlanSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +12,8 @@ export const store = configureStore({
     theme: themeReducer,
     user: userReducer,
     ai: aiReducer,
+    pantry: pantryReducer,
+    mealPlan: mealPlanReducer,
   },
 });
 
