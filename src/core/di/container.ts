@@ -8,6 +8,13 @@ import { SecureTokenStorage } from "../storage/secureTokenStorage";
 import { HttpUserRepository } from "@/features/auth/httpUserRepository";
 import { UserService } from "@/features/auth/userService";
 
+import { HttpPantryRepository } from "@/features/pantry/httpPantryRepository";
+import { PantryService } from "@/features/pantry/pantryService";
+import { HttpMealPlanRepository } from "@/features/mealplan/httpMealPlanRepository";
+import { MealPlanService } from "@/features/mealplan/mealPlanService";
+import { HttpShoppingRepository } from "@/features/shopping/httpShoppingRepository";
+import { ShoppingService } from "@/features/shopping/shoppingService";
+
 export const kvStorage = new AsyncKeyValueStorage();
 export const tokenStorage = new SecureTokenStorage();
 
@@ -25,3 +32,13 @@ export const authService = new AuthService(
 );
 
 export const userService = new UserService(userRepository);
+
+const pantryRepository = new HttpPantryRepository(privateHttp);
+export const pantryService = new PantryService(pantryRepository);
+
+const mealPlanRepository = new HttpMealPlanRepository(privateHttp);
+export const mealPlanService = new MealPlanService(mealPlanRepository, mealPlanRepository);
+
+const shoppingRepository = new HttpShoppingRepository(privateHttp);
+export const shoppingService = new ShoppingService(shoppingRepository);
+

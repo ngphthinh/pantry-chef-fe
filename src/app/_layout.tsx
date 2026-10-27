@@ -33,6 +33,14 @@ function RootNavigator() {
         {/* Khu vực đã đăng nhập */}
         <Stack.Protected guard={isAuthed}>
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="pantry/[id]" />
+          <Stack.Screen name="pantry/new" />
+          <Stack.Screen name="pantry/select-ingredient" />
+          <Stack.Screen name="pantry/scan-review" />
+          <Stack.Screen name="pantry/expiring" />
+          <Stack.Screen name="meal-plan/add-entry" />
+          <Stack.Screen name="meal-plan/shopping-preview" />
+          <Stack.Screen name="ai/meal-plan" />
           <Stack.Screen
             name="settings/preferences"
             options={{
