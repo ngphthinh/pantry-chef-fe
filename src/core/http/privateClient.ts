@@ -40,6 +40,9 @@ export function createPrivateClient(
 
   client.interceptors.request.use(async (config) => {
     const token = await tokens.getAccessToken();
+
+    console.log("[API]", config.method?.toUpperCase(), config.url);
+    console.log("[JWT]", token ? "Token exists" : "Token missing");
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   });
