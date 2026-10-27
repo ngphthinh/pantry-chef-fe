@@ -1,5 +1,5 @@
 import type { AxiosInstance } from "axios";
-import { Platform } from "react-native";
+import { buildImageForm } from "@/core/http/multipart";
 
 import type {
   ApiResponse,
@@ -18,25 +18,15 @@ export class HttpUserRepository implements IUserApi {
   };
 
   updateMe = async (body: UserUpdateRequest): Promise<UserResponse> => {
-    const { data } = await this.privateHttp.put<ApiResponse<UserResponse>>(
+    const { data } = await this.privateHttp.put<UserResponse>(
       "/v1/users/me",
       body,
     );
-    return data.data;
+    return data;
   };
 
   updateAvatar = async (image: PickedImage): Promise<UserResponse> => {
-    const name = image.fileName ?? "avatar.jpg";
-    const type = image.mimeType ?? "image/jpeg";
-    const form = new FormData();
-
-    if (Platform.OS === "web") {
-      // Web cần Blob thật, không nhận object { uri, name, type }
-      const blob = await (await fetch(image.uri)).blob();
-      form.append("avatar", blob, name);
-    } else {
-      form.append("avatar", { uri: image.uri, name, type } as unknown as Blob);
-    }
+    const form = await buildImageForm("avatar", image, "avatar.jpg");
 
     const { data } = await this.privateHttp.put("/v1/users/me/avatar", form, {
       headers: { "Content-Type": "multipart/form-data" },

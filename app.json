@@ -11,7 +11,14 @@
       "expo-secure-store",
       "expo-splash-screen",
       "expo-status-bar",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Cho phép Tủ công thức dùng camera để chụp nguyên liệu.",
+          "photosPermission": "Cho phép Tủ công thức truy cập ảnh để nhận diện nguyên liệu."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": false
