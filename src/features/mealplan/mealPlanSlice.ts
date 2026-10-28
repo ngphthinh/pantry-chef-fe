@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { mealPlanService } from '@/core/di/container';
+import { aiService, mealPlanService } from '@/core/di/container';
 import type { AppThunk } from '@/store/hooks';
 import type {
   AiMealPlanRequest,
@@ -211,6 +211,17 @@ export const fetchShoppingPreview =
         const items = await mealPlanService.getShoppingList(id);
         dispatch(shoppingPreviewReceived(items));
         return items;
+      }),
+    );
+
+export const generateAiMealPlan =
+  (request: AiMealPlanRequest): AppThunk<Promise<AiMealPlanResponse>> =>
+  (dispatch) =>
+    dispatch(
+      withStatus('generatingAi', async () => {
+        const draft = await aiService.generateMealPlan(request);
+        dispatch(aiDraftReceived(draft));
+        return draft;
       }),
     );
 

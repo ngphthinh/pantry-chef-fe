@@ -24,6 +24,8 @@ import { HttpShoppingRepository } from "@/features/shopping/httpShoppingReposito
 import { ShoppingService } from "@/features/shopping/shoppingService";
 import { HttpUnitRepository } from "@/features/unit/httpUnitRepository";
 import { UnitService } from "@/features/unit/unitService";
+import { HttpRecipeRepository } from "@/features/recipe/httpRecipeRepository";
+import { RecipeService } from "@/features/recipe/recipeService";
 
 export const kvStorage = new AsyncKeyValueStorage();
 export const tokenStorage = new SecureTokenStorage();
@@ -46,12 +48,20 @@ export const userService = new UserService(userRepository);
 export const aiService = new AiService(new HttpAiRepository(privateHttp));
 
 const cuisineRepository = new HttpCuisineRepository(publicHttp, privateHttp);
-export const cuisineService = new CuisineService(cuisineRepository, cuisineRepository);
+export const cuisineService = new CuisineService(
+  cuisineRepository,
+  cuisineRepository,
+);
 
 const customRecipeRepository = new HttpCustomRecipeRepository(privateHttp);
-export const customRecipeService = new CustomRecipeService(customRecipeRepository, customRecipeRepository);
+export const customRecipeService = new CustomRecipeService(
+  customRecipeRepository,
+  customRecipeRepository,
+);
 
-export const feedbackService = new FeedbackService(new HttpFeedbackRepository(privateHttp));
+export const feedbackService = new FeedbackService(
+  new HttpFeedbackRepository(privateHttp),
+);
 
 const pantryRepository = new HttpPantryRepository(privateHttp);
 export const pantryService = new PantryService(pantryRepository);
@@ -60,6 +70,13 @@ const mealPlanRepository = new HttpMealPlanRepository(privateHttp);
 export const mealPlanService = new MealPlanService(mealPlanRepository);
 
 const shoppingRepository = new HttpShoppingRepository(privateHttp);
-export const shoppingService = new ShoppingService(shoppingRepository, shoppingRepository);
 
 export const unitService = new UnitService(new HttpUnitRepository(privateHttp));
+
+const recipeRepository = new HttpRecipeRepository(privateHttp);
+export const recipeService = new RecipeService(recipeRepository);
+
+export const shoppingService = new ShoppingService(
+  shoppingRepository,
+  shoppingRepository,
+);
