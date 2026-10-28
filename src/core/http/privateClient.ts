@@ -40,6 +40,11 @@ export function createPrivateClient(
 
   client.interceptors.request.use(async (config) => {
     const token = await tokens.getAccessToken();
+    console.log(
+        "TOKEN?",
+        config.url,
+        token ? `có, dài ${String(token).length}, đầu: ${String(token).slice(0, 12)}` : "KHÔNG CÓ",
+    );
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   });
@@ -79,9 +84,10 @@ export function createPrivateClient(
           const newToken = await refreshing;
           original.headers.Authorization = `Bearer ${newToken}`;
           return client(original); // gọi lại request cũ
-        } catch {
+        } catch (e) {
+          console.log("REFRESH FAILED:", e);
           await tokens.clear();
-          unauthorizedEvent.emit(); // listener điều hướng về màn login
+          unauthorizedEvent.emit();
           return Promise.reject(toApiError(error));
         }
       }

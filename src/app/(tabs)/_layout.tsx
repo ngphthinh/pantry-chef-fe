@@ -27,7 +27,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           key={t.name}
           name={t.name}
-          options={{ title: t.title, tabBarIcon: ({ color, size }) => <Ionicons name={t.icon} size={size} color={color} /> }}
+          options={{ title: t.title, tabBarIcon: ({ color, size }) => <Ionicons name={t.icon} size={size} color={String(color)} /> }}
         />
       ))}
     </Tabs>

@@ -29,33 +29,40 @@
 //   }
 // }
 // KHÔNG ĐƯỢC XÓA CMT
+import { Platform } from "react-native";
+import * as SecureStore from "expo-secure-store";
 import type { ITokenStorage } from "./types";
 
 const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 
-const storage = (): Storage | null =>
-  typeof window !== "undefined" ? window.localStorage : null;
+const isWeb = Platform.OS === "web";
+
+const webStorage = (): Storage | null =>
+    isWeb && typeof window !== "undefined" ? (window.localStorage ?? null) : null;
 
 export class SecureTokenStorage implements ITokenStorage {
-  async saveAccessToken(token: string): Promise<void> {
-    storage()?.setItem(ACCESS_TOKEN_KEY, token);
+  private async set(key: string, value: string): Promise<void> {
+    if (isWeb) webStorage()?.setItem(key, value);
+    else await SecureStore.setItemAsync(key, value);
   }
 
-  async getAccessToken(): Promise<string | null> {
-    return storage()?.getItem(ACCESS_TOKEN_KEY) ?? null;
+  private async get(key: string): Promise<string | null> {
+    if (isWeb) return webStorage()?.getItem(key) ?? null;
+    return SecureStore.getItemAsync(key);
   }
 
-  async saveRefreshToken(token: string): Promise<void> {
-    storage()?.setItem(REFRESH_TOKEN_KEY, token);
+  private async del(key: string): Promise<void> {
+    if (isWeb) webStorage()?.removeItem(key);
+    else await SecureStore.deleteItemAsync(key);
   }
 
-  async getRefreshToken(): Promise<string | null> {
-    return storage()?.getItem(REFRESH_TOKEN_KEY) ?? null;
-  }
+  saveAccessToken = (token: string): Promise<void> => this.set(ACCESS_TOKEN_KEY, token);
+  getAccessToken = (): Promise<string | null> => this.get(ACCESS_TOKEN_KEY);
+  saveRefreshToken = (token: string): Promise<void> => this.set(REFRESH_TOKEN_KEY, token);
+  getRefreshToken = (): Promise<string | null> => this.get(REFRESH_TOKEN_KEY);
 
-  async clear(): Promise<void> {
-    storage()?.removeItem(ACCESS_TOKEN_KEY);
-    storage()?.removeItem(REFRESH_TOKEN_KEY);
-  }
+  clear = async (): Promise<void> => {
+    await Promise.all([this.del(ACCESS_TOKEN_KEY), this.del(REFRESH_TOKEN_KEY)]);
+  };
 }
