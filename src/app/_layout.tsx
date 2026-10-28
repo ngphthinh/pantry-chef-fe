@@ -41,6 +41,14 @@ function RootNavigator() {
           <Stack.Screen name="meal-plan/add-entry" />
           <Stack.Screen name="meal-plan/shopping-preview" />
           <Stack.Screen name="ai/meal-plan" />
+          <Stack.Screen name="shopping/index" />
+          <Stack.Screen name="shopping/[id]" />
+          <Stack.Screen name="recipe/custom/index" />
+          <Stack.Screen name="recipe/custom/[id]" />
+          <Stack.Screen name="recipe/custom/form" />
+          <Stack.Screen name="settings/unit-converter" />
+          <Stack.Screen name="settings/feedback" />
+          <Stack.Screen name="settings/about" />
           <Stack.Screen
             name="settings/preferences"
             options={{

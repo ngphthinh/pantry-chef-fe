@@ -5,6 +5,11 @@ import themeReducer from "@/core/theme/themeSlice";
 import aiReducer from "@/features/ai/aiSlice";
 import pantryReducer from "@/features/pantry/pantrySlice";
 import mealPlanReducer from "@/features/mealplan/mealPlanSlice";
+import cuisineReducer from "@/features/cuisine/cuisineSlice";
+import customRecipeReducer from "@/features/customRecipe/customRecipeSlice";
+import feedbackReducer from "@/features/feedback/feedbackSlice";
+import shoppingReducer from "@/features/shopping/shoppingSlice";
+import unitReducer from "@/features/unit/unitSlice";
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +19,11 @@ export const store = configureStore({
     ai: aiReducer,
     pantry: pantryReducer,
     mealPlan: mealPlanReducer,
+    cuisine: cuisineReducer,
+    customRecipe: customRecipeReducer,
+    feedback: feedbackReducer,
+    shopping: shoppingReducer,
+    unit: unitReducer,
   },
 });
 

@@ -21,7 +21,7 @@ const SECTIONS: Section[] = [
       {
         icon: "cart-outline",
         title: "Danh sách mua sắm",
-        route: "shopping/index",
+        route: "shopping",
       },
     ],
   },
@@ -31,7 +31,7 @@ const SECTIONS: Section[] = [
       {
         icon: "create-outline",
         title: "Món tự tạo",
-        route: "recipe/custom/index",
+        route: "recipe/custom",
       },
       {
         icon: "folder-outline",
