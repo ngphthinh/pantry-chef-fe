@@ -5,6 +5,8 @@ import themeReducer from "@/core/theme/themeSlice";
 import aiReducer from "@/features/ai/aiSlice";
 import pantryReducer from "@/features/pantry/pantrySlice";
 import mealPlanReducer from "@/features/mealplan/mealPlanSlice";
+import customRecipeReducer from "@/features/customRecipe/customRecipeSlice";
+import recipeReducer from "@/features/recipe/recipeSlice";
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +16,8 @@ export const store = configureStore({
     ai: aiReducer,
     pantry: pantryReducer,
     mealPlan: mealPlanReducer,
+    recipe: recipeReducer,
+    customRecipe: customRecipeReducer,
   },
 });
 

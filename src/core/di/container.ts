@@ -16,6 +16,10 @@ import { HttpPantryRepository } from "@/features/pantry/httpPantryRepository";
 import { PantryService } from "@/features/pantry/pantryService";
 import { HttpMealPlanRepository } from "@/features/mealplan/httpMealPlanRepository";
 import { MealPlanService } from "@/features/mealplan/mealPlanService";
+import { CustomRecipeService } from "@/features/customRecipe/customRecipeService";
+import { HttpCustomRecipeRepository } from "@/features/customRecipe/httpCustomRecipeRepository";
+import { HttpRecipeRepository } from "@/features/recipe/httpRecipeRepository";
+import { RecipeService } from "@/features/recipe/recipeService";
 import { HttpShoppingRepository } from "@/features/shopping/httpShoppingRepository";
 import { ShoppingService } from "@/features/shopping/shoppingService";
 
@@ -50,3 +54,9 @@ export const mealPlanService = new MealPlanService(mealPlanRepository);
 
 const shoppingRepository = new HttpShoppingRepository(privateHttp);
 export const shoppingService = new ShoppingService(shoppingRepository);
+
+const recipeRepository = new HttpRecipeRepository(privateHttp);
+export const recipeService = new RecipeService(recipeRepository);
+
+const customRecipeRepository = new HttpCustomRecipeRepository(privateHttp);
+export const customRecipeService = new CustomRecipeService(customRecipeRepository);
