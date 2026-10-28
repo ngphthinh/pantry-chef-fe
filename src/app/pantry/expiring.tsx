@@ -161,7 +161,7 @@ export default function PantryExpiringScreen() {
                     <View>
                       <AppText variant="heading">{item.ingredientName}</AppText>
                       <AppText variant="caption">
-                        {item.quantity} {item.unit} · HSD: {item.expiryDate || 'N/A'}
+                        {Math.round(item.quantity)} {item.unit} · HSD: {item.expiryDate || 'N/A'}
                       </AppText>
                     </View>
                   </View>

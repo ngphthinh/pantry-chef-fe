@@ -45,13 +45,6 @@ export default function LoginScreen() {
     }
   };
 
-  const handleBiometricSimulation = async () => {
-    // Quick login with stored credentials
-    form.setValue('email')('admin@gmail.com');
-    form.setValue('password')('Admin@123');
-    await form.submit();
-  };
-
   return (
     <View style={styles.root}>
       {/* 4D Living Background with Autonomous Fluid Energy & Particles */}
@@ -270,77 +263,6 @@ export default function LoginScreen() {
               onPress={form.submit}
               iconName="arrow-forward-outline"
             />
-
-            {/* Divider */}
-            <View style={styles.dividerRow}>
-              <View
-                style={[
-                  styles.dividerLine,
-                  { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)' },
-                ]}
-              />
-              <AppText
-                variant="caption"
-                style={[styles.dividerText, { color: isDark ? '#9CA3AF' : '#6B7280' }]}
-              >
-                hoặc tiếp tục với
-              </AppText>
-              <View
-                style={[
-                  styles.dividerLine,
-                  { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)' },
-                ]}
-              />
-            </View>
-
-            {/* Social / Quick Biometric Actions */}
-            <View style={styles.socialRow}>
-              {/* Biometric Touch/Face */}
-              <Pressable
-                onPress={handleBiometricSimulation}
-                style={[
-                  styles.socialBtn,
-                  {
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-                  },
-                ]}
-              >
-                <Ionicons
-                  name="finger-print-outline"
-                  size={22}
-                  color={isDark ? '#34D399' : '#2E7D4F'}
-                />
-              </Pressable>
-
-              {/* Google Glass Pill */}
-              <Pressable
-                onPress={() => fillCredentials('admin')}
-                style={[
-                  styles.socialBtn,
-                  {
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-                  },
-                ]}
-              >
-                <Ionicons name="logo-google" size={20} color={isDark ? '#F87171' : '#EA4335'} />
-              </Pressable>
-
-              {/* Apple Glass Pill */}
-              <Pressable
-                onPress={() => fillCredentials('chef')}
-                style={[
-                  styles.socialBtn,
-                  {
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-                  },
-                ]}
-              >
-                <Ionicons name="logo-apple" size={21} color={isDark ? '#FFFFFF' : '#000000'} />
-              </Pressable>
-            </View>
           </TiltCard3D>
 
           {/* Footer Register Link */}
@@ -496,39 +418,6 @@ const styles = StyleSheet.create({
   bannerErrorText: {
     fontSize: 13,
     flex: 1,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 14,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    marginHorizontal: 12,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  socialRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    marginTop: 2,
-  },
-  socialBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
   },
   footer: {
     flexDirection: 'row',

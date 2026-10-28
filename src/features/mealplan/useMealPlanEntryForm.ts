@@ -114,7 +114,7 @@ export function useMealPlanEntryForm(
     }));
     setErrors((prev) => ({
       ...prev,
-      recipeId: undefined,
+      recipeId: 'Vui lòng chọn một công thức món ăn',
     }));
   }, []);
 

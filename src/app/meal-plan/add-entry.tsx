@@ -73,6 +73,8 @@ export default function AddMealPlanEntryScreen() {
         Alert.alert('Thành công', 'Đã thêm bữa ăn vào thực đơn!', [
           { text: 'OK', onPress: () => router.back() },
         ]);
+      } else if (!values.recipeId) {
+        Alert.alert('Chưa chọn công thức', 'Vui lòng chọn một công thức món ăn từ kho công thức.');
       }
     } catch {
       Alert.alert(
@@ -178,18 +180,15 @@ export default function AddMealPlanEntryScreen() {
             />
           </Card>
 
-          {/* 3. Recipe Selection (Liên kết Recipe của Tùng) */}
-          <Card className="p-4 shadow-sm">
+          {/* 3. Recipe Selection (Bắt buộc chọn công thức) */}
+          <Card className={`p-4 shadow-sm ${errors.recipeId ? 'border border-red-300 dark:border-red-800' : ''}`}>
             <View className="flex-row items-center justify-between mb-2">
               <View className="flex-row items-center gap-1.5">
                 <AppText variant="label" className="font-bold">
-                  Công thức món ăn
+                  Công thức món ăn <AppText className="text-red-500">*</AppText>
                 </AppText>
-                <View className="rounded-full bg-soft px-2.5 py-0.5 dark:bg-soft-dark">
-                  <AppText className="text-xs font-semibold text-muted">Tuỳ chọn</AppText>
-                </View>
               </View>
-              {values.recipeId || values.recipeTitle ? (
+              {values.recipeId ? (
                 <Pressable
                   onPress={clearRecipe}
                   className="flex-row items-center gap-1 active:opacity-70"
@@ -209,7 +208,7 @@ export default function AddMealPlanEntryScreen() {
                   Đang đồng bộ công thức từ hệ thống...
                 </AppText>
               </View>
-            ) : values.recipeTitle ? (
+            ) : values.recipeId ? (
               // Selected Recipe Preview Card
               <View className="rounded-2xl border border-line bg-soft/50 p-3.5 dark:border-line-dark dark:bg-surface-dark">
                 <View className="flex-row items-center gap-3">
@@ -236,18 +235,12 @@ export default function AddMealPlanEntryScreen() {
                     </AppText>
 
                     <View className="mt-1 flex-row items-center gap-2">
-                      {values.recipeId ? (
-                        <View className="flex-row items-center gap-1">
-                          <Ionicons name="checkmark-circle" size={13} color="#10B981" />
-                          <AppText className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
-                            Đã liên kết Recipe
-                          </AppText>
-                        </View>
-                      ) : (
-                        <AppText className="text-xs text-muted">
-                          Tên món tuỳ chỉnh
+                      <View className="flex-row items-center gap-1">
+                        <Ionicons name="checkmark-circle" size={13} color="#10B981" />
+                        <AppText className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                          Đã liên kết Recipe
                         </AppText>
-                      )}
+                      </View>
                     </View>
                   </View>
                 </View>
@@ -264,46 +257,35 @@ export default function AddMealPlanEntryScreen() {
                 </Pressable>
               </View>
             ) : (
-              // Empty State - Select or Type
-              <View className="gap-3">
+              // Empty State - Select recipe required
+              <View className="gap-2">
                 <Pressable
                   onPress={() => setPickerVisible(true)}
-                  className="flex-row items-center justify-between rounded-2xl border border-dashed border-brand/60 bg-brandSoft/40 p-4 active:opacity-80 dark:bg-surface-dark"
+                  className={`flex-row items-center justify-between rounded-2xl border ${
+                    errors.recipeId
+                      ? 'border-red-400 bg-red-50/60 dark:border-red-600 dark:bg-red-950/20'
+                      : 'border-dashed border-brand/60 bg-brandSoft/40 dark:bg-surface-dark'
+                  } p-4 active:opacity-80`}
                 >
                   <View className="flex-row items-center gap-3">
-                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-brand text-white">
+                    <View className={`h-10 w-10 items-center justify-center rounded-xl ${errors.recipeId ? 'bg-red-500' : 'bg-brand'}`}>
                       <Ionicons name="search" size={20} color="#fff" />
                     </View>
-                    <View>
+                    <View className="flex-1 pr-2">
                       <AppText className="text-sm font-bold text-ink dark:text-ink-dark">
                         Tìm và chọn từ kho công thức
                       </AppText>
-                      <AppText variant="caption" className="text-muted">
-                        Gợi ý từ tủ, tìm theo tên, món phổ biến
+                      <AppText variant="caption" className={errors.recipeId ? 'text-red-500 font-medium' : 'text-muted'}>
+                        {errors.recipeId || 'Bắt buộc chọn món từ kho công thức'}
                       </AppText>
                     </View>
                   </View>
-                  <Ionicons name="chevron-forward" size={18} color={brand} />
+                  <Ionicons name="chevron-forward" size={18} color={errors.recipeId ? '#EF4444' : brand} />
                 </Pressable>
-
-                <View className="flex-row items-center gap-2 px-1">
-                  <View className="h-[1px] flex-1 bg-line dark:bg-line-dark" />
-                  <AppText variant="caption" className="text-muted">
-                    hoặc tự đặt tên món
-                  </AppText>
-                  <View className="h-[1px] flex-1 bg-line dark:bg-line-dark" />
-                </View>
-
-                <TextField
-                  label="Tên món ăn (tuỳ chỉnh)"
-                  value={values.recipeTitle}
-                  onChangeText={(text) => setField('recipeTitle', text)}
-                  placeholder="Ví dụ: Cơm rang dưa bò..."
-                />
               </View>
             )}
 
-            {errors.recipeId ? (
+            {errors.recipeId && values.recipeId ? (
               <AppText className="mt-1 text-xs text-red-500">
                 {errors.recipeId}
               </AppText>

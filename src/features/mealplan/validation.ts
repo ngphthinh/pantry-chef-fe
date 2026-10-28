@@ -66,12 +66,11 @@ export const mealPlanValidators = {
   },
 
   /**
-   * recipe: @JoinColumn(name = "recipe_id", nullable = true) private Recipe recipe;
-   * Tuỳ chọn (nullable = true), nhưng nếu có thì phải là UUID hợp lệ
+   * recipe: Bắt buộc chọn công thức món ăn (phải có recipeId và đúng định dạng UUID)
    */
   recipeId: (value?: string | null): string | null => {
     if (!value || !value.trim()) {
-      return null; // recipeId is optional
+      return 'Vui lòng chọn một công thức món ăn';
     }
     if (!UUID_REGEX.test(value.trim())) {
       return 'Mã công thức (recipeId) không đúng định dạng UUID';

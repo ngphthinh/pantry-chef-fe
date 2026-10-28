@@ -62,7 +62,7 @@ export default function PantryItemDetailScreen() {
 
   useEffect(() => {
     if (selectedItem) {
-      setEditQty(String(selectedItem.quantity));
+      setEditQty(String(Math.round(selectedItem.quantity)));
       setEditExpiry(selectedItem.expiryDate || '');
       setEditLocation(selectedItem.location || 'FRIDGE');
     }
@@ -76,14 +76,14 @@ export default function PantryItemDetailScreen() {
       return;
     }
     if (qty > selectedItem.quantity) {
-      Alert.alert('Lỗi', `Số lượng dùng không thể lớn hơn lượng hiện có (${selectedItem.quantity})`);
+      Alert.alert('Lỗi', `Số lượng dùng không thể lớn hơn lượng hiện có (${Math.round(selectedItem.quantity)})`);
       return;
     }
     try {
       await consume(id, qty);
       setConsumeModalVisible(false);
       setConsumeAmount('1');
-      Alert.alert('Thành công', `Đã dùng ${qty} ${selectedItem.unit}`);
+      Alert.alert('Thành công', `Đã dùng ${Math.round(qty)} ${selectedItem.unit}`);
     } catch {
       Alert.alert('Lỗi', 'Không thể dùng bớt nguyên liệu');
     }
@@ -246,7 +246,7 @@ export default function PantryItemDetailScreen() {
           <Card className="flex-1 p-4 shadow-sm">
             <AppText variant="caption">Số lượng hiện có</AppText>
             <AppText variant="title" className="mt-1 text-brand">
-              {selectedItem.quantity} {selectedItem.unit}
+              {Math.round(selectedItem.quantity)} {selectedItem.unit}
             </AppText>
           </Card>
           <Card className="flex-1 p-4 shadow-sm">
@@ -286,7 +286,7 @@ export default function PantryItemDetailScreen() {
           <Card className="m-4 gap-4 p-6 shadow-2xl">
             <AppText variant="heading">Dùng bớt nguyên liệu</AppText>
             <AppText variant="caption">
-              Lượng hiện có: {selectedItem.quantity} {selectedItem.unit}
+              Lượng hiện có: {Math.round(selectedItem.quantity)} {selectedItem.unit}
             </AppText>
 
             <TextField
