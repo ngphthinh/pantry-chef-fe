@@ -12,7 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { AppText } from "@/components/ui/AppText";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { recipeService } from "@/core/di/container";
+import { customRecipeService, recipeService } from "@/core/di/container";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import type { RecipeSummaryResponse } from "@/types";
 
@@ -49,17 +49,17 @@ export function RecipePickerModal({
       if (mode === "suggestions") {
         results = (await recipeService.suggestions({ size: 20 })).content || [];
       } else if (mode === "popular") {
-        results = (await recipeService.getPopular({ size: 20 })).content || [];
+        results = (await recipeService.popular({ size: 20 })).content || [];
       } else if (mode === "random") {
-        results = await recipeService.getRandom(8);
+        results = await recipeService.random(8);
       } else if (mode === "custom") {
         results =
-          (await recipeService.getCustomList({ size: 20 })).content || [];
+          (await customRecipeService.getRecipes({ size: 20 })).content || [];
       } else if (mode === "search") {
         results = queryText
-          ? (await recipeService.getByName({ q: queryText, size: 20 }))
-              .content || []
-          : (await recipeService.getPopular({ size: 20 })).content || [];
+          ? (await recipeService.byName({ q: queryText, size: 20 })).content ||
+            []
+          : (await recipeService.popular({ size: 20 })).content || [];
       }
       if (myId === requestId.current) setRecipes(results); // bỏ kết quả cũ về muộn
     } catch (err: unknown) {
@@ -150,8 +150,7 @@ export function RecipePickerModal({
             ) : null}
             <Pressable
               onPress={handleSearchSubmit}
-              className="ml-1 rounded-xl bg-brand px-3 py-1.5 active:opacity-80"
-            >
+              className="ml-1 rounded-xl bg-brand px-3 py-1.5 active:opacity-80">
               <AppText className="text-xs font-bold text-white">Tìm</AppText>
             </Pressable>
           </View>

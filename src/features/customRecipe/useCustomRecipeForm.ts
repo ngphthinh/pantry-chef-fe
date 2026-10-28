@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { parseDecimal, parseInteger, formatDecimal } from "@/core/format/decimal";
+import {
+  parseDecimal,
+  parseInteger,
+  formatDecimal,
+} from "@/core/format/decimal";
 import type { ActionResult } from "@/core/http/actionResult";
 import { useCuisine } from "@/features/cuisine/useCuisine";
 import type {
@@ -56,8 +60,17 @@ export interface SaveOutcome {
 let rowSeq = 0;
 const nextKey = () => `row-${++rowSeq}`;
 
-const blankIngredient = (): IngredientRow => ({ key: nextKey(), name: "", amount: "", unit: "" });
-const blankStep = (): StepRow => ({ key: nextKey(), text: "", timerMinutes: "" });
+const blankIngredient = (): IngredientRow => ({
+  key: nextKey(),
+  name: "",
+  amount: "",
+  unit: "",
+});
+const blankStep = (): StepRow => ({
+  key: nextKey(),
+  text: "",
+  timerMinutes: "",
+});
 
 const emptyValues = (): FormValues => ({
   title: "",
@@ -72,7 +85,8 @@ const emptyValues = (): FormValues => ({
 const fromDetail = (recipe: RecipeDetailResponse): FormValues => ({
   title: recipe.title,
   servings: recipe.servings === null ? "" : String(recipe.servings),
-  readyInMinutes: recipe.readyInMinutes === null ? "" : String(recipe.readyInMinutes),
+  readyInMinutes:
+    recipe.readyInMinutes === null ? "" : String(recipe.readyInMinutes),
   difficulty: recipe.difficulty ?? "",
   cuisineId: recipe.cuisine?.id ?? "",
   ingredients: recipe.ingredients.length
@@ -89,7 +103,8 @@ const fromDetail = (recipe: RecipeDetailResponse): FormValues => ({
         .map((s) => ({
           key: nextKey(),
           text: s.text,
-          timerMinutes: s.timerSeconds === null ? "" : formatDecimal(s.timerSeconds / 60),
+          timerMinutes:
+            s.timerSeconds === null ? "" : formatDecimal(s.timerSeconds / 60),
         }))
     : [blankStep()],
 });
@@ -106,7 +121,11 @@ const toRequest = (values: FormValues): RecipeCreateRequest => ({
     .map((r) => {
       const amount = parseDecimal(r.amount) ?? undefined;
       // Có đơn vị mà không có số lượng thì vô nghĩa ("vừa đủ" không đi kèm đơn vị).
-      return { name: r.name.trim(), amount, unit: amount !== undefined ? r.unit || undefined : undefined };
+      return {
+        name: r.name.trim(),
+        amount,
+        unit: amount !== undefined ? r.unit || undefined : undefined,
+      };
     }),
   steps: values.steps
     .filter((r) => r.text.trim())
@@ -165,17 +184,26 @@ export function useCustomRecipeForm(recipeId?: string) {
   // ───────── Nguyên liệu ─────────
 
   const addIngredient = useCallback(
-    () => setValues((prev) => ({ ...prev, ingredients: [...prev.ingredients, blankIngredient()] })),
+    () =>
+      setValues((prev) => ({
+        ...prev,
+        ingredients: [...prev.ingredients, blankIngredient()],
+      })),
     [],
   );
 
-  const updateIngredient = useCallback((key: string, patch: Partial<Omit<IngredientRow, "key">>) => {
-    setValues((prev) => ({
-      ...prev,
-      ingredients: prev.ingredients.map((r) => (r.key === key ? { ...r, ...patch } : r)),
-    }));
-    setErrors((prev) => ({ ...prev, ingredients: undefined }));
-  }, []);
+  const updateIngredient = useCallback(
+    (key: string, patch: Partial<Omit<IngredientRow, "key">>) => {
+      setValues((prev) => ({
+        ...prev,
+        ingredients: prev.ingredients.map((r) =>
+          r.key === key ? { ...r, ...patch } : r,
+        ),
+      }));
+      setErrors((prev) => ({ ...prev, ingredients: undefined }));
+    },
+    [],
+  );
 
   /** Luôn giữ lại ít nhất một dòng để người dùng còn chỗ nhập. */
   const removeIngredient = useCallback((key: string) => {
@@ -188,17 +216,21 @@ export function useCustomRecipeForm(recipeId?: string) {
   // ───────── Các bước ─────────
 
   const addStep = useCallback(
-    () => setValues((prev) => ({ ...prev, steps: [...prev.steps, blankStep()] })),
+    () =>
+      setValues((prev) => ({ ...prev, steps: [...prev.steps, blankStep()] })),
     [],
   );
 
-  const updateStep = useCallback((key: string, patch: Partial<Omit<StepRow, "key">>) => {
-    setValues((prev) => ({
-      ...prev,
-      steps: prev.steps.map((r) => (r.key === key ? { ...r, ...patch } : r)),
-    }));
-    setErrors((prev) => ({ ...prev, steps: undefined }));
-  }, []);
+  const updateStep = useCallback(
+    (key: string, patch: Partial<Omit<StepRow, "key">>) => {
+      setValues((prev) => ({
+        ...prev,
+        steps: prev.steps.map((r) => (r.key === key ? { ...r, ...patch } : r)),
+      }));
+      setErrors((prev) => ({ ...prev, steps: undefined }));
+    },
+    [],
+  );
 
   const removeStep = useCallback((key: string) => {
     setValues((prev) => {
@@ -225,8 +257,10 @@ export function useCustomRecipeForm(recipeId?: string) {
     const next: FormErrors = {
       title: customRecipeValidators.title(v.title) ?? undefined,
       servings: customRecipeValidators.servings(v.servings) ?? undefined,
-      readyInMinutes: customRecipeValidators.readyInMinutes(v.readyInMinutes) ?? undefined,
-      ingredients: customRecipeValidators.ingredients(v.ingredients) ?? undefined,
+      readyInMinutes:
+        customRecipeValidators.readyInMinutes(v.readyInMinutes) ?? undefined,
+      ingredients:
+        customRecipeValidators.ingredients(v.ingredients) ?? undefined,
       steps: customRecipeValidators.steps(v.steps) ?? undefined,
     };
     setErrors(next);
@@ -234,13 +268,19 @@ export function useCustomRecipeForm(recipeId?: string) {
   }, []);
 
   const submit = useCallback(async (): Promise<ActionResult<SaveOutcome>> => {
-    if (!validate(values)) return { ok: false, message: "Vui lòng kiểm tra lại thông tin." };
+    if (!validate(values))
+      return { ok: false, message: "Vui lòng kiểm tra lại thông tin." };
 
     const body = toRequest(values);
-    const result = recipeId ? await update(recipeId, body, image) : await create(body, image);
+    const result = recipeId
+      ? await update(recipeId, body, image)
+      : await create(body, image);
     if (!result.ok) return result;
 
-    return { ok: true, data: { id: result.data.recipe.id, imageFailed: result.data.imageFailed } };
+    return {
+      ok: true,
+      data: { id: result.data.recipe.id, imageFailed: result.data.imageFailed },
+    };
   }, [create, image, recipeId, update, validate, values]);
 
   const cuisineOptions = useMemo(

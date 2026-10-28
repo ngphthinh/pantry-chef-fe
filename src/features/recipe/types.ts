@@ -3,33 +3,48 @@ import type {
   Difficulty,
   RecipeDetailResponse,
   RecipeSummaryResponse,
-  UUID,
-} from '@/types';
+} from "@/types";
 
-export interface RecipeSearchParams {
-  ingredients?: string[];
-  cursor?: string;
+/**
+ * Tham số tìm theo nguyên liệu. `cursor` là offset dạng chuỗi, lấy từ `nextCursor` của lần gọi trước.
+ * `ingredients` được gửi dạng lặp tham số (`ingredients=a&ingredients=b`).
+ */
+export interface RecipeSearchQuery {
+  ingredients: string[];
+  cursor?: string | null;
   size?: number;
-  cuisineId?: UUID;
+  cuisineId?: string;
   maxMinutes?: number;
   difficulty?: Difficulty;
 }
 
-export interface RecipeByNameParams {
-  q: string;
-  cursor?: string;
+export interface RecipePageQuery {
+  cursor?: string | null;
   size?: number;
 }
 
+export interface RecipeNameQuery extends RecipePageQuery {
+  q: string;
+}
+
+/** Các danh sách phân trang trong slice, mỗi danh sách có con trỏ riêng. */
+export type RecipeFeedKey = "search" | "suggestions" | "byName" | "popular";
+
 export interface IRecipeApi {
-  search(params: RecipeSearchParams): Promise<CursorResponse<RecipeSummaryResponse>>;
-  suggestions(params?: { cursor?: string; size?: number }): Promise<CursorResponse<RecipeSummaryResponse>>;
+  search(
+    query: RecipeSearchQuery,
+  ): Promise<CursorResponse<RecipeSummaryResponse>>;
+  suggestions(
+    query: RecipePageQuery,
+  ): Promise<CursorResponse<RecipeSummaryResponse>>;
+  byName(
+    query: RecipeNameQuery,
+  ): Promise<CursorResponse<RecipeSummaryResponse>>;
+  popular(
+    query: RecipePageQuery,
+  ): Promise<CursorResponse<RecipeSummaryResponse>>;
+  random(count?: number): Promise<RecipeSummaryResponse[]>;
   getDetail(externalId: string): Promise<RecipeDetailResponse>;
-  getByName(params: RecipeByNameParams): Promise<CursorResponse<RecipeSummaryResponse>>;
-  getRandom(count?: number): Promise<RecipeSummaryResponse[]>;
-  getPopular(params?: { cursor?: string; size?: number }): Promise<CursorResponse<RecipeSummaryResponse>>;
-  getSimilar(externalId: string): Promise<RecipeSummaryResponse[]>;
+  similar(externalId: string): Promise<RecipeSummaryResponse[]>;
   scale(externalId: string, servings: number): Promise<RecipeDetailResponse>;
-  getCustomList(params?: { cursor?: string; size?: number }): Promise<CursorResponse<RecipeSummaryResponse>>;
-  getCustomDetail(id: string): Promise<RecipeDetailResponse>;
 }

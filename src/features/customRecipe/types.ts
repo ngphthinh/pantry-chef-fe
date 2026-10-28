@@ -22,11 +22,16 @@ export interface SaveRecipeResult {
 }
 
 export interface ICustomRecipeApi {
-  getRecipes(query: CustomRecipeQuery): Promise<CursorResponse<RecipeSummaryResponse>>;
+  getRecipes(
+    query: CustomRecipeQuery,
+  ): Promise<CursorResponse<RecipeSummaryResponse>>;
   getRecipe(id: string): Promise<RecipeDetailResponse>;
   createRecipe(body: RecipeCreateRequest): Promise<RecipeDetailResponse>;
   /** PUT thay toàn bộ nguyên liệu và các bước. */
-  updateRecipe(id: string, body: RecipeUpdateRequest): Promise<RecipeDetailResponse>;
+  updateRecipe(
+    id: string,
+    body: RecipeUpdateRequest,
+  ): Promise<RecipeDetailResponse>;
   removeRecipe(id: string): Promise<void>;
 }
 

@@ -6,11 +6,12 @@ import aiReducer from "@/features/ai/aiSlice";
 import pantryReducer from "@/features/pantry/pantrySlice";
 import mealPlanReducer from "@/features/mealplan/mealPlanSlice";
 import cuisineReducer from "@/features/cuisine/cuisineSlice";
-import customRecipeReducer from "@/features/customRecipe/customRecipeSlice";
 import feedbackReducer from "@/features/feedback/feedbackSlice";
 import shoppingReducer from "@/features/shopping/shoppingSlice";
 import unitReducer from "@/features/unit/unitSlice";
 import adminReducer from "@/features/admin/adminSlice";
+import customRecipeReducer from "@/features/customRecipe/customRecipeSlice";
+import recipeReducer from "@/features/recipe/recipeSlice";
 
 export const store = configureStore({
   reducer: {
@@ -26,6 +27,7 @@ export const store = configureStore({
     shopping: shoppingReducer,
     unit: unitReducer,
     admin: adminReducer,
+    recipe: recipeReducer,
   },
 });
 

@@ -19,15 +19,21 @@ export class CustomRecipeService {
     private readonly images: ICustomRecipeImageApi,
   ) {}
 
-  getRecipes = (query: CustomRecipeQuery): Promise<CursorResponse<RecipeSummaryResponse>> =>
+  getRecipes = (
+    query: CustomRecipeQuery,
+  ): Promise<CursorResponse<RecipeSummaryResponse>> =>
     this.recipes.getRecipes(query);
 
-  getRecipe = (id: string): Promise<RecipeDetailResponse> => this.recipes.getRecipe(id);
+  getRecipe = (id: string): Promise<RecipeDetailResponse> =>
+    this.recipes.getRecipe(id);
 
   removeRecipe = (id: string): Promise<void> => this.recipes.removeRecipe(id);
 
   /** Tạo công thức rồi (nếu có) tải ảnh lên. */
-  async createRecipe(body: RecipeCreateRequest, image?: PickedImage | null): Promise<SaveRecipeResult> {
+  async createRecipe(
+    body: RecipeCreateRequest,
+    image?: PickedImage | null,
+  ): Promise<SaveRecipeResult> {
     const recipe = await this.recipes.createRecipe(body);
     return this.attachImage(recipe, image);
   }
@@ -52,9 +58,38 @@ export class CustomRecipeService {
   ): Promise<SaveRecipeResult> => {
     if (!image) return { recipe, imageFailed: false };
     try {
-      return { recipe: await this.images.uploadImage(recipe.id, image), imageFailed: false };
+      return {
+        recipe: await this.images.uploadImage(recipe.id, image),
+        imageFailed: false,
+      };
     } catch {
       return { recipe, imageFailed: true };
     }
+  };
+}
+
+// create = (body: RecipeCreateRequest): Promise<RecipeDetailResponse> =>
+//   this.recipes.create(normalize(body));
+
+/** PUT thay toàn bộ: phải gửi đủ nguyên liệu và các bước. */
+// update = (
+//   id: string,
+//   body: RecipeUpdateRequest,
+// ): Promise<RecipeDetailResponse> => this.recipes.update(id, normalize(body));
+
+// remove = (id: string): Promise<void> => this.recipes.remove(id);
+
+// uploadImage = (
+//   id: string,
+//   image: PickedImage,
+// ): Promise<RecipeDetailResponse> => this.recipes.uploadImage(id, image);
+
+/** Cắt khoảng trắng thừa để server không nhận dữ liệu như "  Thịt  ". */
+function normalize<T extends RecipeCreateRequest>(body: T): T {
+  return {
+    ...body,
+    title: body.title.trim(),
+    ingredients: body.ingredients.map((i) => ({ ...i, name: i.name.trim() })),
+    steps: body.steps.map((s) => ({ ...s, text: s.text.trim() })),
   };
 }

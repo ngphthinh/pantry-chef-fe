@@ -11,7 +11,12 @@ import type {
 } from "@/types";
 import type { SaveRecipeResult } from "./types";
 
-export type CustomRecipeStatus = "idle" | "loading" | "loadingMore" | "loadingDetail" | "saving";
+export type CustomRecipeStatus =
+  | "idle"
+  | "loading"
+  | "loadingMore"
+  | "loadingDetail"
+  | "saving";
 
 interface CustomRecipeState {
   items: RecipeSummaryResponse[];
@@ -67,8 +72,13 @@ const customRecipeSlice = createSlice({
   },
 });
 
-export const { statusChanged, recipesLoaded, recipeRemoved, detailLoaded, detailCleared } =
-  customRecipeSlice.actions;
+export const {
+  statusChanged,
+  recipesLoaded,
+  recipeRemoved,
+  detailLoaded,
+  detailCleared,
+} = customRecipeSlice.actions;
 export default customRecipeSlice.reducer;
 
 /*
@@ -96,19 +106,23 @@ export const fetchCustomRecipes =
     const { hasNext, nextCursor } = getState().customRecipe;
     if (loadMore && (!hasNext || !nextCursor)) return;
 
-    await withStatus(dispatch, loadMore ? "loadingMore" : "loading", async () => {
-      const page = await customRecipeService.getRecipes({
-        cursor: loadMore ? (nextCursor ?? undefined) : undefined,
-      });
-      dispatch(
-        recipesLoaded({
-          items: page.content,
-          hasNext: page.hasNext,
-          nextCursor: page.nextCursor,
-          replace: !loadMore,
-        }),
-      );
-    });
+    await withStatus(
+      dispatch,
+      loadMore ? "loadingMore" : "loading",
+      async () => {
+        const page = await customRecipeService.getRecipes({
+          cursor: loadMore ? (nextCursor ?? undefined) : undefined,
+        });
+        dispatch(
+          recipesLoaded({
+            items: page.content,
+            hasNext: page.hasNext,
+            nextCursor: page.nextCursor,
+            replace: !loadMore,
+          }),
+        );
+      },
+    );
   };
 
 export const fetchCustomRecipeDetail =
@@ -122,7 +136,10 @@ export const fetchCustomRecipeDetail =
   };
 
 export const createCustomRecipe =
-  (body: RecipeCreateRequest, image?: PickedImage | null): AppThunk<Promise<SaveRecipeResult>> =>
+  (
+    body: RecipeCreateRequest,
+    image?: PickedImage | null,
+  ): AppThunk<Promise<SaveRecipeResult>> =>
   async (dispatch) =>
     withStatus(dispatch, "saving", async () => {
       const result = await customRecipeService.createRecipe(body, image);
@@ -131,7 +148,11 @@ export const createCustomRecipe =
     });
 
 export const updateCustomRecipe =
-  (id: string, body: RecipeUpdateRequest, image?: PickedImage | null): AppThunk<Promise<SaveRecipeResult>> =>
+  (
+    id: string,
+    body: RecipeUpdateRequest,
+    image?: PickedImage | null,
+  ): AppThunk<Promise<SaveRecipeResult>> =>
   async (dispatch) =>
     withStatus(dispatch, "saving", async () => {
       const result = await customRecipeService.updateRecipe(id, body, image);

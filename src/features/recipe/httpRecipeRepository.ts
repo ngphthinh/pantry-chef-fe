@@ -1,101 +1,101 @@
-import type { AxiosInstance } from 'axios';
+import type { AxiosInstance } from "axios";
+
 import type {
   CursorResponse,
   RecipeDetailResponse,
   RecipeSummaryResponse,
-} from '@/types';
-import type { IRecipeApi, RecipeByNameParams, RecipeSearchParams } from './types';
+} from "@/types";
+import type {
+  IRecipeApi,
+  RecipeNameQuery,
+  RecipePageQuery,
+  RecipeSearchQuery,
+} from "./types";
+
+const BASE = "/v1/recipes";
+
+/** Bỏ các tham số rỗng để không gửi `cursor=` hay `size=undefined` lên server. */
+const compact = <T extends object>(params: T): Partial<T> =>
+  Object.fromEntries(
+    Object.entries(params).filter(
+      ([, v]) => v !== undefined && v !== null && v !== "",
+    ),
+  ) as Partial<T>;
 
 export class HttpRecipeRepository implements IRecipeApi {
   constructor(private readonly privateHttp: AxiosInstance) {}
 
-  search = async (params: RecipeSearchParams): Promise<CursorResponse<RecipeSummaryResponse>> => {
-    const { data } = await this.privateHttp.get<CursorResponse<RecipeSummaryResponse>>(
-      '/v1/recipes/search',
-      {
-        params,
-        paramsSerializer: {
-          indexes: null, // serializes array as ingredients=x&ingredients=y
-        },
-      },
-    );
+  search = async (
+    query: RecipeSearchQuery,
+  ): Promise<CursorResponse<RecipeSummaryResponse>> => {
+    const { data } = await this.privateHttp.get<
+      CursorResponse<RecipeSummaryResponse>
+    >(`${BASE}/search`, {
+      params: compact(query),
+      // axios mặc định gửi `ingredients[]=a`; server cần `ingredients=a&ingredients=b`
+      paramsSerializer: { indexes: null },
+    });
     return data;
   };
 
-  suggestions = async (params?: {
-    cursor?: string;
-    size?: number;
-  }): Promise<CursorResponse<RecipeSummaryResponse>> => {
-    const { data } = await this.privateHttp.get<CursorResponse<RecipeSummaryResponse>>(
-      '/v1/recipes/suggestions',
-      { params },
+  suggestions = async (
+    query: RecipePageQuery = {},
+  ): Promise<CursorResponse<RecipeSummaryResponse>> => {
+    const { data } = await this.privateHttp.get<
+      CursorResponse<RecipeSummaryResponse>
+    >(`${BASE}/suggestions`, { params: compact(query) });
+    return data;
+  };
+
+  byName = async (
+    query: RecipeNameQuery,
+  ): Promise<CursorResponse<RecipeSummaryResponse>> => {
+    const { data } = await this.privateHttp.get<
+      CursorResponse<RecipeSummaryResponse>
+    >(`${BASE}/by-name`, { params: compact(query) });
+    return data;
+  };
+
+  popular = async (
+    query: RecipePageQuery = {},
+  ): Promise<CursorResponse<RecipeSummaryResponse>> => {
+    const { data } = await this.privateHttp.get<
+      CursorResponse<RecipeSummaryResponse>
+    >(`${BASE}/popular`, { params: compact(query) });
+    return data;
+  };
+
+  random = async (count?: number): Promise<RecipeSummaryResponse[]> => {
+    const { data } = await this.privateHttp.get<RecipeSummaryResponse[]>(
+      `${BASE}/random`,
+      {
+        params: compact({ count }),
+      },
     );
     return data;
   };
 
   getDetail = async (externalId: string): Promise<RecipeDetailResponse> => {
     const { data } = await this.privateHttp.get<RecipeDetailResponse>(
-      `/v1/recipes/${encodeURIComponent(externalId)}`,
+      `${BASE}/${encodeURIComponent(externalId)}`,
     );
     return data;
   };
 
-  getByName = async (params: RecipeByNameParams): Promise<CursorResponse<RecipeSummaryResponse>> => {
-    const { data } = await this.privateHttp.get<CursorResponse<RecipeSummaryResponse>>(
-      '/v1/recipes/by-name',
-      { params },
-    );
-    return data;
-  };
-
-  getRandom = async (count: number = 5): Promise<RecipeSummaryResponse[]> => {
+  similar = async (externalId: string): Promise<RecipeSummaryResponse[]> => {
     const { data } = await this.privateHttp.get<RecipeSummaryResponse[]>(
-      '/v1/recipes/random',
-      { params: { count } },
+      `${BASE}/${encodeURIComponent(externalId)}/similar`,
     );
     return data;
   };
 
-  getPopular = async (params?: {
-    cursor?: string;
-    size?: number;
-  }): Promise<CursorResponse<RecipeSummaryResponse>> => {
-    const { data } = await this.privateHttp.get<CursorResponse<RecipeSummaryResponse>>(
-      '/v1/recipes/popular',
-      { params },
-    );
-    return data;
-  };
-
-  getSimilar = async (externalId: string): Promise<RecipeSummaryResponse[]> => {
-    const { data } = await this.privateHttp.get<RecipeSummaryResponse[]>(
-      `/v1/recipes/${encodeURIComponent(externalId)}/similar`,
-    );
-    return data;
-  };
-
-  scale = async (externalId: string, servings: number): Promise<RecipeDetailResponse> => {
+  scale = async (
+    externalId: string,
+    servings: number,
+  ): Promise<RecipeDetailResponse> => {
     const { data } = await this.privateHttp.get<RecipeDetailResponse>(
-      `/v1/recipes/${encodeURIComponent(externalId)}/scale`,
+      `${BASE}/${encodeURIComponent(externalId)}/scale`,
       { params: { servings } },
-    );
-    return data;
-  };
-
-  getCustomList = async (params?: {
-    cursor?: string;
-    size?: number;
-  }): Promise<CursorResponse<RecipeSummaryResponse>> => {
-    const { data } = await this.privateHttp.get<CursorResponse<RecipeSummaryResponse>>(
-      '/v1/recipes/custom',
-      { params },
-    );
-    return data;
-  };
-
-  getCustomDetail = async (id: string): Promise<RecipeDetailResponse> => {
-    const { data } = await this.privateHttp.get<RecipeDetailResponse>(
-      `/v1/recipes/custom/${encodeURIComponent(id)}`,
     );
     return data;
   };
