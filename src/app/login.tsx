@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -6,44 +6,35 @@ import {
   ScrollView,
   StyleSheet,
   View,
-} from 'react-native';
-import { Link, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppText } from '@/components/ui/AppText';
-import { useForm } from '@/components/ui/useForm';
-import { useAppTheme } from '@/core/theme/useAppTheme';
-import { useAuth } from '@/features/auth/useAuth';
-import { validators } from '@/features/auth/validation';
-import { LivingBackground4D } from '@/components/auth/LivingBackground4D';
-import { HeroBadge3D } from '@/components/auth/HeroBadge3D';
-import { TiltCard3D } from '@/components/auth/TiltCard3D';
-import { GlassInput3D } from '@/components/auth/GlassInput3D';
-import { TactileButton3D } from '@/components/auth/TactileButton3D';
+} from "react-native";
+import { Link, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppText } from "@/components/ui/AppText";
+import { useForm } from "@/components/ui/useForm";
+import { useAppTheme } from "@/core/theme/useAppTheme";
+import { useAuth } from "@/features/auth/useAuth";
+import { validators } from "@/features/auth/validation";
+import { LivingBackground4D } from "@/components/auth/LivingBackground4D";
+import { HeroBadge3D } from "@/components/auth/HeroBadge3D";
+import { TiltCard3D } from "@/components/auth/TiltCard3D";
+import { GlassInput3D } from "@/components/auth/GlassInput3D";
+import { TactileButton } from "@/components/ui/TactileButton";
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
   const { signIn } = useAuth();
   const router = useRouter();
-  const [selectedDemo, setSelectedDemo] = useState<'admin' | 'chef' | null>(null);
+  const [selectedDemo, setSelectedDemo] = useState<"admin" | "chef" | null>(
+    null,
+  );
 
   const form = useForm(
-    { email: 'admin@gmail.com', password: 'Admin@123' },
+    { email: "admin@gmail.com", password: "Admin@123" },
     { email: validators.email, password: validators.password },
     signIn,
   );
-
-  const fillCredentials = (type: 'admin' | 'chef') => {
-    setSelectedDemo(type);
-    if (type === 'admin') {
-      form.setValue('email')('admin@gmail.com');
-      form.setValue('password')('Admin@123');
-    } else {
-      form.setValue('email')('chef@gmail.com');
-      form.setValue('password')('Chef@123');
-    }
-  };
 
   return (
     <View style={styles.root}>
@@ -52,16 +43,17 @@ export default function LoginScreen() {
 
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+        behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: Math.max(insets.top + 10, 24), paddingBottom: Math.max(insets.bottom + 20, 32) },
+            {
+              paddingTop: Math.max(insets.top + 10, 24),
+              paddingBottom: Math.max(insets.bottom + 20, 32),
+            },
           ]}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
+          keyboardShouldPersistTaps="handled">
           {/* Header 3D Holographic Crest & Title */}
           <View style={styles.header}>
             <HeroBadge3D isDark={isDark} />
@@ -70,99 +62,20 @@ export default function LoginScreen() {
               variant="title"
               style={[
                 styles.brandTitle,
-                { color: isDark ? '#F3F4F6' : '#111827' },
-              ]}
-            >
+                { color: isDark ? "#F3F4F6" : "#111827" },
+              ]}>
               PANTRY CHEF
             </AppText>
 
             <View style={styles.subtitleRow}>
-              <View style={[styles.glowDot, { backgroundColor: isDark ? '#34D399' : '#10B981' }]} />
               <AppText
                 variant="caption"
                 style={[
                   styles.brandSubtitle,
-                  { color: isDark ? '#A7F3D0' : '#065F46' },
-                ]}
-              >
+                  { color: isDark ? "#A7F3D0" : "#065F46" },
+                ]}>
                 Không Gian Ẩm Thực Thông Minh
               </AppText>
-            </View>
-          </View>
-
-          {/* Quick Demo Credentials Pill Bar */}
-          <View style={styles.demoBar}>
-            <AppText
-              variant="label"
-              style={[styles.demoLabel, { color: isDark ? '#9CA3AF' : '#6B7280' }]}
-            >
-              Tài khoản mẫu:
-            </AppText>
-
-            <View style={styles.demoButtonsRow}>
-              <Pressable
-                onPress={() => fillCredentials('admin')}
-                style={[
-                  styles.demoPill,
-                  {
-                    backgroundColor:
-                      selectedDemo === 'admin'
-                        ? isDark ? 'rgba(52, 211, 153, 0.25)' : 'rgba(46, 125, 79, 0.2)'
-                        : isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-                    borderColor:
-                      selectedDemo === 'admin'
-                        ? isDark ? '#34D399' : '#2E7D4F'
-                        : isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)',
-                  },
-                ]}
-              >
-                <AppText style={styles.demoEmoji}>👑</AppText>
-                <AppText
-                  style={[
-                    styles.demoPillText,
-                    {
-                      color:
-                        selectedDemo === 'admin'
-                          ? isDark ? '#34D399' : '#2E7D4F'
-                          : isDark ? '#E5E7EB' : '#374151',
-                    },
-                  ]}
-                >
-                  Admin
-                </AppText>
-              </Pressable>
-
-              <Pressable
-                onPress={() => fillCredentials('chef')}
-                style={[
-                  styles.demoPill,
-                  {
-                    backgroundColor:
-                      selectedDemo === 'chef'
-                        ? isDark ? 'rgba(245, 158, 11, 0.25)' : 'rgba(217, 119, 6, 0.2)'
-                        : isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-                    borderColor:
-                      selectedDemo === 'chef'
-                        ? isDark ? '#FBBF24' : '#D97706'
-                        : isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.1)',
-                  },
-                ]}
-              >
-                <AppText style={styles.demoEmoji}>👨‍🍳</AppText>
-                <AppText
-                  style={[
-                    styles.demoPillText,
-                    {
-                      color:
-                        selectedDemo === 'chef'
-                          ? isDark ? '#FBBF24' : '#D97706'
-                          : isDark ? '#E5E7EB' : '#374151',
-                    },
-                  ]}
-                >
-                  Đầu bếp
-                </AppText>
-              </Pressable>
             </View>
           </View>
 
@@ -173,30 +86,12 @@ export default function LoginScreen() {
               <View>
                 <AppText
                   variant="heading"
-                  style={[styles.cardTitle, { color: isDark ? '#FFFFFF' : '#111827' }]}
-                >
+                  style={[
+                    styles.cardTitle,
+                    { color: isDark ? "#FFFFFF" : "#111827" },
+                  ]}>
                   Đăng Nhập
                 </AppText>
-                <AppText
-                  variant="caption"
-                  style={[styles.cardSubtitle, { color: isDark ? '#9CA3AF' : '#6B7280' }]}
-                >
-                  Mở khóa tủ nguyên liệu và công thức AI
-                </AppText>
-              </View>
-
-              {/* 3D Depth Indicator Badge */}
-              <View
-                style={[
-                  styles.cardCornerBadge,
-                  { backgroundColor: isDark ? 'rgba(52, 211, 153, 0.15)' : 'rgba(46, 125, 79, 0.12)' },
-                ]}
-              >
-                <Ionicons
-                  name="cube-outline"
-                  size={15}
-                  color={isDark ? '#34D399' : '#2E7D4F'}
-                />
               </View>
             </View>
 
@@ -207,7 +102,7 @@ export default function LoginScreen() {
               placeholder="nhap.email@vidu.com"
               keyboardType="email-address"
               value={form.values.email}
-              onChangeText={form.setValue('email')}
+              onChangeText={form.setValue("email")}
               error={form.errors.email}
               isDark={isDark}
             />
@@ -219,7 +114,7 @@ export default function LoginScreen() {
               placeholder="••••••••"
               secureTextEntry
               value={form.values.password}
-              onChangeText={form.setValue('password')}
+              onChangeText={form.setValue("password")}
               error={form.errors.password}
               isDark={isDark}
             />
@@ -230,8 +125,10 @@ export default function LoginScreen() {
                 <Pressable hitSlop={8}>
                   <AppText
                     variant="link"
-                    style={[styles.forgotText, { color: isDark ? '#6EE7B7' : '#2E7D4F' }]}
-                  >
+                    style={[
+                      styles.forgotText,
+                      { color: isDark ? "#6EE7B7" : "#2E7D4F" },
+                    ]}>
                     Quên mật khẩu?
                   </AppText>
                 </Pressable>
@@ -244,11 +141,14 @@ export default function LoginScreen() {
                 style={[
                   styles.errorBanner,
                   {
-                    backgroundColor: isDark ? 'rgba(239, 68, 68, 0.18)' : 'rgba(254, 226, 226, 0.9)',
-                    borderColor: isDark ? 'rgba(248, 113, 113, 0.5)' : '#EF4444',
+                    backgroundColor: isDark
+                      ? "rgba(239, 68, 68, 0.18)"
+                      : "rgba(254, 226, 226, 0.9)",
+                    borderColor: isDark
+                      ? "rgba(248, 113, 113, 0.5)"
+                      : "#EF4444",
                   },
-                ]}
-              >
+                ]}>
                 <Ionicons name="alert-circle" size={18} color="#EF4444" />
                 <AppText variant="error" style={styles.bannerErrorText}>
                   {form.formError}
@@ -257,11 +157,10 @@ export default function LoginScreen() {
             ) : null}
 
             {/* 3D Tactile Submit Button */}
-            <TactileButton3D
+            <TactileButton
               title="Đăng Nhập Ngay"
               loading={form.loading}
               onPress={form.submit}
-              iconName="arrow-forward-outline"
             />
           </TiltCard3D>
 
@@ -269,37 +168,27 @@ export default function LoginScreen() {
           <View style={styles.footer}>
             <AppText
               variant="caption"
-              style={[styles.footerText, { color: isDark ? '#9CA3AF' : '#6B7280' }]}
-            >
+              style={[
+                styles.footerText,
+                { color: isDark ? "#9CA3AF" : "#6B7280" },
+              ]}>
               Chưa có tài khoản bếp của bạn?
             </AppText>
             <Link href="/register" asChild>
               <Pressable hitSlop={8}>
                 <AppText
                   variant="link"
-                  style={[styles.registerLink, { color: isDark ? '#34D399' : '#2E7D4F' }]}
-                >
+                  style={[
+                    styles.registerLink,
+                    { color: isDark ? "#34D399" : "#2E7D4F" },
+                  ]}>
                   Đăng ký ngay
                 </AppText>
               </Pressable>
             </Link>
           </View>
 
-          {/* 3D Interaction Hint Badge */}
-          <View
-            style={[
-              styles.interactionHint,
-              { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' },
-            ]}
-          >
-            <Ionicons name="sparkles" size={12} color="#FBBF24" />
-            <AppText
-              variant="label"
-              style={[styles.hintText, { color: isDark ? '#6B7280' : '#9CA3AF' }]}
-            >
-              Chạm & vuốt trên thẻ để trải nghiệm hiệu ứng 3D Parallax
-            </AppText>
-          </View>
+          {/* 3D Ínteraction Hint Badge */}
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -316,21 +205,21 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 16,
   },
   brandTitle: {
     fontSize: 26,
-    fontWeight: '900',
+    fontWeight: "900",
     letterSpacing: 2.5,
     marginTop: 6,
   },
   subtitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 4,
     gap: 6,
   },
@@ -341,27 +230,27 @@ const styles = StyleSheet.create({
   },
   brandSubtitle: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
     letterSpacing: 0.5,
   },
   demoBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 14,
     paddingHorizontal: 4,
   },
   demoLabel: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   demoButtonsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
   },
   demoPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 14,
@@ -373,17 +262,17 @@ const styles = StyleSheet.create({
   },
   demoPillText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 18,
   },
   cardTitle: {
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: "800",
     letterSpacing: 0.3,
   },
   cardSubtitle: {
@@ -394,21 +283,21 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   forgotRow: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
     marginTop: -2,
     marginBottom: 10,
   },
   forgotText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 10,
     borderRadius: 14,
     borderWidth: 1,
@@ -420,9 +309,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 18,
     gap: 6,
   },
@@ -431,21 +320,21 @@ const styles = StyleSheet.create({
   },
   registerLink: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   interactionHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginTop: 12,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 20,
-    alignSelf: 'center',
+    alignSelf: "center",
     gap: 6,
   },
   hintText: {
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });

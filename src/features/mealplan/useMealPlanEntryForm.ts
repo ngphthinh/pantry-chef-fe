@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { recipeService } from '@/core/di/container';
+import { useCallback, useState } from "react";
+import { recipeService } from "@/core/di/container";
 import type {
   MealPlanEntryCreateRequest,
   MealPlanEntryResponse,
@@ -7,9 +7,9 @@ import type {
   MealType,
   RecipeDetailResponse,
   RecipeSummaryResponse,
-} from '@/types';
-import { useMealPlan } from './useMealPlan';
-import { mealPlanValidators } from './validation';
+} from "@/types";
+import { useMealPlan } from "./useMealPlan";
+import { mealPlanValidators } from "./validation";
 
 export interface MealPlanEntryFormValues {
   date: string;
@@ -31,21 +31,29 @@ export function useMealPlanEntryForm(
   const { addEntry, updateEntry, isSaving: isMealPlanSaving } = useMealPlan();
 
   const [values, setValues] = useState<MealPlanEntryFormValues>({
-    date: initialEntry?.date ?? defaultDate ?? new Date().toISOString().split('T')[0],
-    mealType: initialEntry?.mealType ?? defaultMealType ?? 'DINNER',
+    date:
+      initialEntry?.date ??
+      defaultDate ??
+      new Date().toISOString().split("T")[0],
+    mealType: initialEntry?.mealType ?? defaultMealType ?? "DINNER",
     recipeId: initialEntry?.recipeId ?? defaultRecipeId ?? undefined,
     externalId: undefined,
-    recipeTitle: initialEntry?.recipeTitle ?? defaultRecipeTitle ?? '',
+    recipeTitle: initialEntry?.recipeTitle ?? defaultRecipeTitle ?? "",
     recipeImageUrl: initialEntry?.recipeImageUrl ?? null,
-    servings: initialEntry?.servings ? String(initialEntry.servings) : '2',
+    servings: initialEntry?.servings ? String(initialEntry.servings) : "",
   });
 
-  const [errors, setErrors] = useState<Partial<Record<keyof MealPlanEntryFormValues, string>>>({});
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof MealPlanEntryFormValues, string>>
+  >({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isLoadingRecipe, setIsLoadingRecipe] = useState(false);
 
   const setField = useCallback(
-    <K extends keyof MealPlanEntryFormValues>(field: K, val: MealPlanEntryFormValues[K]) => {
+    <K extends keyof MealPlanEntryFormValues>(
+      field: K,
+      val: MealPlanEntryFormValues[K],
+    ) => {
       setValues((prev) => ({ ...prev, [field]: val }));
       setErrors((prev) => ({ ...prev, [field]: undefined }));
       setSubmitError(null);
@@ -67,7 +75,9 @@ export function useMealPlanEntryForm(
         let finalRecipeId = recipe.id ?? undefined;
         let finalTitle = recipe.title;
         let finalImage = recipe.imageUrl;
-        let finalServings = recipe.servings ? String(recipe.servings) : values.servings;
+        let finalServings = recipe.servings
+          ? String(recipe.servings)
+          : values.servings;
 
         if (!finalRecipeId && recipe.externalId) {
           // Gọi chi tiết để backend đồng bộ vào DB và lấy UUID nội bộ
@@ -95,7 +105,10 @@ export function useMealPlanEntryForm(
           recipeTitle: undefined,
         }));
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Không thể lấy thông tin chi tiết công thức';
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Không thể lấy thông tin chi tiết công thức";
         setSubmitError(msg);
       } finally {
         setIsLoadingRecipe(false);
@@ -109,12 +122,12 @@ export function useMealPlanEntryForm(
       ...prev,
       recipeId: undefined,
       externalId: undefined,
-      recipeTitle: '',
+      recipeTitle: "",
       recipeImageUrl: null,
     }));
     setErrors((prev) => ({
       ...prev,
-      recipeId: 'Vui lòng chọn một công thức món ăn',
+      recipeId: "Vui lòng chọn một công thức món ăn",
     }));
   }, []);
 
@@ -143,8 +156,13 @@ export function useMealPlanEntryForm(
 
     try {
       const parsedServings =
-        values.servings && values.servings.trim() ? parseInt(values.servings.trim(), 10) : undefined;
-      const cleanRecipeId = values.recipeId && values.recipeId.trim() ? values.recipeId.trim() : undefined;
+        values.servings && values.servings.trim()
+          ? parseInt(values.servings.trim(), 10)
+          : undefined;
+      const cleanRecipeId =
+        values.recipeId && values.recipeId.trim()
+          ? values.recipeId.trim()
+          : undefined;
 
       if (initialEntry) {
         const updatePayload: MealPlanEntryUpdateRequest = {
@@ -163,7 +181,8 @@ export function useMealPlanEntryForm(
         return await addEntry(createPayload);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Có lỗi xảy ra khi lưu bữa ăn';
+      const msg =
+        err instanceof Error ? err.message : "Có lỗi xảy ra khi lưu bữa ăn";
       setSubmitError(msg);
       throw err;
     }

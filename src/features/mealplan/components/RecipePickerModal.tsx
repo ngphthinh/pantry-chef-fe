@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -7,16 +7,16 @@ import {
   Pressable,
   TextInput,
   View,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { AppText } from '@/components/ui/AppText';
-import { Badge } from '@/components/ui/Badge';
-import { Card } from '@/components/ui/Card';
-import { recipeService } from '@/core/di/container';
-import { useAppTheme } from '@/core/theme/useAppTheme';
-import type { RecipeSummaryResponse } from '@/types';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { AppText } from "@/components/ui/AppText";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
+import { recipeService } from "@/core/di/container";
+import { useAppTheme } from "@/core/theme/useAppTheme";
+import type { RecipeSummaryResponse } from "@/types";
 
-type TabMode = 'suggestions' | 'popular' | 'random' | 'search' | 'custom';
+type TabMode = "suggestions" | "popular" | "random" | "search" | "custom";
 
 interface RecipePickerModalProps {
   visible: boolean;
@@ -32,75 +32,69 @@ export function RecipePickerModal({
   selectedRecipeId,
 }: RecipePickerModalProps) {
   const { palette, brand } = useAppTheme();
-  const [activeTab, setActiveTab] = useState<TabMode>('suggestions');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<TabMode>("suggestions");
   const [recipes, setRecipes] = useState<RecipeSummaryResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState(""); // nội dung đang gõ
+  const [submittedQuery, setSubmittedQuery] = useState(""); // nội dung đã bấm Tìm
+  const requestId = useRef(0);
 
-  const loadRecipes = useCallback(
-    async (mode: TabMode, queryText?: string) => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        let results: RecipeSummaryResponse[] = [];
-        if (mode === 'suggestions') {
-          const res = await recipeService.suggestions({ size: 20 });
-          results = res.content || [];
-        } else if (mode === 'popular') {
-          const res = await recipeService.getPopular({ size: 20 });
-          results = res.content || [];
-        } else if (mode === 'random') {
-          results = await recipeService.getRandom(8);
-        } else if (mode === 'custom') {
-          const res = await recipeService.getCustomList({ size: 20 });
-          results = res.content || [];
-        } else if (mode === 'search') {
-          const q = (queryText ?? searchQuery).trim();
-          if (q) {
-            const res = await recipeService.getByName({ q, size: 20 });
-            results = res.content || [];
-          } else {
-            // Nếu chưa nhập tìm kiếm, mặc định lấy phổ biến
-            const res = await recipeService.getPopular({ size: 20 });
-            results = res.content || [];
-          }
-        }
-        setRecipes(results);
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Không thể tải danh sách công thức';
-        setError(msg);
-      } finally {
-        setIsLoading(false);
+  const loadRecipes = useCallback(async (mode: TabMode, queryText: string) => {
+    const myId = ++requestId.current;
+    setIsLoading(true);
+    setError(null);
+    try {
+      let results: RecipeSummaryResponse[] = [];
+      if (mode === "suggestions") {
+        results = (await recipeService.suggestions({ size: 20 })).content || [];
+      } else if (mode === "popular") {
+        results = (await recipeService.getPopular({ size: 20 })).content || [];
+      } else if (mode === "random") {
+        results = await recipeService.getRandom(8);
+      } else if (mode === "custom") {
+        results =
+          (await recipeService.getCustomList({ size: 20 })).content || [];
+      } else if (mode === "search") {
+        results = queryText
+          ? (await recipeService.getByName({ q: queryText, size: 20 }))
+              .content || []
+          : (await recipeService.getPopular({ size: 20 })).content || [];
       }
-    },
-    [searchQuery],
-  );
-
-  useEffect(() => {
-    if (visible) {
-      loadRecipes(activeTab);
+      if (myId === requestId.current) setRecipes(results); // bỏ kết quả cũ về muộn
+    } catch (err: unknown) {
+      if (myId === requestId.current) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Không thể tải danh sách công thức",
+        );
+      }
+    } finally {
+      if (myId === requestId.current) setIsLoading(false);
     }
-  }, [visible, activeTab, loadRecipes]);
+  }, []);
 
-  const handleTabChange = (tab: TabMode) => {
-    setActiveTab(tab);
-    loadRecipes(tab);
-  };
+  // Chỗ DUY NHẤT gọi API
+  useEffect(() => {
+    if (visible) loadRecipes(activeTab, submittedQuery);
+  }, [visible, activeTab, submittedQuery, loadRecipes]);
+
+  const handleTabChange = (tab: TabMode) => setActiveTab(tab);
 
   const handleSearchSubmit = () => {
-    setActiveTab('search');
-    loadRecipes('search', searchQuery);
+    setSubmittedQuery(searchQuery.trim());
+    setActiveTab("search");
   };
 
   const getDifficultyLabel = (diff?: string | null) => {
     switch (diff) {
-      case 'EASY':
-        return { label: 'Dễ', tone: 'success' as const };
-      case 'MEDIUM':
-        return { label: 'Vừa', tone: 'warn' as const };
-      case 'HARD':
-        return { label: 'Khó', tone: 'danger' as const };
+      case "EASY":
+        return { label: "Dễ", tone: "success" as const };
+      case "MEDIUM":
+        return { label: "Vừa", tone: "warn" as const };
+      case "HARD":
+        return { label: "Khó", tone: "danger" as const };
       default:
         return null;
     }
@@ -111,8 +105,7 @@ export function RecipePickerModal({
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
+      onRequestClose={onClose}>
       <View className="flex-1 bg-canvas dark:bg-canvas-dark">
         {/* Header */}
         <View className="flex-row items-center justify-between border-b border-line px-5 py-4 dark:border-line-dark">
@@ -126,8 +119,7 @@ export function RecipePickerModal({
           </View>
           <Pressable
             onPress={onClose}
-            className="h-9 w-9 items-center justify-center rounded-full bg-soft active:opacity-70 dark:bg-surface-dark"
-          >
+            className="h-9 w-9 items-center justify-center rounded-full bg-soft active:opacity-70 dark:bg-surface-dark">
             <Ionicons name="close" size={20} color={palette.ink} />
           </Pressable>
         </View>
@@ -148,14 +140,11 @@ export function RecipePickerModal({
             {searchQuery ? (
               <Pressable
                 onPress={() => {
-                  setSearchQuery('');
-                  if (activeTab === 'search') {
-                    loadRecipes('popular');
-                    setActiveTab('popular');
-                  }
+                  setSearchQuery("");
+                  setSubmittedQuery("");
+                  if (activeTab === "search") setActiveTab("popular");
                 }}
-                className="p-1"
-              >
+                className="p-1">
                 <Ionicons name="close-circle" size={18} color={palette.muted} />
               </Pressable>
             ) : null}
@@ -171,89 +160,81 @@ export function RecipePickerModal({
         {/* Category Tabs */}
         <View className="flex-row gap-2 px-5 py-2">
           <Pressable
-            onPress={() => handleTabChange('suggestions')}
+            onPress={() => handleTabChange("suggestions")}
             className={`flex-row items-center gap-1.5 rounded-full px-3 py-1.5 ${
-              activeTab === 'suggestions'
-                ? 'bg-brand'
-                : 'bg-soft dark:bg-surface-dark'
-            }`}
-          >
+              activeTab === "suggestions"
+                ? "bg-brand"
+                : "bg-soft dark:bg-surface-dark"
+            }`}>
             <Ionicons
               name="sparkles"
               size={14}
-              color={activeTab === 'suggestions' ? '#fff' : palette.muted}
+              color={activeTab === "suggestions" ? "#fff" : palette.muted}
             />
             <AppText
               className={`text-xs font-semibold ${
-                activeTab === 'suggestions' ? 'text-white' : 'text-muted'
-              }`}
-            >
+                activeTab === "suggestions" ? "text-white" : "text-muted"
+              }`}>
               Gợi ý từ tủ
             </AppText>
           </Pressable>
 
           <Pressable
-            onPress={() => handleTabChange('popular')}
+            onPress={() => handleTabChange("popular")}
             className={`flex-row items-center gap-1.5 rounded-full px-3 py-1.5 ${
-              activeTab === 'popular'
-                ? 'bg-brand'
-                : 'bg-soft dark:bg-surface-dark'
-            }`}
-          >
+              activeTab === "popular"
+                ? "bg-brand"
+                : "bg-soft dark:bg-surface-dark"
+            }`}>
             <Ionicons
               name="flame"
               size={14}
-              color={activeTab === 'popular' ? '#fff' : palette.muted}
+              color={activeTab === "popular" ? "#fff" : palette.muted}
             />
             <AppText
               className={`text-xs font-semibold ${
-                activeTab === 'popular' ? 'text-white' : 'text-muted'
-              }`}
-            >
+                activeTab === "popular" ? "text-white" : "text-muted"
+              }`}>
               Phổ biến
             </AppText>
           </Pressable>
 
           <Pressable
-            onPress={() => handleTabChange('random')}
+            onPress={() => handleTabChange("random")}
             className={`flex-row items-center gap-1.5 rounded-full px-3 py-1.5 ${
-              activeTab === 'random'
-                ? 'bg-brand'
-                : 'bg-soft dark:bg-surface-dark'
-            }`}
-          >
+              activeTab === "random"
+                ? "bg-brand"
+                : "bg-soft dark:bg-surface-dark"
+            }`}>
             <Ionicons
               name="dice-outline"
               size={14}
-              color={activeTab === 'random' ? '#fff' : palette.muted}
+              color={activeTab === "random" ? "#fff" : palette.muted}
             />
             <AppText
               className={`text-xs font-semibold ${
-                activeTab === 'random' ? 'text-white' : 'text-muted'
-              }`}
-            >
+                activeTab === "random" ? "text-white" : "text-muted"
+              }`}>
               Ngẫu nhiên
             </AppText>
           </Pressable>
 
           <Pressable
-            onPress={() => handleTabChange('custom')}
+            onPress={() => handleTabChange("custom")}
             className={`flex-row items-center gap-1.5 rounded-full px-3 py-1.5 ${
-              activeTab === 'custom'
-                ? 'bg-brand'
-                : 'bg-soft dark:bg-surface-dark'
-            }`}
-          >
+              activeTab === "custom"
+                ? "bg-brand"
+                : "bg-soft dark:bg-surface-dark"
+            }`}>
             <Ionicons
               name="book-outline"
               size={14}
-              color={activeTab === 'custom' ? '#fff' : palette.muted}
+              color={activeTab === "custom" ? "#fff" : palette.muted}
             />
             <AppText
               className={`text-xs font-semibold ${
-                activeTab === 'custom' ? 'text-white' : 'text-muted'
-              }`}
-            >
+                activeTab === "custom" ? "text-white" : "text-muted"
+              }`}>
               Tự tạo
             </AppText>
           </Pressable>
@@ -263,7 +244,9 @@ export function RecipePickerModal({
         {isLoading ? (
           <View className="flex-1 items-center justify-center p-8">
             <ActivityIndicator size="large" color={brand} />
-            <AppText className="mt-3 text-sm text-muted">Đang tải danh sách món ăn...</AppText>
+            <AppText className="mt-3 text-sm text-muted">
+              Đang tải danh sách món ăn...
+            </AppText>
           </View>
         ) : error ? (
           <View className="flex-1 items-center justify-center p-8 text-center">
@@ -272,15 +255,20 @@ export function RecipePickerModal({
               {error}
             </AppText>
             <Pressable
-              onPress={() => loadRecipes(activeTab)}
-              className="mt-4 rounded-xl bg-brand px-4 py-2"
-            >
-              <AppText className="text-xs font-bold text-white">Thử lại</AppText>
+              onPress={() => loadRecipes(activeTab, submittedQuery)}
+              className="mt-4 rounded-xl bg-brand px-4 py-2">
+              <AppText className="text-xs font-bold text-white">
+                Thử lại
+              </AppText>
             </Pressable>
           </View>
         ) : recipes.length === 0 ? (
           <View className="flex-1 items-center justify-center p-8">
-            <Ionicons name="restaurant-outline" size={48} color={palette.muted} />
+            <Ionicons
+              name="restaurant-outline"
+              size={48}
+              color={palette.muted}
+            />
             <AppText className="mt-3 text-center text-base font-bold">
               Không tìm thấy công thức nào
             </AppText>
@@ -291,10 +279,13 @@ export function RecipePickerModal({
         ) : (
           <FlatList
             data={recipes}
-            keyExtractor={(item, idx) => item.id || item.externalId || `recipe-${idx}`}
+            keyExtractor={(item, idx) =>
+              item.id || item.externalId || `recipe-${idx}`
+            }
             contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
             renderItem={({ item }) => {
-              const isSelected = selectedRecipeId && item.id === selectedRecipeId;
+              const isSelected =
+                selectedRecipeId && item.id === selectedRecipeId;
               const diffBadge = getDifficultyLabel(item.difficulty);
 
               return (
@@ -303,15 +294,13 @@ export function RecipePickerModal({
                     onSelectRecipe(item);
                     onClose();
                   }}
-                  className="active:opacity-85"
-                >
+                  className="active:opacity-85">
                   <Card
                     className={`flex-row overflow-hidden p-3 transition-all ${
                       isSelected
-                        ? 'border-2 border-brand bg-brandSoft dark:bg-surface-dark'
-                        : 'border border-line dark:border-line-dark'
-                    }`}
-                  >
+                        ? "border-2 border-brand bg-brandSoft dark:bg-surface-dark"
+                        : "border border-line dark:border-line-dark"
+                    }`}>
                     {/* Thumbnail */}
                     <View className="h-20 w-20 overflow-hidden rounded-xl bg-soft dark:bg-canvas-dark">
                       {item.imageUrl ? (
@@ -322,7 +311,11 @@ export function RecipePickerModal({
                         />
                       ) : (
                         <View className="h-full w-full items-center justify-center">
-                          <Ionicons name="restaurant" size={28} color={palette.muted} />
+                          <Ionicons
+                            name="restaurant"
+                            size={28}
+                            color={palette.muted}
+                          />
                         </View>
                       )}
                     </View>
@@ -333,13 +326,14 @@ export function RecipePickerModal({
                         <View className="flex-row items-center justify-between gap-1">
                           <AppText
                             numberOfLines={1}
-                            className="flex-1 text-base font-bold text-ink dark:text-ink-dark"
-                          >
+                            className="flex-1 text-base font-bold text-ink dark:text-ink-dark">
                             {item.title}
                           </AppText>
                           {isSelected && (
                             <View className="rounded-full bg-brand/15 px-2.5 py-0.5">
-                              <AppText className="text-xs font-bold text-brand">Đang chọn</AppText>
+                              <AppText className="text-xs font-bold text-brand">
+                                Đang chọn
+                              </AppText>
                             </View>
                           )}
                         </View>
@@ -348,8 +342,14 @@ export function RecipePickerModal({
                         <View className="mt-1 flex-row flex-wrap items-center gap-2">
                           {item.readyInMinutes ? (
                             <View className="flex-row items-center gap-1">
-                              <Ionicons name="time-outline" size={12} color={palette.muted} />
-                              <AppText variant="caption" className="text-xs text-muted">
+                              <Ionicons
+                                name="time-outline"
+                                size={12}
+                                color={palette.muted}
+                              />
+                              <AppText
+                                variant="caption"
+                                className="text-xs text-muted">
                                 {item.readyInMinutes}p
                               </AppText>
                             </View>
@@ -357,31 +357,48 @@ export function RecipePickerModal({
 
                           {item.servings ? (
                             <View className="flex-row items-center gap-1">
-                              <Ionicons name="people-outline" size={12} color={palette.muted} />
-                              <AppText variant="caption" className="text-xs text-muted">
+                              <Ionicons
+                                name="people-outline"
+                                size={12}
+                                color={palette.muted}
+                              />
+                              <AppText
+                                variant="caption"
+                                className="text-xs text-muted">
                                 {item.servings} phần
                               </AppText>
                             </View>
                           ) : null}
 
                           {diffBadge ? (
-                            <Badge label={diffBadge.label} tone={diffBadge.tone} />
+                            <Badge
+                              label={diffBadge.label}
+                              tone={diffBadge.tone}
+                            />
                           ) : null}
 
                           {item.custom ? (
                             <View className="rounded-full bg-soft px-2 py-0.5 dark:bg-canvas-dark">
-                              <AppText className="text-xs font-semibold text-muted">Tự tạo</AppText>
+                              <AppText className="text-xs font-semibold text-muted">
+                                Tự tạo
+                              </AppText>
                             </View>
                           ) : null}
                         </View>
                       </View>
 
                       {/* Match score from pantry if available */}
-                      {item.matchScore !== null && item.matchScore !== undefined ? (
+                      {item.matchScore !== null &&
+                      item.matchScore !== undefined ? (
                         <View className="mt-1 flex-row items-center gap-1.5">
-                          <Ionicons name="checkmark-circle" size={13} color="#10B981" />
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={13}
+                            color="#10B981"
+                          />
                           <AppText className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                            {Math.round(item.matchScore * 100)}% nguyên liệu có sẵn
+                            {Math.round(item.matchScore * 100)}% nguyên liệu có
+                            sẵn
                           </AppText>
                         </View>
                       ) : null}
