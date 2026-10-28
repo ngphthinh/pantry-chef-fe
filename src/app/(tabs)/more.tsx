@@ -8,6 +8,7 @@ import { useAuth } from "@/features/auth/useAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/core/theme/colors";
 import { useUser } from "@/features/auth/useUser";
+import { useAdminAccess } from "@/features/admin/useAdminAccess";
 
 interface Section {
   title: string;
@@ -47,6 +48,11 @@ const SECTIONS: Section[] = [
         icon: "sparkles-outline",
         title: "Ý tưởng món từ tủ",
         route: "ai/ideas",
+      },
+      {
+        icon: "swap-horizontal-outline",
+        title: "Nguyên liệu thay thế",
+        route: "ai/substitutions",
       },
       {
         icon: "calendar-outline",
@@ -107,10 +113,28 @@ const SECTIONS: Section[] = [
   },
 ];
 
+/** Chỉ hiện với admin. Các màn hình này còn được chặn thêm ở app/admin/_layout.tsx. */
+const ADMIN_SECTION: Section = {
+  title: "Quản trị",
+  items: [
+    {
+      icon: "people-outline",
+      title: "Quản lý người dùng",
+      route: "admin/users",
+    },
+    {
+      icon: "chatbubbles-outline",
+      title: "Phản hồi từ người dùng",
+      route: "admin/feedback",
+    },
+  ],
+};
+
 export default function MoreHub() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { deleteAccount } = useUser();
+  const { isAdmin } = useAdminAccess();
   const go = (route: string) => router.push(`/${route}` as Href);
 
   const confirmDeleteAccount = () => {
@@ -149,6 +173,8 @@ export default function MoreHub() {
       onPress: confirmDeleteAccount,
     },
   ];
+
+  const sections = isAdmin ? [...SECTIONS, ADMIN_SECTION] : SECTIONS;
 
   return (
     <Screen>
@@ -192,7 +218,7 @@ export default function MoreHub() {
           </View>
         </Card>
       </Pressable>
-      {SECTIONS.map((s) => (
+      {sections.map((s) => (
         <MenuGroup
           key={s.title}
           title={s.title}

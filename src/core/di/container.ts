@@ -26,6 +26,8 @@ import { HttpUnitRepository } from "@/features/unit/httpUnitRepository";
 import { UnitService } from "@/features/unit/unitService";
 import { HttpRecipeRepository } from "@/features/recipe/httpRecipeRepository";
 import { RecipeService } from "@/features/recipe/recipeService";
+import { AdminService } from "@/features/admin/adminService";
+import { HttpAdminRepository } from "@/features/admin/httpAdminrepository";
 
 export const kvStorage = new AsyncKeyValueStorage();
 export const tokenStorage = new SecureTokenStorage();
@@ -79,4 +81,12 @@ export const recipeService = new RecipeService(recipeRepository);
 export const shoppingService = new ShoppingService(
   shoppingRepository,
   shoppingRepository,
+);
+
+const adminRepo = new HttpAdminRepository(publicHttp, privateHttp);
+export const adminService = new AdminService(
+  adminRepo,
+  adminRepo,
+  adminRepo,
+  tokenStorage,
 );

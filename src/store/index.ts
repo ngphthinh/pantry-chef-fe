@@ -10,6 +10,7 @@ import customRecipeReducer from "@/features/customRecipe/customRecipeSlice";
 import feedbackReducer from "@/features/feedback/feedbackSlice";
 import shoppingReducer from "@/features/shopping/shoppingSlice";
 import unitReducer from "@/features/unit/unitSlice";
+import adminReducer from "@/features/admin/adminSlice";
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +25,7 @@ export const store = configureStore({
     feedback: feedbackReducer,
     shopping: shoppingReducer,
     unit: unitReducer,
+    admin: adminReducer,
   },
 });
 
