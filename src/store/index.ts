@@ -12,6 +12,9 @@ import unitReducer from "@/features/unit/unitSlice";
 import adminReducer from "@/features/admin/adminSlice";
 import customRecipeReducer from "@/features/customRecipe/customRecipeSlice";
 import recipeReducer from "@/features/recipe/recipeSlice";
+import savedRecipesReducer from "@/features/savedRecipes/savedRecipesSlice";
+import statsReducer from "@/features/stats/statsSlice";
+import collectionsReducer from "@/features/collections/collectionsSlice";
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +31,9 @@ export const store = configureStore({
     unit: unitReducer,
     admin: adminReducer,
     recipe: recipeReducer,
+    savedRecipes: savedRecipesReducer,
+    stats : statsReducer,
+    collections: collectionsReducer,
   },
 });
 

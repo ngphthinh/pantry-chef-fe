@@ -19,7 +19,8 @@ export interface SavedRecipeUpdateRequest {
 }
 
 // ───────── Response ─────────
-export interface CollectionResponse { id: UUID; name: string; recipeCount: number }
+export interface CollectionResponse {
+  id: UUID; name: string; recipeCount: number }
 
 export interface SavedRecipeResponse {
   id: UUID;
@@ -36,4 +37,13 @@ export interface SavedRecipeDetailResponse {
   note: string | null;
   favorite: boolean;
   recipe: RecipeDetailResponse;
+}
+
+
+
+export interface SavedRecipeQuery {
+  cursor?: string;
+  size?: number;            // 1–50, mặc định 10
+  favorite?: boolean;       // tab "Yêu thích"
+  collectionId?: string;    // màn hình collection/[id]
 }
