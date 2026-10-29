@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   View,
@@ -14,6 +13,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
 import { useAppTheme } from '@/core/theme/useAppTheme';
+import { showAlert } from '@/components/ui/dialogs';
 import { useMealPlan } from '@/features/mealplan/useMealPlan';
 import { useShopping } from '@/features/shopping/useShopping';
 import type { ShoppingItemResponse } from '@/types';
@@ -34,24 +34,17 @@ export default function MealPlanShoppingPreviewScreen() {
   const handleSaveToShoppingList = async () => {
     if (!currentPlan?.id) return;
     if (shoppingPreview.length === 0) {
-      Alert.alert('Thông báo', 'Không có nguyên liệu nào để tạo danh sách mua');
+      showAlert('Thông báo', 'Không có nguyên liệu nào để tạo danh sách mua');
       return;
     }
 
     const result = await createFromMealPlan(currentPlan.id);
     if (!result.ok) {
-      Alert.alert('Lỗi', result.message);
+      showAlert('Chưa tạo được danh sách', result.message);
       return;
     }
-
-    Alert.alert(
-      'Đã lưu thành công!',
-      `Đã tạo danh sách mua sắm "${result.data.name}" với ${result.data.items.length} món.`,
-      [
-        { text: 'Xem thực đơn', style: 'cancel', onPress: () => router.back() },
-        { text: 'Xem danh sách', onPress: () => router.replace(`/shopping/${result.data.id}`) },
-      ],
-    );
+    // Mở thẳng danh sách vừa tạo: vừa xác nhận đã lưu, vừa chạy được cả trên web (nơi Alert.alert không hiện).
+    router.replace(`/shopping/${result.data.id}`);
   };
 
   return (
