@@ -11,6 +11,8 @@ import { ListScreen } from "@/components/ui/ListScreen";
 import { brand } from "@/core/theme/colors";
 import { confirmAction, notify } from "@/core/ui/dialogs";
 import { useCollectionDetail } from "@/features/collections/useCollectionDetail";
+import { AddRecipesToCollectionModal } from "@/components/ui/AddRecipesToCollectionModal";
+
 
 export default function CollectionDetailScreen() {
     const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
@@ -27,6 +29,7 @@ export default function CollectionDetailScreen() {
         deleteCollection,
     } = useCollectionDetail(id);
     const [renaming, setRenaming] = useState(false);
+    const [adding, setAdding] = useState(false);
 
     const title = collection?.name ?? name ?? "Bộ sưu tập";
 
@@ -50,12 +53,16 @@ export default function CollectionDetailScreen() {
     };
 
     const header = (
+
         <BackHeader
             title={title}
             subtitle={collection ? `${collection.recipeCount} món` : undefined}
             fallbackHref={"/collection" as Href}
             right={
                 <View className="flex-row items-center gap-4">
+                    <Pressable hitSlop={8} onPress={() => setAdding(true)}>
+                        <Ionicons name="add-circle-outline" size={24} color={brand.DEFAULT} />
+                    </Pressable>
                     <Pressable hitSlop={8} onPress={() => setRenaming(true)}>
                         <Ionicons name="create-outline" size={22} color={brand.DEFAULT} />
                     </Pressable>
@@ -77,7 +84,7 @@ export default function CollectionDetailScreen() {
             </Pressable>
         </View>
     ) : (
-        <AppText variant="caption">Bộ sưu tập chưa có món nào.</AppText>
+        <AppText variant="caption">Bộ sưu tập chưa có món nào. Bấm + để thêm.</AppText>
     );
 
     return (
@@ -108,6 +115,15 @@ export default function CollectionDetailScreen() {
                     onClose={() => setRenaming(false)}
                 />
             )}
+            <AddRecipesToCollectionModal
+                visible={adding}
+                collectionId={id}
+                existingIds={items.map((i) => i.id)}
+                onClose={(changed) => {
+                    setAdding(false);
+                    if (changed) void refresh();
+                }}
+            />
         </>
     );
 }
