@@ -1,60 +1,18 @@
-import { parseDecimal, parseInteger } from "@/core/format/decimal";
-
-const TITLE_MAX = 255;
-
-export interface IngredientDraft {
-  name: string;
-  amount: string;
-}
-export interface StepDraft {
-  text: string;
-  timerMinutes: string;
-}
-
-// export const customRecipeValidators = {
-//   title: (v: string) => {
-//     const text = v.trim();
-//     if (!text) return "Vui lòng nhập tên món";
-//     return text.length <= TITLE_MAX ? null : `Tên món tối đa ${TITLE_MAX} ký tự`;
-//   },
-//   servings: (v: string) => {
-//     const n = parseInteger(v);
-//     return n !== null && n >= 1 && n <= 100 ? null : "Khẩu phần từ 1 đến 100";
-//   },
-//   /** Tuỳ chọn: để trống là hợp lệ, nếu nhập thì phải là số nguyên > 0. */
-//   readyInMinutes: (v: string) => {
-//     if (v.trim() === "") return null;
-//     const n = parseInteger(v);
-//     return n !== null && n > 0 ? null : "Thời gian phải là số phút lớn hơn 0";
-//   },
-//   /** Dòng bỏ trống tên được coi là dòng thừa và bị bỏ qua; cần còn ít nhất một dòng. */
-//   ingredients: (rows: IngredientDraft[]) => {
-//     const filled = rows.filter((r) => r.name.trim());
-//     if (filled.length === 0) return "Cần ít nhất một nguyên liệu";
-//     for (const row of filled) {
-//       if (row.amount.trim() === "") continue;
-//       const n = parseDecimal(row.amount);
-//       if (n === null || n <= 0) return `Số lượng của “${row.name.trim()}” phải lớn hơn 0`;
-//     }
-//     return null;
-//   },
-//   /** Dòng bỏ trống nội dung bị bỏ qua; cần còn ít nhất một bước. */
-//   steps: (rows: StepDraft[]) => {
-//     const filled = rows.filter((r) => r.text.trim());
-//     if (filled.length === 0) return "Cần ít nhất một bước làm";
-//     for (const [index, row] of filled.entries()) {
-//       if (row.timerMinutes.trim() === "") continue;
-//       const n = parseDecimal(row.timerMinutes);
-//       if (n === null || n <= 0) return `Thời gian hẹn giờ của bước ${index + 1} phải lớn hơn 0`;
-//     }
-//     return null;
-//   },
-// };
 const MAX_TITLE = 255;
 const MAX_NAME = 255;
 const MAX_STEP_TEXT = 5000;
 const MIN_SERVINGS = 1;
 const MAX_SERVINGS = 100;
+
+export interface IngredientDraft {
+  name: string;
+  amount: string;
+}
+
+export interface StepDraft {
+  text: string;
+  timerMinutes: string;
+}
 
 const toNumber = (v: string): number => Number(v.trim().replace(',', '.'));
 const isPositive = (n: number) => Number.isFinite(n) && n > 0;
@@ -86,6 +44,28 @@ export const customRecipeValidators = {
     return v.trim().length > MAX_STEP_TEXT ? `Nội dung bước tối đa ${MAX_STEP_TEXT} ký tự` : null;
   },
   stepTimerMinutes: (v: string) => (!v.trim() || isPositive(toNumber(v)) ? null : 'Thời gian đếm giờ phải lớn hơn 0'),
+
+  /** Cả danh sách nguyên liệu: dòng bỏ trống tên là dòng thừa và bị bỏ qua; cần còn ít nhất một dòng hợp lệ. */
+  ingredients: (rows: IngredientDraft[]) => {
+    const filled = rows.filter((r) => r.name.trim());
+    if (filled.length === 0) return 'Cần ít nhất một nguyên liệu';
+    for (const row of filled) {
+      const invalid = customRecipeValidators.ingredientName(row.name) ?? customRecipeValidators.ingredientAmount(row.amount);
+      if (invalid) return `${row.name.trim()}: ${invalid.charAt(0).toLowerCase()}${invalid.slice(1)}`;
+    }
+    return null;
+  },
+
+  /** Cả danh sách bước: dòng bỏ trống nội dung là dòng thừa; cần còn ít nhất một bước hợp lệ. */
+  steps: (rows: StepDraft[]) => {
+    const filled = rows.filter((r) => r.text.trim());
+    if (filled.length === 0) return 'Cần ít nhất một bước làm';
+    for (const [index, row] of filled.entries()) {
+      const invalid = customRecipeValidators.stepText(row.text) ?? customRecipeValidators.stepTimerMinutes(row.timerMinutes);
+      if (invalid) return `Bước ${index + 1}: ${invalid.charAt(0).toLowerCase()}${invalid.slice(1)}`;
+    }
+    return null;
+  },
 };
 
 export const parseNumber = toNumber;

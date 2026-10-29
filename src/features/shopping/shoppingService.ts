@@ -2,6 +2,7 @@ import {
   ShoppingItemStatus,
   Unit,
   type CursorResponse,
+  type PantryItemResponse,
   type ShoppingItemCreateRequest,
   type ShoppingItemResponse,
   type ShoppingListCreateRequest,
@@ -46,6 +47,18 @@ export class ShoppingService {
 
   removeList = (id: string): Promise<void> => this.lists.removeList(id);
 
+  /** BE tính phần còn thiếu của thực đơn sau khi đã trừ nguyên liệu trong tủ. */
+  createListFromMealPlan = (mealPlanId: string): Promise<ShoppingListDetailResponse> =>
+    this.lists.createListFromMealPlan(mealPlanId);
+
+  /** BE lấy đủ nguyên liệu của công thức (không trừ đồ trong tủ). */
+  createListFromRecipe = (recipeId: string): Promise<ShoppingListDetailResponse> =>
+    this.lists.createListFromRecipe(recipeId);
+
+  /** Chỉ các mục đã mua và khớp được với danh mục nguyên liệu mới vào tủ; phần còn lại BE giữ nguyên trong danh sách. */
+  moveBoughtToPantry = (listId: string): Promise<PantryItemResponse[]> =>
+    this.lists.moveToPantry(listId);
+
   // ───────── Mục ─────────
 
   addItem = (listId: string, body: ShoppingItemCreateRequest): Promise<ShoppingItemResponse> =>
@@ -76,6 +89,7 @@ export class ShoppingService {
   // ───────── Dùng chung với meal-plan ─────────
 
   /**
+   * @deprecated Dùng `createListFromMealPlan` để BE tính và tạo danh sách trong một lần gọi.
    * Tạo danh sách mới rồi thêm lần lượt từng nguyên liệu (dùng khi lưu thực đơn thành danh sách mua).
    * Thêm tuần tự để thứ tự mục giữ đúng như đầu vào.
    */

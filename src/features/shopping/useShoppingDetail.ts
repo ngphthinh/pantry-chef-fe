@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { confirmDialog } from "@/components/ui/dialogs";
-import { runAction } from "@/core/http/actionResult";
+import { runAction, type ActionResult } from "@/core/http/actionResult";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { ShoppingItemStatus, type ShoppingItemCreateRequest, type ShoppingItemResponse } from "@/types";
 import { formatQuantity } from "@/features/unit/unitOptions";
@@ -10,10 +10,25 @@ import {
   deleteShoppingItem,
   deleteShoppingList,
   fetchShoppingListDetail,
+  moveShoppingItemsToPantry,
   renameShoppingList,
   toggleShoppingItem,
   updateShoppingItem,
 } from "./shoppingSlice";
+
+/** Kết quả chuyển vào tủ: số mục đã vào tủ và số mục còn lại vì chưa có trong danh mục nguyên liệu. */
+export interface MoveToPantrySummary {
+  moved: number;
+  kept: number;
+  /** Câu thông báo dựng sẵn để màn hình chỉ việc hiển thị. */
+  message: string;
+}
+
+const describeMove = (moved: number, kept: number): string => {
+  if (moved === 0) return "Chưa mục nào khớp với danh mục nguyên liệu nên chưa chuyển được vào tủ.";
+  if (kept === 0) return `Đã chuyển ${moved} mục vào tủ.`;
+  return `Đã chuyển ${moved} mục vào tủ. ${kept} mục chưa có trong danh mục nguyên liệu nên được giữ lại trong danh sách.`;
+};
 
 /** Mục kèm nhãn số lượng đã định dạng sẵn ("2 kg") để màn hình chỉ việc hiển thị. */
 export interface ShoppingItemView extends ShoppingItemResponse {
@@ -50,6 +65,22 @@ export function useShoppingDetail(listId: string) {
     (name: string) => runAction(() => dispatch(renameShoppingList(listId, name)), "Không thể đổi tên."),
     [dispatch, listId],
   );
+
+  /**
+   * Chuyển các mục đã mua vào tủ. Mục có tên khớp danh mục nguyên liệu thì vào tủ và rời danh sách,
+   * mục không khớp được giữ lại để người dùng tự xử lý.
+   */
+  const moveBoughtToPantry = useCallback(async (): Promise<ActionResult<MoveToPantrySummary>> => {
+    const boughtBefore = detail?.items.filter((i) => i.status === ShoppingItemStatus.BOUGHT).length ?? 0;
+    const result = await runAction(
+      () => dispatch(moveShoppingItemsToPantry(listId)),
+      "Không thể chuyển vào tủ.",
+    );
+    if (!result.ok) return result;
+    const moved = result.data.length;
+    const kept = Math.max(boughtBefore - moved, 0);
+    return { ok: true, data: { moved, kept, message: describeMove(moved, kept) } };
+  }, [detail, dispatch, listId]);
 
   /** Hỏi xác nhận rồi mới xoá cả danh sách. Trả `null` nếu người dùng huỷ. */
   const confirmAndRemoveList = useCallback(async () => {
@@ -116,11 +147,13 @@ export function useShoppingDetail(listId: string) {
       totalCount,
       boughtCount: boughtItems.length,
       progressPercent,
+      canMoveToPantry: boughtItems.length > 0,
       isLoading: status === "loadingDetail",
       isSaving: status === "saving",
       loadError,
       load,
       rename,
+      moveBoughtToPantry,
       confirmAndRemoveList,
       addItem,
       updateItem,
@@ -137,6 +170,7 @@ export function useShoppingDetail(listId: string) {
       loadError,
       load,
       rename,
+      moveBoughtToPantry,
       confirmAndRemoveList,
       addItem,
       updateItem,

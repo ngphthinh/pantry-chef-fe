@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,9 +13,9 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
-import { shoppingService } from '@/core/di/container';
 import { useAppTheme } from '@/core/theme/useAppTheme';
 import { useMealPlan } from '@/features/mealplan/useMealPlan';
+import { useShopping } from '@/features/shopping/useShopping';
 import type { ShoppingItemResponse } from '@/types';
 
 export default function MealPlanShoppingPreviewScreen() {
@@ -23,7 +23,7 @@ export default function MealPlanShoppingPreviewScreen() {
   const { brand, palette } = useAppTheme();
   const { currentPlan, shoppingPreview, isLoading, loadShoppingList } = useMealPlan();
 
-  const [savingList, setSavingList] = useState(false);
+  const { createFromMealPlan, isSaving: savingList } = useShopping();
 
   useEffect(() => {
     if (currentPlan?.id) {
@@ -32,33 +32,26 @@ export default function MealPlanShoppingPreviewScreen() {
   }, [currentPlan?.id, loadShoppingList]);
 
   const handleSaveToShoppingList = async () => {
+    if (!currentPlan?.id) return;
     if (shoppingPreview.length === 0) {
       Alert.alert('Thông báo', 'Không có nguyên liệu nào để tạo danh sách mua');
       return;
     }
 
-    setSavingList(true);
-    try {
-      const listName = `Nguyên liệu thực đơn tuần ${currentPlan?.weekStart || ''}`.trim();
-      await shoppingService.saveItemsAsList(
-        listName,
-        shoppingPreview.map((item) => ({
-          name: item.name,
-          quantity: item.quantity ?? 1,
-          unit: item.unit ?? 'PCS',
-        })),
-      );
-
-      Alert.alert(
-        'Đã lưu thành công!',
-        `Đã tạo danh sách mua sắm "${listName}" với ${shoppingPreview.length} món.`,
-        [{ text: 'Xem thực đơn', onPress: () => router.back() }],
-      );
-    } catch {
-      Alert.alert('Lỗi', 'Không thể lưu danh sách mua sắm. Vui lòng thử lại.');
-    } finally {
-      setSavingList(false);
+    const result = await createFromMealPlan(currentPlan.id);
+    if (!result.ok) {
+      Alert.alert('Lỗi', result.message);
+      return;
     }
+
+    Alert.alert(
+      'Đã lưu thành công!',
+      `Đã tạo danh sách mua sắm "${result.data.name}" với ${result.data.items.length} món.`,
+      [
+        { text: 'Xem thực đơn', style: 'cancel', onPress: () => router.back() },
+        { text: 'Xem danh sách', onPress: () => router.replace(`/shopping/${result.data.id}`) },
+      ],
+    );
   };
 
   return (

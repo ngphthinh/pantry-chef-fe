@@ -2,6 +2,7 @@ import type { AxiosInstance } from "axios";
 
 import type {
   CursorResponse,
+  PantryItemResponse,
   ShoppingItemCreateRequest,
   ShoppingItemResponse,
   ShoppingItemUpdateRequest,
@@ -42,6 +43,27 @@ export class HttpShoppingRepository implements IShoppingListApi, IShoppingItemAp
 
   removeList = async (id: string): Promise<void> => {
     await this.privateHttp.delete(`/v1/shopping-lists/${id}`); // 204, không có body
+  };
+
+  createListFromMealPlan = async (mealPlanId: string): Promise<ShoppingListDetailResponse> => {
+    const { data } = await this.privateHttp.post<ShoppingListDetailResponse>(
+      `/v1/shopping-lists/from-meal-plan/${mealPlanId}`,
+    );
+    return data;
+  };
+
+  createListFromRecipe = async (recipeId: string): Promise<ShoppingListDetailResponse> => {
+    const { data } = await this.privateHttp.post<ShoppingListDetailResponse>(
+      `/v1/shopping-lists/from-recipe/${recipeId}`,
+    );
+    return data;
+  };
+
+  moveToPantry = async (listId: string): Promise<PantryItemResponse[]> => {
+    const { data } = await this.privateHttp.post<PantryItemResponse[]>(
+      `/v1/shopping-lists/${listId}/move-to-pantry`,
+    );
+    return data;
   };
 
   // ───────── /v1/shopping-lists/{listId}/items ─────────

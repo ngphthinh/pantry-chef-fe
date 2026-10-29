@@ -52,6 +52,12 @@ export default function ShoppingDetailScreen() {
     if (result && !result.ok) showAlert("Lỗi", result.message);
   };
 
+  const handleMoveToPantry = async () => {
+    const result = await shopping.moveBoughtToPantry();
+    if (result.ok) showAlert("Chuyển vào tủ", result.data.message);
+    else showAlert("Lỗi", result.message);
+  };
+
   const handleRemoveList = async () => {
     const result = await shopping.confirmAndRemoveList();
     if (!result) return;
@@ -196,6 +202,14 @@ export default function ShoppingDetailScreen() {
               <AppText variant="label">Đã mua</AppText>
               <Card className="overflow-hidden">{shopping.boughtItems.map(renderItem)}</Card>
             </View>
+          ) : null}
+
+          {shopping.canMoveToPantry ? (
+            <Button
+              title="Chuyển món đã mua vào tủ"
+              loading={shopping.isSaving}
+              onPress={() => void handleMoveToPantry()}
+            />
           ) : null}
 
           <Button title="Xoá danh sách" variant="danger" onPress={() => void handleRemoveList()} />

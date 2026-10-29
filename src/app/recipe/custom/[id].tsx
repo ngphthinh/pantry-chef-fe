@@ -11,6 +11,7 @@ import { cn } from "@/components/ui/cn";
 import { showAlert } from "@/components/ui/dialogs";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { useCustomRecipeDetail } from "@/features/customRecipe/useCustomRecipeDetail";
+import { useShopping } from "@/features/shopping/useShopping";
 
 export default function CustomRecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -19,9 +20,18 @@ export default function CustomRecipeDetailScreen() {
   const { recipe, meta, ingredientLines, stepLines, isLoading, loadError, load, confirmAndRemove } =
     useCustomRecipeDetail(id);
 
+  const { createFromRecipe, isSaving: isCreatingList } = useShopping();
+
   useEffect(() => {
     void load();
   }, [load]);
+
+  const handleCreateShoppingList = async () => {
+    if (!recipe) return;
+    const result = await createFromRecipe(recipe.id);
+    if (result.ok) router.push(`/shopping/${result.data.id}` as Href);
+    else showAlert("Chưa tạo được danh sách", result.message);
+  };
 
   const handleRemove = async () => {
     const result = await confirmAndRemove();
@@ -92,6 +102,11 @@ export default function CustomRecipeDetailScreen() {
           </View>
 
           <View className="gap-3">
+            <Button
+              title="Tạo danh sách mua"
+              loading={isCreatingList}
+              onPress={() => void handleCreateShoppingList()}
+            />
             <Button
               title="Sửa công thức"
               variant="outline"
