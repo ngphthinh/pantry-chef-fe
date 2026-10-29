@@ -6,7 +6,7 @@ import { AppText } from "./AppText";
 import { cn } from "./cn";
 
 interface TextFieldProps extends TextInputProps {
-  label: string;
+  label?: string;
   error?: string | null;
 }
 
@@ -22,9 +22,11 @@ export function TextField({
 
   return (
     <View className="gap-1.5">
-      <AppText variant="caption" className="font-semibold">
-        {label}
-      </AppText>
+      {label ? (
+        <AppText variant="caption" className="font-semibold">
+          {label}
+        </AppText>
+      ) : null}
       <View
         className={cn(
           "h-12 flex-row items-center rounded-full border bg-surface px-4 dark:bg-surface-dark",

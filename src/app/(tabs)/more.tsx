@@ -37,7 +37,7 @@ const SECTIONS: Section[] = [
       {
         icon: "folder-outline",
         title: "Bộ sưu tập",
-        route: "collection/index",
+        route: "collection",
       },
     ],
   },
@@ -126,6 +126,16 @@ const ADMIN_SECTION: Section = {
       icon: "chatbubbles-outline",
       title: "Phản hồi từ người dùng",
       route: "admin/feedback",
+    },
+    {
+      icon: "fast-food-outline",
+      title: "Quản lí ẩm thực",
+      route: "admin/cuisine",
+    },
+    {
+      icon: "pricetags-outline",
+      title: "Danh mục nguyên liệu",
+      route: "admin/ingredient-categories",
     },
   ],
 };

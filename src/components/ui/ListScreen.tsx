@@ -1,3 +1,4 @@
+// ListScreen.tsx
 import type { ReactElement } from "react";
 import {
   ActivityIndicator,
@@ -13,21 +14,20 @@ interface ListScreenProps<T> {
   data: T[];
   keyExtractor: (item: T) => string;
   renderItem: ListRenderItem<T>;
-  /** Phần đầu danh sách (tiêu đề, ô tìm kiếm, bộ lọc...). Truyền ELEMENT, không truyền component. */
   header?: ReactElement;
-  /** Hiện khi danh sách rỗng (chỉ truyền khi đã tải xong, nếu không sẽ nháy lên lúc đang tải). */
   empty?: ReactElement | null;
-  /** Gọi khi người dùng cuộn gần tới cuối. */
   onEndReached?: () => void;
   isLoadingMore?: boolean;
+  /** >1 thì render dạng lưới; không đổi giá trị này khi component đang mount. */
+  numColumns?: number;
+  /** Khoảng cách giữa các cột/hàng khi dùng lưới. */
+  gap?: number;
+  onRefresh?: () => void;
+  refreshing?: boolean;
+  /** Gọi khi người dùng bắt đầu kéo cuộn. */
+  onScrollBeginDrag?: () => void;
 }
 
-/**
- * Màn hình dạng danh sách cuộn vô hạn. Dùng FlatList làm vùng cuộn chính
- * (không lồng trong ScrollView) nên onEndReached hoạt động đúng.
- *
- * Nếu màu nền / khoảng đệm không giống `Screen`, chỉ cần chỉnh ở file này.
- */
 export function ListScreen<T>({
   data,
   keyExtractor,
@@ -36,6 +36,11 @@ export function ListScreen<T>({
   empty,
   onEndReached,
   isLoadingMore = false,
+  numColumns = 1,
+  gap = 16,
+  onRefresh,
+  refreshing = false,
+  onScrollBeginDrag,
 }: ListScreenProps<T>) {
   const insets = useSafeAreaInsets();
 
@@ -45,6 +50,8 @@ export function ListScreen<T>({
         data={data}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
+        numColumns={numColumns}
+        columnWrapperStyle={numColumns > 1 ? { gap } : undefined}
         ListHeaderComponent={header}
         ListEmptyComponent={empty ?? undefined}
         ListFooterComponent={
@@ -56,11 +63,14 @@ export function ListScreen<T>({
         }
         onEndReached={onEndReached}
         onEndReachedThreshold={0.4}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
+        onScrollBeginDrag={onScrollBeginDrag}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{
           padding: 20,
           paddingBottom: insets.bottom + 32,
-          gap: 16,
+          gap,
         }}
       />
     </View>

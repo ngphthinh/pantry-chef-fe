@@ -18,7 +18,7 @@ import { DatePickerField } from "@/components/ui/DatePickerField";
 import { Screen } from "@/components/ui/Screen";
 import { TextField } from "@/components/ui/TextField";
 import { useAppTheme } from "@/core/theme/useAppTheme";
-import { RecipePickerModal } from "@/features/mealplan/components/RecipePickerModal";
+import { RecipePickerModal } from "@/components/recipe/RecipePickerModal";
 import { useMealPlanEntryForm } from "@/features/mealplan/useMealPlanEntryForm";
 import type { MealType, RecipeSummaryResponse } from "@/types";
 import { TactileButton } from "@/components/ui/TactileButton";
