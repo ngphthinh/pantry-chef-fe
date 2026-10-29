@@ -25,6 +25,7 @@ export function useSavedRecipes() {
     const detail = useAppSelector((s) => s.savedRecipes.detail);
     const status = useAppSelector((s) => s.savedRecipes.status);
     const hasNext = useAppSelector((s) => s.savedRecipes.hasNext);
+    const queryKey = useAppSelector((s) => s.savedRecipes.queryKey);
 
     const load = useCallback(
         (query?: ListQuery) =>
@@ -73,6 +74,7 @@ export function useSavedRecipes() {
             detail,
             status,
             hasNext,
+            queryKey,
             isLoading: status === "loading",
             isLoadingMore: status === "loadingMore",
             isLoadingDetail: status === "loadingDetail",

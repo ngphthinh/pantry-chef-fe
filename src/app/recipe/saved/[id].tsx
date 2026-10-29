@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/Card";
 import { Screen } from "@/components/ui/Screen";
 import { TextField } from "@/components/ui/TextField";
 import { cn } from "@/components/ui/cn";
-import { notify } from "@/core/ui/dialogs";
+import {confirmAction, notify } from "@/core/ui/dialogs";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { useSavedRecipeForm } from "@/features/savedRecipes/useSavedRecipeForm";
 
@@ -48,6 +48,7 @@ export default function SavedRecipeScreen() {
     errors,
     setField,
     submit,
+      remove,
     isDirty,
     isLoading,
     isSubmitting,
@@ -57,6 +58,19 @@ export default function SavedRecipeScreen() {
 
   const handleSave = async () => {
     const result = await submit();
+    if (result.ok) router.back();
+    else notify("Lỗi", result.message);
+  };
+
+  const handleRemove = async () => {
+    const ok = await confirmAction({
+      title: "Bỏ lưu món",
+      message: `Bỏ lưu "${recipe?.title ?? "món này"}"?`,
+      confirmText: "Bỏ lưu",
+      destructive: true,
+    });
+    if (!ok) return;
+    const result = await remove();
     if (result.ok) router.back();
     else notify("Lỗi", result.message);
   };
@@ -237,6 +251,9 @@ export default function SavedRecipeScreen() {
           disabled={!isDirty}
           onPress={handleSave}
         />
+        <Pressable className="items-center py-3" onPress={() => void handleRemove()}>
+          <AppText className="font-bold text-danger">Bỏ lưu món này</AppText>
+        </Pressable>
       </View>
 
       <AddToCollectionModal

@@ -12,7 +12,7 @@ import { CACHE_KEYS } from "@/core/cache/cacheKeys";
 const LIST_PREFIX = CACHE_KEYS.savedRecipeListPrefix;
 const detailKey = (id: string) => `savedRecipes:detail:${id}`;
 const listKey = (q: SavedRecipeQuery) =>
-    `${LIST_PREFIX}fav=${q.favorite ?? "all"}:col=${q.collectionId ?? "none"}`;
+    `${LIST_PREFIX}fav=${q.favorite ?? "all"}:col=${q.collectionId ?? "none"}:min=${q.minRating ?? "any"}`;
 
 export class CachedSavedRecipeRepository implements ISavedRecipeApi {
     constructor(private readonly remote: ISavedRecipeApi) {}
@@ -20,9 +20,10 @@ export class CachedSavedRecipeRepository implements ISavedRecipeApi {
     /** Chỉ cache trang đầu của mỗi bộ lọc (tất cả / yêu thích / từng bộ sưu tập). */
     list = async (query: SavedRecipeQuery): Promise<CursorResponse<SavedRecipeResponse>> => {
         const key = listKey(query);
+        const cacheable = !query.cursor && !query.keyword;
         try {
             const page = await this.remote.list(query);
-            if (!query.cursor) await jsonCache.write(key, page);
+            if (cacheable) await jsonCache.write(key, page);
             return page;
         } catch (error) {
             if (!query.cursor && isOfflineError(error)) {
@@ -55,7 +56,17 @@ export class CachedSavedRecipeRepository implements ISavedRecipeApi {
 
     update = async (id: string, body: SavedRecipeUpdateRequest): Promise<SavedRecipeResponse> => {
         const updated = await this.remote.update(id, body);
-        await this.afterWrite(id);
+
+        const cached = await jsonCache.read<SavedRecipeDetailResponse>(detailKey(id));
+        if (cached) {
+            await jsonCache.write(detailKey(id), {
+                ...cached,
+                rating: updated.rating,
+                note: updated.note,
+                favorite: updated.favorite,
+            });
+        }
+        await jsonCache.removeByPrefix(LIST_PREFIX);
         return updated;
     };
 

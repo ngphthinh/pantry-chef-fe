@@ -14,12 +14,13 @@ interface FormValues {
 const EMPTY: FormValues = { rating: 0, note: "", favorite: false };
 
 export function useSavedRecipeForm(id: string) {
-    const { detail, isLoadingDetail, isSaving, loadDetail, update } = useSavedRecipes();
+    const { detail, isLoadingDetail, isSaving, loadDetail, update, remove } = useSavedRecipes();
     const [values, setValues] = useState<FormValues>(EMPTY);
     const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
     const [loadError, setLoadError] = useState<string | null>(null);
 
     const current = detail?.id === id ? detail : null;
+    const removeSaved = useCallback(() => remove(id), [id, remove]);
 
     useEffect(() => {
         let active = true;
@@ -89,5 +90,6 @@ export function useSavedRecipeForm(id: string) {
         isLoading: isLoadingDetail && !current,
         isSubmitting: isSaving,
         loadError,
+        remove: removeSaved
     };
 }
