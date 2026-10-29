@@ -15,6 +15,11 @@ import recipeReducer from "@/features/recipe/recipeSlice";
 import savedRecipesReducer from "@/features/savedRecipes/savedRecipesSlice";
 import statsReducer from "@/features/stats/statsSlice";
 import collectionsReducer from "@/features/collections/collectionsSlice";
+import ingredientReducer from "@/features/ingredient/ingredientSlice";
+import excludedIngredientReducer from "@/features/excludedIngredient/excludedIngredientSlice";
+import syncReducer from "@/features/sync/syncSlice";
+import metaReducer from "@/features/meta/metaSlice";
+import expiryReminderReducer from "@/features/expiryReminder/expiryReminderSlice";
 
 export const store = configureStore({
   reducer: {
@@ -32,8 +37,13 @@ export const store = configureStore({
     admin: adminReducer,
     recipe: recipeReducer,
     savedRecipes: savedRecipesReducer,
-    stats : statsReducer,
+    stats: statsReducer,
     collections: collectionsReducer,
+    ingredient: ingredientReducer,
+    excludedIngredient: excludedIngredientReducer,
+    sync: syncReducer,
+    meta: metaReducer,
+    expiryReminder: expiryReminderReducer,
   },
 });
 

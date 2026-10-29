@@ -16,7 +16,15 @@ export default function AdminLayout() {
     );
   }
 
-  if (!isAdmin) return <Redirect href="/" />;
+  if (!isAdmin) {
+    return <Redirect href="/" />;
+  }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    />
+  );
 }

@@ -1,15 +1,15 @@
-import '../global.css';
-import { useEffect } from 'react';
-import { Stack, useRouter } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Provider } from 'react-redux';
-import { store } from '@/store';
-import { AppBootstrap } from '@/store/AppBootstrap';
-import { useAuth } from '@/features/auth/useAuth';
-import { forbiddenEvent } from '@/core/events/emitter';
-import { useAppTheme } from '@/core/theme/useAppTheme';
+import "../global.css";
+import { useEffect } from "react";
+import { Stack, useRouter } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Provider } from "react-redux";
+import { store } from "@/store";
+import { AppBootstrap } from "@/store/AppBootstrap";
+import { useAuth } from "@/features/auth/useAuth";
+import { forbiddenEvent } from "@/core/events/emitter";
+import { useAppTheme } from "@/core/theme/useAppTheme";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -17,19 +17,24 @@ function RootNavigator() {
   const { status } = useAuth();
   const { palette, isDark } = useAppTheme();
   const router = useRouter();
-  const isAuthed = status === 'authenticated';
+  const isAuthed = status === "authenticated";
 
   useEffect(() => {
-    if (status !== 'loading') SplashScreen.hideAsync();
+    if (status !== "loading") SplashScreen.hideAsync();
   }, [status]);
 
   // 403 từ API -> trang Forbidden
-  useEffect(() => forbiddenEvent.on(() => router.push('/forbidden')), [router]);
+  useEffect(() => forbiddenEvent.on(() => router.push("/forbidden")), [router]);
 
   return (
     <>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: palette.canvas } }}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: palette.canvas },
+        }}
+      >
         {/* Khu vực đã đăng nhập */}
         <Stack.Protected guard={isAuthed}>
           <Stack.Screen name="(tabs)" />
@@ -47,6 +52,10 @@ function RootNavigator() {
           <Stack.Screen name="meal-plan/add-entry" />
           <Stack.Screen name="meal-plan/shopping-preview" />
           <Stack.Screen name="ai/meal-plan" />
+          <Stack.Screen name="pantry/barcode" />
+          <Stack.Screen name="settings/excluded-ingredients" />
+          <Stack.Screen name="settings/notifications" />
+          <Stack.Screen name="dev/dev-tools" />
           <Stack.Screen name="shopping/index" />
           <Stack.Screen name="shopping/[id]" />
           <Stack.Screen name="recipe/custom/index" />
@@ -59,7 +68,7 @@ function RootNavigator() {
             name="settings/preferences"
             options={{
               headerShown: true,
-              title: 'Giao diện & hệ đo',
+              title: "Giao diện & hệ đo",
               headerStyle: { backgroundColor: palette.canvas },
               headerTintColor: palette.ink,
               headerShadowVisible: false,

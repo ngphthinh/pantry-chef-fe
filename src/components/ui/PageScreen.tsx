@@ -12,10 +12,17 @@ interface PageScreenProps {
   right?: ReactNode;
   className?: string;
   children: ReactNode;
+  scroll?: boolean;
 }
 
 /** Khung cho màn hình con (không nằm trong tab): tiêu đề + nút quay lại + tránh bàn phím. */
-export function PageScreen({ title, right, className, children }: PageScreenProps) {
+export function PageScreen({
+  title,
+  right,
+  className,
+  children,
+  scroll = true,
+}: PageScreenProps) {
   const router = useRouter();
   const { palette } = useAppTheme();
 
@@ -25,8 +32,11 @@ export function PageScreen({ title, right, className, children }: PageScreenProp
   };
 
   return (
-    <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <Screen className={className}>
+    <KeyboardAvoidingView
+      className="flex-1"
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <Screen className={className} scroll={scroll}>
         <View className="flex-row items-center gap-2">
           <Pressable
             onPress={goBack}
