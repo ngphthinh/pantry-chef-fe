@@ -20,6 +20,7 @@ interface ListScreenProps<T> {
   /** Gọi khi người dùng cuộn gần tới cuối. */
   onEndReached?: () => void;
   isLoadingMore?: boolean;
+  numColumns?: number;
 }
 
 /**
@@ -36,11 +37,12 @@ export function ListScreen<T>({
   empty,
   onEndReached,
   isLoadingMore = false,
+                                numColumns = 1,
 }: ListScreenProps<T>) {
   const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-canvas dark:bg-canvas-dark" style={{ paddingTop: insets.top }}>
       <FlatList
         data={data}
         keyExtractor={keyExtractor}
@@ -62,6 +64,8 @@ export function ListScreen<T>({
           paddingBottom: insets.bottom + 32,
           gap: 16,
         }}
+        numColumns={numColumns}
+        columnWrapperStyle={numColumns > 1 ? {gap: 12} : undefined}
       />
     </View>
   );

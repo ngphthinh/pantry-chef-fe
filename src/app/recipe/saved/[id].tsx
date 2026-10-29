@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { ActivityIndicator, Image, Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 
+import {BackHeader} from "@/components/ui/BackHeader";
 import { AppText } from "@/components/ui/AppText";
 import { AddToCollectionModal } from "@/components/ui/AddToCollectionModal";
 import { Button } from "@/components/ui/Button";
@@ -29,8 +30,10 @@ export default function SavedRecipeScreen() {
     if (isLoading) {
         return (
             <Screen>
+                <BackHeader title="Món đã lưu" fallbackHref={"/saved" as Href} />
                 <ActivityIndicator color={brand.DEFAULT} />
             </Screen>
+
         );
     }
 
@@ -44,6 +47,7 @@ export default function SavedRecipeScreen() {
 
     return (
         <Screen>
+            <BackHeader title="Món đã lưu" fallbackHref={"/saved" as Href} />
             {recipe.imageUrl ? (
                 <Image
                     source={{ uri: recipe.imageUrl }}

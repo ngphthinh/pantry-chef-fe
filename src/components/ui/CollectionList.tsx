@@ -1,11 +1,14 @@
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Modal, Pressable, View } from "react-native";
-import { AppText as Text } from "@/components/ui/AppText";
-import { useFocusEffect, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter, type Href } from "expo-router";
 
+import { AppText } from "@/components/ui/AppText";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { TextField } from "@/components/ui/TextField";
-import { confirmAction, notify } from "@/components/ui/dialogs";
+import { brand } from "@/core/theme/colors";
+import { confirmAction, notify } from "@/core/ui/dialogs";
 import { useCollectionForm } from "@/features/collections/useCollectionForm";
 import { useCollections } from "@/features/collections/useCollections";
 
@@ -25,7 +28,7 @@ export function CollectionList() {
     const handleRemove = async (id: string, name: string) => {
         const ok = await confirmAction({
             title: "Xoá bộ sưu tập",
-            message: `Xoá "${name}"? Các món đã lưu vẫn được giữ.`, // xác nhận câu này với backend
+            message: `Xoá "${name}"? Các món đã lưu vẫn được giữ.`,
             confirmText: "Xoá",
             destructive: true,
         });
@@ -35,31 +38,49 @@ export function CollectionList() {
     };
 
     return (
-        <View className="flex-1">
+        <View className="gap-3">
             <Button title="Tạo bộ sưu tập" onPress={() => setEditing("new")} />
 
             {isLoading && items.length === 0 ? (
-                <ActivityIndicator />
+                <ActivityIndicator color={brand.DEFAULT} />
             ) : items.length === 0 ? (
-                <Text>Chưa có bộ sưu tập nào.</Text>
+                <Card className="items-center gap-2 p-6">
+                    <Ionicons name="folder-open-outline" size={32} color={brand.DEFAULT} />
+                    <AppText variant="caption">Chưa có bộ sưu tập nào. Hãy tạo bộ sưu tập đầu tiên.</AppText>
+                </Card>
             ) : (
                 items.map((item) => (
-                    <View key={item.id} className="flex-row items-center justify-between py-3">
-                        <Pressable className="flex-1" onPress={() => router.push(`/collection/${item.id}`)}>
-                            <Text>{item.name}</Text>
-                            <Text>{item.recipeCount} món</Text>
+                    <Card key={item.id} className="flex-row items-center gap-3 p-3">
+                        <Pressable
+                            className="flex-1 flex-row items-center gap-3"
+                            onPress={() =>
+                                router.push(
+                                    `/collection/${item.id}?name=${encodeURIComponent(item.name)}` as Href,
+                                )
+                            }
+                        >
+                            <View className="h-12 w-12 items-center justify-center rounded-xl bg-brandSoft">
+                                <Ionicons name="folder-outline" size={24} color={brand.DEFAULT} />
+                            </View>
+                            <View className="flex-1">
+                                <AppText className="font-bold" numberOfLines={1}>
+                                    {item.name}
+                                </AppText>
+                                <AppText variant="caption">{`${item.recipeCount} món`}</AppText>
+                            </View>
                         </Pressable>
-                        <Pressable onPress={() => setEditing({ id: item.id, name: item.name })}>
-                            <Text>Sửa</Text>
+
+                        <Pressable hitSlop={8} onPress={() => setEditing({ id: item.id, name: item.name })}>
+                            <Ionicons name="create-outline" size={22} color={brand.DEFAULT} />
                         </Pressable>
-                        <Pressable className="ml-3" onPress={() => void handleRemove(item.id, item.name)}>
-                            <Text>Xoá</Text>
+                        <Pressable hitSlop={8} onPress={() => void handleRemove(item.id, item.name)}>
+                            <Ionicons name="trash-outline" size={22} color="#DC2626" />
                         </Pressable>
-                    </View>
+                    </Card>
                 ))
             )}
 
-            {/* Chỉ mount khi mở, kèm key: useCollectionForm lấy tên ban đầu từ useState nên phải mount mới mỗi lần. */}
+            {/* Chỉ mount khi mở, kèm key: tên ban đầu lấy từ useState nên phải mount mới mỗi lần. */}
             {editing !== null && (
                 <CollectionDialog
                     key={editing === "new" ? "new" : editing.id}
@@ -71,10 +92,10 @@ export function CollectionList() {
     );
 }
 
-function CollectionDialog({
-                              collection,
-                              onClose,
-                          }: {
+export function CollectionDialog({
+                                     collection,
+                                     onClose,
+                                 }: {
     collection?: { id: string; name: string };
     onClose: () => void;
 }) {
@@ -83,16 +104,19 @@ function CollectionDialog({
     const handleSubmit = async () => {
         const result = await submit();
         if (result.ok) onClose();
-        else if (!error) notify("Lỗi", result.message); // lỗi nhập đã hiện ở ô nhập
+        else if (!error) notify("Lỗi", result.message);
     };
 
     return (
         <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-            <View className="flex-1 items-center justify-center bg-black/40">
-                <View className="w-4/5 gap-3 rounded-2xl bg-white p-4">
+            <View className="flex-1 items-center justify-center bg-black/40 px-6">
+                <View className="w-full gap-4 rounded-2xl bg-surface p-5">
+                    <AppText variant="heading">{collection ? "Đổi tên bộ sưu tập" : "Tạo bộ sưu tập"}</AppText>
                     <TextField label="Tên bộ sưu tập" value={name} onChangeText={setName} error={error} />
                     <Button title={collection ? "Lưu" : "Tạo"} loading={isSubmitting} onPress={handleSubmit} />
-                    <Button title="Huỷ" onPress={onClose} />
+                    <Pressable className="items-center py-1" onPress={onClose}>
+                        <AppText className="font-bold text-brand">Huỷ</AppText>
+                    </Pressable>
                 </View>
             </View>
         </Modal>

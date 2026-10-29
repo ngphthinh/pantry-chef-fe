@@ -6,9 +6,8 @@ import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
 import { cn } from '@/components/ui/cn';
 import { SAVED_RECIPES, SAVED_TABS } from '@/features/saved/mock';
-import { SavedRecipeGrid } from '@/components/saved/SavedRecipeGrid'; // THÊM
-import { CollectionList } from '@/components/ui/CollectionList'; // THÊM
-
+import { SavedRecipeList } from '@/components/saved/SavedRecipeList';
+import { CollectionList } from '@/components/ui/CollectionList';
 
 const USE_REAL_DATA = true;
 
@@ -16,8 +15,8 @@ export default function SavedHub() {
     const router = useRouter();
     const [tab, setTab] = useState<(typeof SAVED_TABS)[number]>('Tất cả');
 
-    return (
-        <Screen>
+    const header = (
+        <View className="gap-4">
             <AppText variant="title">Đã lưu</AppText>
             <View className="flex-row rounded-full bg-soft p-1 dark:bg-soft-dark">
                 {SAVED_TABS.map((t) => (
@@ -26,11 +25,17 @@ export default function SavedHub() {
                     </Pressable>
                 ))}
             </View>
+        </View>
+    );
 
-            {USE_REAL_DATA && tab === 'Tất cả' && <SavedRecipeGrid />}
-            {USE_REAL_DATA && tab === 'Yêu thích' && <SavedRecipeGrid favoriteOnly />}
+    if (USE_REAL_DATA && (tab === 'Tất cả' || tab === 'Yêu thích')) {
+        return <SavedRecipeList favoriteOnly={tab === 'Yêu thích'} header={header} />;
+    }
+
+    return (
+        <Screen>
+            {header}
             {USE_REAL_DATA && tab === 'Bộ sưu tập' && <CollectionList />}
-
             {(!USE_REAL_DATA || tab === 'Tự tạo') && (
                 <View className="flex-row flex-wrap justify-between gap-y-3">
                     {SAVED_RECIPES.map((r) => (

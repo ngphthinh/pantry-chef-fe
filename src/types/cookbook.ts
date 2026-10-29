@@ -29,6 +29,8 @@ export interface SavedRecipeResponse {
   rating: number | null;
   note: string | null;
   favorite: boolean;
+  recipeImageUrl?: string;
+  imageUrl?: string;
 }
 
 export interface SavedRecipeDetailResponse {

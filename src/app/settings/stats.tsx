@@ -1,6 +1,8 @@
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
+import {type Href } from "expo-router";
+import {BackHeader} from "@/components/ui/BackHeader";
 import { AppText } from "@/components/ui/AppText";
 import { Card } from "@/components/ui/Card";
 import { Screen } from "@/components/ui/Screen";
@@ -19,7 +21,7 @@ export default function StatsScreen() {
 
     return (
         <Screen>
-            <AppText variant="title">Thống kê của tôi</AppText>
+            <BackHeader title="Thống kê của tôi" fallbackHref={"/more" as Href} />
 
             {isLoading && <ActivityIndicator color={brand.DEFAULT} />}
 

@@ -37,7 +37,7 @@ const SECTIONS: Section[] = [
       {
         icon: "folder-outline",
         title: "Bộ sưu tập",
-        route: "collection/index",
+        route: "collection",
       },
     ],
   },
