@@ -54,15 +54,35 @@ export default function PantryItemDetailScreen() {
   const [editQty, setEditQty] = useState("");
   const [editExpiry, setEditExpiry] = useState("");
   const [editLocation, setEditLocation] = useState<StorageLocation>("FRIDGE");
+  const [imageFailed, setImageFailed] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
     if (id && id !== "select-ingredient") {
-      loadItemById(id).catch(() => {});
+      setIsFetching(true);
+      setFetchError(null);
+      loadItemById(id)
+        .catch((err: any) => {
+          if (isMounted) {
+            setFetchError(err?.message || "Không thể tải thông tin món");
+          }
+        })
+        .finally(() => {
+          if (isMounted) {
+            setIsFetching(false);
+          }
+        });
     }
+    return () => {
+      isMounted = false;
+    };
   }, [id, loadItemById]);
 
   useEffect(() => {
     if (selectedItem) {
+      setImageFailed(false);
       setEditQty(String(Math.round(selectedItem.quantity)));
       setEditExpiry(selectedItem.expiryDate || "");
       setEditLocation(selectedItem.location || "FRIDGE");
@@ -205,24 +225,42 @@ export default function PantryItemDetailScreen() {
     }
   };
 
-  if (isLoading && !selectedItem) {
+  if (!selectedItem || selectedItem.id !== id || isFetching || isLoading) {
+    if (fetchError && !isLoading && !isFetching) {
+      return (
+        <View className="flex-1 bg-canvas dark:bg-canvas-dark">
+          <Screen>
+            <View className="flex-row items-center gap-3 pb-4">
+              <Pressable
+                onPress={() => router.back()}
+                className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark">
+                <Ionicons name="arrow-back" size={20} color={palette.ink} />
+              </Pressable>
+              <AppText variant="heading">Chi tiết nguyên liệu</AppText>
+            </View>
+            <Card className="items-center p-8 text-center shadow-sm">
+              <Ionicons name="alert-circle-outline" size={48} color={palette.warnInk} />
+              <AppText variant="heading" className="mt-3 text-center">
+                {fetchError || "Không tìm thấy món trong tủ"}
+              </AppText>
+              <Button
+                title="Quay lại danh sách"
+                onPress={() => router.back()}
+                className="mt-6 w-full max-w-xs"
+              />
+            </Card>
+          </Screen>
+        </View>
+      );
+    }
+
     return (
       <View className="flex-1 items-center justify-center bg-canvas dark:bg-canvas-dark">
         <ActivityIndicator size="large" color={brand} />
+        <AppText variant="caption" className="mt-3 font-medium text-muted">
+          Đang tải dữ liệu nguyên liệu...
+        </AppText>
       </View>
-    );
-  }
-
-  if (!selectedItem) {
-    return (
-      <Screen>
-        <AppText variant="heading">Không tìm thấy món trong tủ</AppText>
-        <Button
-          title="Quay lại"
-          onPress={() => router.back()}
-          className="mt-4"
-        />
-      </Screen>
     );
   }
 
@@ -246,16 +284,32 @@ export default function PantryItemDetailScreen() {
 
         {/* 3D Main Card */}
         <Card className="items-center p-6 shadow-md">
-          {selectedItem.photoUri ? (
+          {isUploading ? (
+            <View className="mb-4 h-48 w-full items-center justify-center rounded-2xl bg-soft shadow-inner dark:bg-soft-dark">
+              <ActivityIndicator size="large" color={brand} />
+              <AppText variant="caption" className="mt-2 text-muted">
+                Đang tải ảnh lên...
+              </AppText>
+            </View>
+          ) : selectedItem.photoUri && !imageFailed ? (
             <Image
               source={{ uri: selectedItem.photoUri }}
-              className="mb-4 h-40 w-full rounded-2xl"
+              className="mb-4 h-48 w-full rounded-2xl"
               resizeMode="cover"
+              onError={() => setImageFailed(true)}
             />
           ) : (
-            <View className="mb-4 h-32 w-32 items-center justify-center rounded-3xl bg-brandSoft dark:bg-surface-dark shadow-inner">
-              <Ionicons name="nutrition-outline" size={56} color={brand} />
-            </View>
+            <Pressable
+              onPress={handlePickPhoto}
+              className="mb-4 h-48 w-full items-center justify-center rounded-2xl bg-soft shadow-inner active:opacity-80 dark:bg-soft-dark">
+              <Ionicons name="image-outline" size={48} color={palette.muted} />
+              <AppText variant="caption" className="mt-2 font-medium text-muted">
+                Chưa có ảnh nguyên liệu
+              </AppText>
+              <AppText variant="caption" className="mt-0.5 text-xs text-brand">
+                Chạm để chọn ảnh
+              </AppText>
+            </Pressable>
           )}
 
           <AppText variant="title" className="text-center">
