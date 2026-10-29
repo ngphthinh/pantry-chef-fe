@@ -126,25 +126,28 @@ export default function NewPantryItemScreen() {
               Đơn vị đo
             </AppText>
             <View className="flex-row flex-wrap gap-2">
-              {UNITS.map((u) => (
-                <Pressable
-                  key={u}
-                  onPress={() => setField('unit', u)}
-                  className={`rounded-xl px-3.5 py-2 ${
-                    values.unit === u
-                      ? 'bg-brand text-white shadow-sm'
-                      : 'bg-soft dark:bg-soft-dark'
-                  }`}
-                >
-                  <AppText
-                    className={`font-semibold ${
-                      values.unit === u ? 'text-white' : 'text-ink dark:text-ink-dark'
+              {UNITS.map((u) => {
+                const isSelected = values.unit === u;
+                return (
+                  <Pressable
+                    key={u}
+                    onPress={() => setField('unit', u)}
+                    className={`rounded-xl px-3.5 py-2 ${
+                      isSelected
+                        ? 'bg-brand'
+                        : 'bg-soft dark:bg-soft-dark'
                     }`}
                   >
-                    {u}
-                  </AppText>
-                </Pressable>
-              ))}
+                    <AppText
+                      className={`font-semibold ${
+                        isSelected ? 'text-white' : 'text-ink dark:text-ink-dark'
+                      }`}
+                    >
+                      {u}
+                    </AppText>
+                  </Pressable>
+                );
+              })}
             </View>
           </Card>
 
@@ -160,10 +163,10 @@ export default function NewPantryItemScreen() {
                   <Pressable
                     key={loc.value}
                     onPress={() => setField('location', loc.value)}
-                    className={`flex-1 items-center gap-1.5 rounded-2xl p-3 shadow-sm ${
+                    className={`flex-1 items-center gap-1.5 rounded-2xl border-2 p-3 ${
                       isSelected
-                        ? 'border-2 border-brand bg-brandSoft dark:bg-surface-dark'
-                        : 'bg-soft dark:bg-soft-dark'
+                        ? 'border-brand bg-brandSoft dark:bg-surface-dark'
+                        : 'border-transparent bg-soft dark:bg-soft-dark'
                     }`}
                   >
                     <Ionicons

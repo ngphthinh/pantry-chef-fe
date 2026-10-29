@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { Screen } from "@/components/ui/Screen";
+import { PantryItemThumbnail } from "@/components/pantry/PantryItemThumbnail";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { usePantry } from "@/features/pantry/usePantry";
 import type { StorageLocation } from "@/types";
@@ -370,19 +371,11 @@ export default function PantryHubScreen() {
                     className="active:scale-[0.985]">
                     <Card className="flex-row items-center justify-between p-4 shadow-sm">
                       <View className="flex-row items-center gap-3.5">
-                        <View className="h-12 w-12 items-center justify-center rounded-2xl bg-soft shadow-inner dark:bg-soft-dark">
-                          <Ionicons
-                            name={
-                              item.location === "FREEZER"
-                                ? "snow-outline"
-                                : item.location === "PANTRY_SHELF"
-                                  ? "cube-outline"
-                                  : "leaf-outline"
-                            }
-                            size={22}
-                            color={brand}
-                          />
-                        </View>
+                        <PantryItemThumbnail
+                          photoUri={item.photoUri}
+                          location={item.location}
+                          className="h-12 w-12"
+                        />
                         <View>
                           <AppText
                             variant="heading"
