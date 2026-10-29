@@ -45,7 +45,7 @@ export function ListScreen<T>({
   const insets = useSafeAreaInsets();
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-canvas dark:bg-canvas-dark" style={{ paddingTop: insets.top }}>
       <FlatList
         data={data}
         keyExtractor={keyExtractor}
