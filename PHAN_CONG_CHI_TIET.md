@@ -306,6 +306,8 @@ Tổng 50 màn hình = 44 màn hình con + 5 trang trung tâm của tab + `+not-
 | `settings/unit-converter` | `GET /units/convert` |
 | `settings/feedback` | `POST /feedback` |
 | `settings/about` | Màn tĩnh (giới thiệu, quyền riêng tư) |
+| `settings/cuisine` | Màn hình quản lí cuisine của admin |
+
 
 **Việc ưu tiên:** seed `Cuisine` **sớm** vì Tùng (bộ lọc `cuisineId`) và form tạo công thức cần.
 

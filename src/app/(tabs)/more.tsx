@@ -127,6 +127,16 @@ const ADMIN_SECTION: Section = {
       title: "Phản hồi từ người dùng",
       route: "admin/feedback",
     },
+    {
+      icon: "fast-food-outline",
+      title: "Quản lí ẩm thực",
+      route: "admin/cuisine",
+    },
+    {
+      icon: "pricetags-outline",
+      title: "Danh mục nguyên liệu",
+      route: "admin/ingredient-categories",
+    },
   ],
 };
 
