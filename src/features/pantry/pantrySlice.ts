@@ -52,7 +52,9 @@ const pantrySlice = createSlice({
     ) {
       const { response, append } = action.payload;
       if (append) {
-        state.items = [...state.items, ...response.content];
+        const existingIds = new Set(state.items.map((i) => i.id));
+        const newItems = response.content.filter((i) => !existingIds.has(i.id));
+        state.items = [...state.items, ...newItems];
       } else {
         state.items = response.content;
       }
