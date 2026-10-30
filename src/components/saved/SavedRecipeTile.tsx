@@ -26,6 +26,12 @@ export function SavedRecipeTile({ item, onPress, onToggleFavorite, onRemove }: P
         <Card className="overflow-hidden">
           <View>
             <SavedRecipeImage uri={imageUri} className="h-28 w-full" />
+            {item.rating != null && item.rating > 0 ? (
+                <View className="absolute bottom-2 left-2 flex-row items-center gap-1 rounded-full bg-black/60 px-2 py-1">
+                  <Ionicons name="star" size={12} color="#FACC15" />
+                  <AppText className="text-xs font-bold text-white">{item.rating}</AppText>
+                </View>
+            ) : null}
             {onRemove ? (
                 <Pressable
                     hitSlop={8}
