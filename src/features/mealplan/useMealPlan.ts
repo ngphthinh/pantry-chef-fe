@@ -14,6 +14,7 @@ import {
   createMealPlan,
   deleteMealPlan,
   deleteMealPlanEntry,
+  fetchMealPlanById,
   fetchMealPlanByWeek,
   fetchShoppingPreview,
   formatLocalDate,
@@ -47,6 +48,11 @@ export function useMealPlan() {
   const loadWeek = useCallback(
     (weekStart: string = selectedWeekStart) => dispatch(fetchMealPlanByWeek(weekStart)),
     [dispatch, selectedWeekStart],
+  );
+
+  const loadPlanById = useCallback(
+    (id: string) => dispatch(fetchMealPlanById(id)),
+    [dispatch],
   );
 
   const changeWeek = useCallback(
@@ -219,6 +225,7 @@ export function useMealPlan() {
     isSaving: status === 'saving',
     isGeneratingAi: status === 'generatingAi',
     loadWeek,
+    loadPlanById,
     changeWeek,
     goToPrevWeek,
     goToNextWeek,

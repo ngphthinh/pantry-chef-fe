@@ -135,6 +135,19 @@ export const fetchMealPlanByWeek =
         }
       }),
     );
+export const fetchMealPlanById =
+  (id: string): AppThunk<Promise<MealPlanResponse>> =>
+  (dispatch) =>
+    dispatch(
+      withStatus('loading', async () => {
+        const plan = await mealPlanService.getById(id);
+        dispatch(planReceived(plan));
+        if (plan?.weekStart) {
+          dispatch(weekSelected(plan.weekStart));
+        }
+        return plan;
+      }),
+    );
 
 export const createMealPlan =
   (body: MealPlanCreateRequest): AppThunk<Promise<MealPlanResponse>> =>
