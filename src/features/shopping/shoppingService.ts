@@ -19,6 +19,10 @@ export interface ShoppingItemPatch {
   status?: ShoppingItemStatus;
 }
 
+/** Số lượng hợp lệ để gửi BE (phải > 0). Mục cũ có thể đã lưu 0 do làm tròn ở BE, coi như chưa có số lượng. */
+const positiveOrUndefined = (value?: number | null): number | undefined =>
+  value != null && value > 0 ? value : undefined;
+
 /**
  * BE từ chối PATCH nếu thiếu/null bất kỳ trường nào trong name, quantity, unit, status.
  * Mục tạo ra không có số lượng/đơn vị thì BE trả null, nên khi sửa phải điền mặc định.
@@ -72,7 +76,7 @@ export class ShoppingService {
   ): Promise<ShoppingItemResponse> =>
     this.items.updateItem(listId, item.id, {
       name: (patch.name ?? item.name).trim(),
-      quantity: patch.quantity ?? item.quantity ?? DEFAULT_QUANTITY,
+      quantity: positiveOrUndefined(patch.quantity) ?? positiveOrUndefined(item.quantity) ?? DEFAULT_QUANTITY,
       unit: patch.unit ?? item.unit ?? DEFAULT_UNIT,
       status: patch.status ?? item.status,
     });

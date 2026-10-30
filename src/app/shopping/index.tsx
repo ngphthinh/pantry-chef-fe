@@ -1,13 +1,14 @@
-import { useCallback } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { useEffect } from "react";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useRouter, type Href } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 
 import { AppText } from "@/components/ui/AppText";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PageScreen } from "@/components/ui/PageScreen";
+import { ListScreen } from "@/components/ui/ListScreen";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { TextField } from "@/components/ui/TextField";
 import { showAlert } from "@/components/ui/dialogs";
 import { useAppTheme } from "@/core/theme/useAppTheme";
@@ -18,16 +19,13 @@ import type { ShoppingListResponse } from "@/types";
 export default function ShoppingListsScreen() {
   const router = useRouter();
   const { palette, brand } = useAppTheme();
-  const { lists, hasNext, isLoading, isLoadingMore, loadError, load, loadMore, create, confirmAndRemove } =
-    useShopping();
+  const { lists, isLoading, isLoadingMore, loadError, load, loadMore, create, confirmAndRemove } = useShopping();
   const form = useShoppingListForm(create);
 
-  // Tải lại mỗi lần quay về màn hình này (ví dụ sau khi xoá danh sách ở màn chi tiết).
-  useFocusEffect(
-    useCallback(() => {
-      void load();
-    }, [load]),
-  );
+  // Danh sách được cập nhật trực tiếp khi tạo / đổi tên / xoá, nên chỉ cần tải khi mở màn hình.
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const handleCreate = async () => {
     const result = await form.submit();
@@ -39,8 +37,10 @@ export default function ShoppingListsScreen() {
     if (result && !result.ok) showAlert("Lỗi", result.message);
   };
 
-  return (
-    <PageScreen title="Danh sách mua sắm">
+  const header = (
+    <View className="gap-4">
+      <PageHeader title="Danh sách mua sắm" />
+
       <Card className="gap-3 p-4">
         <TextField
           label="Tạo danh sách mới"
@@ -65,43 +65,48 @@ export default function ShoppingListsScreen() {
       ) : null}
 
       {isLoading && lists.length === 0 ? <ActivityIndicator color={brand} className="py-6" /> : null}
+    </View>
+  );
 
-      {!isLoading && !loadError && lists.length === 0 ? (
-        <EmptyState
-          icon="cart-outline"
-          title="Chưa có danh sách nào"
-          message="Tạo danh sách đầu tiên để ghi lại những thứ cần mua."
-        />
-      ) : null}
+  // Chỉ truyền khi đã tải xong, nếu không sẽ nháy "chưa có danh sách" lúc đang tải.
+  const empty =
+    !isLoading && !loadError ? (
+      <EmptyState
+        icon="cart-outline"
+        title="Chưa có danh sách nào"
+        message="Tạo danh sách đầu tiên để ghi lại những thứ cần mua."
+      />
+    ) : null;
 
-      {lists.map((list) => (
-        <Pressable key={list.id} onPress={() => router.push(`/shopping/${list.id}` as Href)}>
-          <Card className="flex-row items-center gap-3 p-4">
-            <Ionicons name="cart-outline" size={22} color={brand} />
-            <AppText className="flex-1 font-bold" numberOfLines={1}>
-              {list.name}
-            </AppText>
-            <Pressable
-              onPress={() => void handleDelete(list)}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel={`Xoá ${list.name}`}
-            >
-              <Ionicons name="trash-outline" size={20} color={palette.dangerInk} />
-            </Pressable>
-            <Ionicons name="chevron-forward" size={18} color={palette.muted} />
-          </Card>
-        </Pressable>
-      ))}
-
-      {hasNext ? (
-        <Button
-          variant="outline"
-          title={isLoadingMore ? "Đang tải..." : "Xem thêm"}
-          disabled={isLoadingMore}
-          onPress={() => void loadMore()}
-        />
-      ) : null}
-    </PageScreen>
+  return (
+    <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <ListScreen
+        data={lists}
+        keyExtractor={(list) => list.id}
+        header={header}
+        empty={empty}
+        onEndReached={() => void loadMore()}
+        isLoadingMore={isLoadingMore}
+        renderItem={({ item: list }) => (
+          <Pressable onPress={() => router.push(`/shopping/${list.id}` as Href)}>
+            <Card className="flex-row items-center gap-3 p-4">
+              <Ionicons name="cart-outline" size={22} color={brand} />
+              <AppText className="flex-1 font-bold" numberOfLines={1}>
+                {list.name}
+              </AppText>
+              <Pressable
+                onPress={() => void handleDelete(list)}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={`Xoá ${list.name}`}
+              >
+                <Ionicons name="trash-outline" size={20} color={palette.dangerInk} />
+              </Pressable>
+              <Ionicons name="chevron-forward" size={18} color={palette.muted} />
+            </Card>
+          </Pressable>
+        )}
+      />
+    </KeyboardAvoidingView>
   );
 }

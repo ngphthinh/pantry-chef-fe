@@ -34,7 +34,7 @@ export function useShoppingItemForm({ addItem, updateItem }: ItemFormActions) {
     setEditing(item);
     setValues({
       name: item.name,
-      quantity: item.quantity === null ? "" : formatDecimal(item.quantity),
+      quantity: item.quantity === null || item.quantity <= 0 ? "" : formatDecimal(item.quantity),
       unit: item.unit ?? Unit.PCS,
     });
     setErrors({});
