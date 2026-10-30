@@ -29,15 +29,21 @@ export class IngredientService {
 
   // ───────── Nguyên liệu ─────────
 
-  search = (query: IngredientQuery = {}): Promise<CursorResponse<IngredientResponse>> =>
+  search = (
+    query: IngredientQuery = {},
+  ): Promise<CursorResponse<IngredientResponse>> =>
     this.ingredients.search({
       q: query.q?.trim() || undefined,
       categoryId: query.categoryId,
       cursor: query.cursor,
-      size: Math.min(Math.max(query.size ?? DEFAULT_PAGE_SIZE, 1), MAX_PAGE_SIZE),
+      size: Math.min(
+        Math.max(query.size ?? DEFAULT_PAGE_SIZE, 1),
+        MAX_PAGE_SIZE,
+      ),
     });
 
-  getById = (id: string): Promise<IngredientResponse> => this.ingredients.getById(id);
+  getById = (id: string): Promise<IngredientResponse> =>
+    this.ingredients.getById(id);
 
   /** Kiểm tra định dạng trước khi gọi API; 404 đổi thành thông điệp dễ hiểu cho người dùng. */
   getByBarcode = async (code: string): Promise<IngredientResponse> => {
@@ -59,7 +65,10 @@ export class IngredientService {
     this.ingredientAdmin.create(this.normalize(body));
 
   /** Chỉ ADMIN. PUT thay thế toàn bộ nên luôn gửi đủ các trường. */
-  update = (id: string, body: IngredientUpdateRequest): Promise<IngredientResponse> =>
+  update = (
+    id: string,
+    body: IngredientUpdateRequest,
+  ): Promise<IngredientResponse> =>
     this.ingredientAdmin.update(id, this.normalize(body));
 
   /** Chỉ ADMIN. */
@@ -68,28 +77,66 @@ export class IngredientService {
   // ───────── Nhóm nguyên liệu ─────────
 
   /** BE đã sắp sẵn (nhóm mới thêm lên đầu, "Khác" luôn cuối) nên giữ nguyên thứ tự. */
-  listCategories = (): Promise<IngredientCategoryResponse[]> => this.categories.list();
+  listCategories = (): Promise<IngredientCategoryResponse[]> =>
+    this.categories.list();
 
-  /** Chỉ ADMIN. `code` luôn UPPER_CASE theo ràng buộc của BE. */
-  createCategory = (body: IngredientCategoryRequest): Promise<IngredientCategoryResponse> =>
-    this.categoryAdmin.create(this.normalizeCategory(body));
+  /** Chỉ ADMIN. `code` luôn UPPER_CASE theo ràng buộc của BE; trùng mã thì BE trả 409. */
+  createCategory = (
+    body: IngredientCategoryRequest,
+  ): Promise<IngredientCategoryResponse> =>
+    this.translateCategoryError(
+      () => this.categoryAdmin.create(this.normalizeCategory(body)),
+      "Mã danh mục này đã tồn tại.",
+    );
 
   updateCategory = (
     id: string,
     body: IngredientCategoryRequest,
   ): Promise<IngredientCategoryResponse> =>
-    this.categoryAdmin.update(id, this.normalizeCategory(body));
+    this.translateCategoryError(
+      () => this.categoryAdmin.update(id, this.normalizeCategory(body)),
+      "Mã danh mục này đã tồn tại.",
+    );
 
   /** Chỉ ADMIN. BE trả 409 khi nhóm còn nguyên liệu. */
-  removeCategory = (id: string): Promise<void> => this.categoryAdmin.remove(id);
+  removeCategory = (id: string): Promise<void> =>
+    this.translateCategoryError(
+      () => this.categoryAdmin.remove(id),
+      "Danh mục này vẫn còn nguyên liệu nên chưa thể xoá.",
+    );
 
-  private normalize = (body: IngredientCreateRequest): IngredientCreateRequest => ({
+  /** 403 / 404 / 409 của nhóm nguyên liệu đổi thành thông điệp tiếng Việt; lỗi khác giữ nguyên. */
+  private translateCategoryError = async <T>(
+    run: () => Promise<T>,
+    conflictMessage: string,
+  ): Promise<T> => {
+    try {
+      return await run();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.status === 403)
+          throw new Error("Chỉ quản trị viên mới thực hiện được thao tác này.");
+        if (error.status === 404)
+          throw new Error(
+            "Không tìm thấy danh mục. Danh sách có thể đã thay đổi, hãy tải lại.",
+          );
+        if (error.status === 409) throw new Error(conflictMessage);
+      }
+      throw error;
+    }
+  };
+
+  private normalize = (
+    body: IngredientCreateRequest,
+  ): IngredientCreateRequest => ({
     ...body,
     name: body.name.trim(),
     barcode: body.barcode?.trim() || undefined,
   });
 
-  private normalizeCategory = (body: IngredientCategoryRequest): IngredientCategoryRequest => ({
+  private normalizeCategory = (
+    body: IngredientCategoryRequest,
+  ): IngredientCategoryRequest => ({
     code: body.code.trim().toUpperCase(),
     name: body.name.trim(),
   });

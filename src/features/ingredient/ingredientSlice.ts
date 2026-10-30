@@ -2,10 +2,19 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { ingredientService } from "@/core/di/container";
 import { unauthenticated } from "@/features/auth/authSlice";
 import type { AppThunk } from "@/store/hooks";
-import type { CursorResponse, IngredientCategoryResponse, IngredientResponse } from "@/types";
+import type {
+  CursorResponse,
+  IngredientCategoryRequest,
+  IngredientCategoryResponse,
+  IngredientResponse,
+} from "@/types";
 import type { IngredientQuery } from "./types";
 
-export type IngredientStatus = "idle" | "loadingCategories" | "lookingUp";
+export type IngredientStatus =
+  | "idle"
+  | "loadingCategories"
+  | "lookingUp"
+  | "saving";
 
 interface IngredientState {
   categories: IngredientCategoryResponse[];
@@ -14,7 +23,11 @@ interface IngredientState {
   status: IngredientStatus;
 }
 
-const initialState: IngredientState = { categories: [], categoriesLoaded: false, status: "idle" };
+const initialState: IngredientState = {
+  categories: [],
+  categoriesLoaded: false,
+  status: "idle",
+};
 
 const ingredientSlice = createSlice({
   name: "ingredient",
@@ -23,7 +36,10 @@ const ingredientSlice = createSlice({
     statusChanged(state, action: PayloadAction<IngredientStatus>) {
       state.status = action.payload;
     },
-    categoriesLoaded(state, action: PayloadAction<IngredientCategoryResponse[]>) {
+    categoriesLoaded(
+      state,
+      action: PayloadAction<IngredientCategoryResponse[]>,
+    ) {
       state.categories = action.payload;
       state.categoriesLoaded = true;
     },
@@ -69,11 +85,42 @@ export const fetchIngredientCategories =
  * có từ khoá và danh sách riêng, lưu chung sẽ ghi đè lẫn nhau. Hook `useIngredientSearch` giữ danh sách.
  */
 export const searchIngredients =
-  (query: IngredientQuery): AppThunk<Promise<CursorResponse<IngredientResponse>>> =>
+  (
+    query: IngredientQuery,
+  ): AppThunk<Promise<CursorResponse<IngredientResponse>>> =>
   async () =>
     ingredientService.search(query);
 
 export const lookupIngredientByBarcode =
   (code: string): AppThunk<Promise<IngredientResponse>> =>
   async (dispatch) =>
-    withStatus(dispatch, "lookingUp", () => ingredientService.getByBarcode(code));
+    withStatus(dispatch, "lookingUp", () =>
+      ingredientService.getByBarcode(code),
+    );
+
+/**
+ * Thêm (id = null) hoặc sửa nhóm nguyên liệu (chỉ ADMIN), rồi tải lại danh sách vì
+ * BE là nơi quyết định thứ tự hiển thị (nhóm mới lên đầu, "Khác" luôn cuối).
+ */
+export const saveIngredientCategory =
+  (
+    id: string | null,
+    body: IngredientCategoryRequest,
+  ): AppThunk<Promise<void>> =>
+  async (dispatch) => {
+    await withStatus(dispatch, "saving", async () => {
+      if (id) await ingredientService.updateCategory(id, body);
+      else await ingredientService.createCategory(body);
+      dispatch(categoriesLoaded(await ingredientService.listCategories()));
+    });
+  };
+
+/** Xoá nhóm (chỉ ADMIN); BE từ chối khi nhóm còn nguyên liệu. */
+export const deleteIngredientCategory =
+  (id: string): AppThunk<Promise<void>> =>
+  async (dispatch) => {
+    await withStatus(dispatch, "saving", async () => {
+      await ingredientService.removeCategory(id);
+      dispatch(categoriesLoaded(await ingredientService.listCategories()));
+    });
+  };
