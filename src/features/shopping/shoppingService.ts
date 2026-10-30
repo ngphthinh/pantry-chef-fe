@@ -84,6 +84,29 @@ export class ShoppingService {
         item.status === ShoppingItemStatus.BOUGHT ? ShoppingItemStatus.PENDING : ShoppingItemStatus.BOUGHT,
     });
 
+  /**
+   * Đặt trạng thái cho nhiều mục cùng lúc ("chọn tất cả" / "bỏ chọn tất cả"). BE chưa có API hàng loạt
+   * nên gửi từng mục song song; mục lỗi không làm hỏng các mục khác. Chỉ ném lỗi khi không mục nào thành công.
+   */
+  setItemsStatus = async (
+    listId: string,
+    items: ShoppingItemResponse[],
+    status: ShoppingItemStatus,
+  ): Promise<{ updated: ShoppingItemResponse[]; failed: number }> => {
+    const targets = items.filter((item) => item.status !== status);
+    const results = await Promise.allSettled(
+      targets.map((item) => this.updateItem(listId, item, { status })),
+    );
+
+    const updated = results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+    const failed = results.length - updated.length;
+    if (updated.length === 0 && failed > 0) {
+      const firstFailure = results.find((r): r is PromiseRejectedResult => r.status === "rejected");
+      throw firstFailure?.reason;
+    }
+    return { updated, failed };
+  };
+
   removeItem = (listId: string, itemId: string): Promise<void> => this.items.removeItem(listId, itemId);
 
   // ───────── Dùng chung với meal-plan ─────────

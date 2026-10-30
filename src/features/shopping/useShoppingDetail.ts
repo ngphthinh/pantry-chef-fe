@@ -11,6 +11,7 @@ import {
   deleteShoppingList,
   fetchShoppingListDetail,
   moveShoppingItemsToPantry,
+  setAllShoppingItemsStatus,
   renameShoppingList,
   toggleShoppingItem,
   updateShoppingItem,
@@ -112,6 +113,27 @@ export function useShoppingDetail(listId: string) {
     [dispatch, listId],
   );
 
+  /**
+   * "Chọn tất cả": đánh dấu đã mua mọi mục; khi đã chọn hết thì thành "Bỏ chọn tất cả".
+   * Trả về số mục không cập nhật được (0 nghĩa là thành công hoàn toàn).
+   */
+  const toggleAll = useCallback(async (): Promise<ActionResult<{ failed: number; message: string | null }>> => {
+    const items = detail?.items ?? [];
+    const allBought = items.length > 0 && items.every((i) => i.status === ShoppingItemStatus.BOUGHT);
+    const target = allBought ? ShoppingItemStatus.PENDING : ShoppingItemStatus.BOUGHT;
+
+    const result = await runAction(
+      () => dispatch(setAllShoppingItemsStatus(listId, items, target)),
+      "Không thể cập nhật các mục.",
+    );
+    if (!result.ok) return result;
+    const failed = result.data;
+    return {
+      ok: true,
+      data: { failed, message: failed > 0 ? `${failed} mục chưa cập nhật được, hãy thử lại.` : null },
+    };
+  }, [detail, dispatch, listId]);
+
   /** Hỏi xác nhận rồi mới xoá mục. Trả `null` nếu người dùng huỷ. */
   const confirmAndRemoveItem = useCallback(
     async (item: ShoppingItemResponse) => {
@@ -147,6 +169,7 @@ export function useShoppingDetail(listId: string) {
       totalCount,
       boughtCount: boughtItems.length,
       progressPercent,
+      allBought: totalCount > 0 && pendingItems.length === 0,
       canMoveToPantry: boughtItems.length > 0,
       isLoading: status === "loadingDetail",
       isSaving: status === "saving",
@@ -154,6 +177,7 @@ export function useShoppingDetail(listId: string) {
       load,
       rename,
       moveBoughtToPantry,
+      toggleAll,
       confirmAndRemoveList,
       addItem,
       updateItem,
@@ -171,6 +195,7 @@ export function useShoppingDetail(listId: string) {
       load,
       rename,
       moveBoughtToPantry,
+      toggleAll,
       confirmAndRemoveList,
       addItem,
       updateItem,
