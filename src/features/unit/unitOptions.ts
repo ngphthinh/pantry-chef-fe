@@ -36,7 +36,7 @@ export const compatibleUnits = (from: Unit): UnitOption[] =>
 
 /** "2 kg", "1.5 muỗng canh"; không có số lượng thì trả chuỗi rỗng. */
 export const formatQuantity = (quantity: number | null, unit: Unit | null): string => {
-  if (quantity === null) return "";
+  if (quantity === null || quantity <= 0) return "";   // 0 là dữ liệu cũ do làm tròn, không hiển thị "0 g"
   const amount = formatDecimal(quantity);
   return unit ? `${amount} ${unitLabel(unit)}` : amount;
 };

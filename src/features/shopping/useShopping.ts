@@ -34,11 +34,13 @@ export function useShopping() {
     return result;
   }, [dispatch]);
 
+  /** Gọi khi cuộn tới cuối danh sách; bỏ qua nếu hết trang hoặc đang tải dở để không tải trùng một trang. */
   const loadMore = useCallback(async () => {
+    if (!hasNext || status !== "idle") return;
     const result = await runAction(() => dispatch(fetchShoppingLists(true)), "Không tải thêm được.");
     setLoadError(result.ok ? null : result.message);
     return result;
-  }, [dispatch]);
+  }, [dispatch, hasNext, status]);
 
   const create = useCallback(
     (name: string) => runAction(() => dispatch(createShoppingList(name)), "Không thể tạo danh sách."),

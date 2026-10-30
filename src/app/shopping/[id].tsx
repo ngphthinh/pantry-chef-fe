@@ -52,6 +52,12 @@ export default function ShoppingDetailScreen() {
     if (result && !result.ok) showAlert("Lỗi", result.message);
   };
 
+  const handleToggleAll = async () => {
+    const result = await shopping.toggleAll();
+    if (!result.ok) showAlert("Lỗi", result.message);
+    else if (result.data.message) showAlert("Chưa cập nhật hết", result.data.message);
+  };
+
   const handleMoveToPantry = async () => {
     const result = await shopping.moveBoughtToPantry();
     if (result.ok) showAlert("Chuyển vào tủ", result.data.message);
@@ -178,9 +184,27 @@ export default function ShoppingDetailScreen() {
             <EmptyState icon="basket-outline" title="Danh sách đang trống" message="Thêm mục đầu tiên ở phía trên." />
           ) : (
             <View className="gap-1">
-              <AppText variant="caption">
-                Đã mua {shopping.boughtCount}/{shopping.totalCount}
-              </AppText>
+              <View className="flex-row items-center justify-between">
+                <AppText variant="caption">
+                  Đã mua {shopping.boughtCount}/{shopping.totalCount}
+                </AppText>
+                <Pressable
+                  onPress={() => void handleToggleAll()}
+                  disabled={shopping.isSaving}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  className="flex-row items-center gap-1 active:opacity-70"
+                >
+                  <Ionicons
+                    name={shopping.allBought ? "checkbox" : "checkbox-outline"}
+                    size={18}
+                    color={brand}
+                  />
+                  <AppText className="text-sm font-semibold text-brand">
+                    {shopping.allBought ? "Bỏ chọn tất cả" : "Chọn tất cả"}
+                  </AppText>
+                </Pressable>
+              </View>
               <View className="h-2 overflow-hidden rounded-full bg-soft dark:bg-soft-dark">
                 <View
                   className="h-2 rounded-full bg-brand"

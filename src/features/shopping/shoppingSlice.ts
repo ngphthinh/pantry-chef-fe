@@ -6,6 +6,7 @@ import type {
   PantryItemResponse,
   ShoppingItemCreateRequest,
   ShoppingItemResponse,
+  ShoppingItemStatus,
   ShoppingListDetailResponse,
   ShoppingListResponse,
 } from "@/types";
@@ -225,6 +226,16 @@ export const moveShoppingItemsToPantry =
       const moved = await shoppingService.moveBoughtToPantry(listId);
       dispatch(detailLoaded(await shoppingService.getList(listId)));
       return moved;
+    });
+
+/** Chọn / bỏ chọn tất cả mục. Trả về số mục không cập nhật được. */
+export const setAllShoppingItemsStatus =
+  (listId: string, items: ShoppingItemResponse[], status: ShoppingItemStatus): AppThunk<Promise<number>> =>
+  async (dispatch) =>
+    withStatus(dispatch, "saving", async () => {
+      const { updated, failed } = await shoppingService.setItemsStatus(listId, items, status);
+      updated.forEach((item) => dispatch(itemUpserted(item)));
+      return failed;
     });
 
 export const deleteShoppingItem =

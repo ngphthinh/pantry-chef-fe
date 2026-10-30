@@ -31,11 +31,13 @@ export function useCustomRecipe() {
     return result;
   }, [dispatch]);
 
+  /** Gọi khi cuộn tới cuối danh sách; bỏ qua nếu hết trang hoặc đang tải dở để không tải trùng một trang. */
   const loadMore = useCallback(async () => {
+    if (!hasNext || status !== "idle") return;
     const result = await runAction(() => dispatch(fetchCustomRecipes(true)), "Không tải thêm được.");
     setLoadError(result.ok ? null : result.message);
     return result;
-  }, [dispatch]);
+  }, [dispatch, hasNext, status]);
 
   const create = useCallback(
     (body: RecipeCreateRequest, image?: PickedImage | null) =>

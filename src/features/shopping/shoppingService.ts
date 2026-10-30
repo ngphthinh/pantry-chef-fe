@@ -19,6 +19,10 @@ export interface ShoppingItemPatch {
   status?: ShoppingItemStatus;
 }
 
+/** Số lượng hợp lệ để gửi BE (phải > 0). Mục cũ có thể đã lưu 0 do làm tròn ở BE, coi như chưa có số lượng. */
+const positiveOrUndefined = (value?: number | null): number | undefined =>
+  value != null && value > 0 ? value : undefined;
+
 /**
  * BE từ chối PATCH nếu thiếu/null bất kỳ trường nào trong name, quantity, unit, status.
  * Mục tạo ra không có số lượng/đơn vị thì BE trả null, nên khi sửa phải điền mặc định.
@@ -72,7 +76,7 @@ export class ShoppingService {
   ): Promise<ShoppingItemResponse> =>
     this.items.updateItem(listId, item.id, {
       name: (patch.name ?? item.name).trim(),
-      quantity: patch.quantity ?? item.quantity ?? DEFAULT_QUANTITY,
+      quantity: positiveOrUndefined(patch.quantity) ?? positiveOrUndefined(item.quantity) ?? DEFAULT_QUANTITY,
       unit: patch.unit ?? item.unit ?? DEFAULT_UNIT,
       status: patch.status ?? item.status,
     });
@@ -83,6 +87,29 @@ export class ShoppingService {
       status:
         item.status === ShoppingItemStatus.BOUGHT ? ShoppingItemStatus.PENDING : ShoppingItemStatus.BOUGHT,
     });
+
+  /**
+   * Đặt trạng thái cho nhiều mục cùng lúc ("chọn tất cả" / "bỏ chọn tất cả"). BE chưa có API hàng loạt
+   * nên gửi từng mục song song; mục lỗi không làm hỏng các mục khác. Chỉ ném lỗi khi không mục nào thành công.
+   */
+  setItemsStatus = async (
+    listId: string,
+    items: ShoppingItemResponse[],
+    status: ShoppingItemStatus,
+  ): Promise<{ updated: ShoppingItemResponse[]; failed: number }> => {
+    const targets = items.filter((item) => item.status !== status);
+    const results = await Promise.allSettled(
+      targets.map((item) => this.updateItem(listId, item, { status })),
+    );
+
+    const updated = results.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+    const failed = results.length - updated.length;
+    if (updated.length === 0 && failed > 0) {
+      const firstFailure = results.find((r): r is PromiseRejectedResult => r.status === "rejected");
+      throw firstFailure?.reason;
+    }
+    return { updated, failed };
+  };
 
   removeItem = (listId: string, itemId: string): Promise<void> => this.items.removeItem(listId, itemId);
 
