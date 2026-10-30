@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useFocusEffect } from "expo-router";
 
+import type { SavedRecipeResponse } from "@/types";
 import { savedQueryKey } from "./savedRecipesSlice";
 import { useSavedRecipes } from "./useSavedRecipes";
 
@@ -11,13 +12,13 @@ interface SavedListFilter {
   minRating?: number;
 }
 
+const EMPTY: SavedRecipeResponse[] = [];
+
 export function useSavedList(filter: SavedListFilter = {}) {
   const { favorite, collectionId, keyword, minRating } = filter;
-
   const {
     items, hasNext, queryKey, isLoading, isLoadingMore, load, loadMore, toggleFavorite, remove,
   } = useSavedRecipes();
-  const [error, setError] = useState<string | null>(null);
 
   const query = useMemo(
       () => ({ favorite, collectionId, keyword: keyword || undefined, minRating }),
@@ -25,16 +26,19 @@ export function useSavedList(filter: SavedListFilter = {}) {
   );
   const key = useMemo(() => savedQueryKey(query), [query]);
 
-  // Dùng ref để việc "danh sách vừa tải xong" không kích hoạt lại effect bên dưới.
+  const [errorState, setErrorState] = useState<{ key: string; message: string } | null>(null);
+  const error = errorState?.key === key ? errorState.message : null;
+
+  const isReady = queryKey === key;
+
   const loadedKeyRef = useRef(queryKey);
   loadedKeyRef.current = queryKey;
 
   const refresh = useCallback(async () => {
     const result = await load(query);
-    setError(result.ok ? null : result.message);
-  }, [load, query]);
+    setErrorState(result.ok ? null : { key, message: result.message });
+  }, [load, query, key]);
 
-  // Chỉ tải khi bộ lọc đổi hoặc danh sách đã cũ. Quay lại từ màn hình chi tiết thì không tải lại.
   useFocusEffect(
       useCallback(() => {
         if (loadedKeyRef.current !== key) void refresh();
@@ -42,13 +46,23 @@ export function useSavedList(filter: SavedListFilter = {}) {
   );
 
   const more = useCallback(async () => {
-    if (!hasNext) return;
+    if (!isReady || !hasNext) return;
     const result = await loadMore(query);
-    if (!result.ok) setError(result.message);
-  }, [hasNext, loadMore, query]);
+    if (!result.ok) setErrorState({ key, message: result.message });
+  }, [isReady, hasNext, loadMore, query, key]);
 
   return useMemo(
-      () => ({ items, hasNext, error, isLoading, isLoadingMore, refresh, loadMore: more, toggleFavorite, remove }),
-      [items, hasNext, error, isLoading, isLoadingMore, refresh, more, toggleFavorite, remove],
+      () => ({
+        items: isReady ? items : EMPTY,
+        hasNext: isReady && hasNext,
+        error,
+        isLoading: isLoading || (!isReady && error === null),
+        isLoadingMore,
+        refresh,
+        loadMore: more,
+        toggleFavorite,
+        remove,
+      }),
+      [items, hasNext, isReady, error, isLoading, isLoadingMore, refresh, more, toggleFavorite, remove],
   );
 }

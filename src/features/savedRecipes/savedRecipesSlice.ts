@@ -120,18 +120,22 @@ const withStatus = async <T>(
     }
 };
 
-/** Tải trang đầu (loadMore = false) hoặc trang kế tiếp (loadMore = true). */
+let latestListRequest = 0;
+
 export const fetchSavedRecipes =
     (query: Omit<SavedRecipeQuery, "cursor"> = {}, loadMore = false): AppThunk<Promise<void>> =>
         async (dispatch, getState) => {
             const { hasNext, nextCursor, status } = getState().savedRecipes;
             if (loadMore && (!hasNext || status !== "idle")) return;
 
+            const requestId = ++latestListRequest;
+
             await withStatus(dispatch, loadMore ? "loadingMore" : "loading", async () => {
                 const page = await savedRecipeService.list({
                     ...query,
-                    cursor: loadMore && nextCursor ? nextCursor : undefined,
+                    cursor: loadMore ? (nextCursor ?? undefined) : undefined,
                 });
+                if (requestId !== latestListRequest) return; // đã có yêu cầu mới hơn, bỏ kết quả này
                 dispatch(
                     pageLoaded({
                         items: page.content,
