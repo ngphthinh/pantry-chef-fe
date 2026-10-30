@@ -1,21 +1,17 @@
-import { useEffect, useState } from "react";
-import { cuisineService } from "@/core/di/container";
+import { useEffect } from "react";
 import type { CuisineResponse } from "@/types";
+import { useCuisine } from "./useCuisine";
 
-/** Danh sách ẩm thực; lỗi thì trả mảng rỗng (bộ lọc này không bắt buộc). */
+/**
+ * Giữ cho các màn hình đang gọi `useCuisines()` (ví dụ ai/meal-plan): tự tải khi mở màn hình và
+ * trả về mảng ẩm thực, lỗi thì mảng rỗng vì bộ lọc này không bắt buộc. Code mới nên dùng useCuisine.
+ */
 export function useCuisines(): CuisineResponse[] {
-  const [cuisines, setCuisines] = useState<CuisineResponse[]>([]);
+  const { items, load } = useCuisine();
 
   useEffect(() => {
-    let active = true;
-    cuisineService
-      .list()
-      .then((list) => active && setCuisines(list))
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, []);
+    void load();
+  }, [load]);
 
-  return cuisines;
+  return items;
 }

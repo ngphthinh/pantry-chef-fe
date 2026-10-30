@@ -1,6 +1,6 @@
-import type { AxiosInstance } from 'axios';
+import type { AxiosInstance } from "axios";
 
-import { buildImageForm } from '@/core/http/multipart';
+import { buildImageForm } from "@/core/http/multipart";
 import type {
   CursorResponse,
   PickedImage,
@@ -8,48 +8,69 @@ import type {
   RecipeDetailResponse,
   RecipeSummaryResponse,
   RecipeUpdateRequest,
-} from '@/types';
-import type { CustomRecipeQuery, ICustomRecipeApi } from './types';
+} from "@/types";
+import type {
+  CustomRecipeQuery,
+  ICustomRecipeApi,
+  ICustomRecipeImageApi,
+} from "./types";
 
-const BASE = '/v1/recipes/custom';
-const UPLOAD_TIMEOUT_MS = 60000;
-
-export class HttpCustomRecipeRepository implements ICustomRecipeApi {
+export class HttpCustomRecipeRepository
+  implements ICustomRecipeApi, ICustomRecipeImageApi
+{
   constructor(private readonly privateHttp: AxiosInstance) {}
 
-  list = async (query: CustomRecipeQuery = {}): Promise<CursorResponse<RecipeSummaryResponse>> => {
-    const params: Record<string, string | number> = {};
-    if (query.cursor) params.cursor = query.cursor;
-    if (query.size) params.size = query.size;
-    const { data } = await this.privateHttp.get<CursorResponse<RecipeSummaryResponse>>(BASE, { params });
+  getRecipes = async (
+    query: CustomRecipeQuery,
+  ): Promise<CursorResponse<RecipeSummaryResponse>> => {
+    const { data } = await this.privateHttp.get<
+      CursorResponse<RecipeSummaryResponse>
+    >("/v1/recipes/custom", { params: query });
     return data;
   };
 
-  create = async (body: RecipeCreateRequest): Promise<RecipeDetailResponse> => {
-    const { data } = await this.privateHttp.post<RecipeDetailResponse>(BASE, body);
+  getRecipe = async (id: string): Promise<RecipeDetailResponse> => {
+    const { data } = await this.privateHttp.get<RecipeDetailResponse>(
+      `/v1/recipes/custom/${id}`,
+    );
     return data;
   };
 
-  getById = async (id: string): Promise<RecipeDetailResponse> => {
-    const { data } = await this.privateHttp.get<RecipeDetailResponse>(`${BASE}/${id}`);
+  createRecipe = async (
+    body: RecipeCreateRequest,
+  ): Promise<RecipeDetailResponse> => {
+    const { data } = await this.privateHttp.post<RecipeDetailResponse>(
+      "/v1/recipes/custom",
+      body,
+    );
     return data;
   };
 
-  update = async (id: string, body: RecipeUpdateRequest): Promise<RecipeDetailResponse> => {
-    const { data } = await this.privateHttp.put<RecipeDetailResponse>(`${BASE}/${id}`, body);
+  updateRecipe = async (
+    id: string,
+    body: RecipeUpdateRequest,
+  ): Promise<RecipeDetailResponse> => {
+    const { data } = await this.privateHttp.put<RecipeDetailResponse>(
+      `/v1/recipes/custom/${id}`,
+      body,
+    );
     return data;
   };
 
-  remove = async (id: string): Promise<void> => {
-    await this.privateHttp.delete(`${BASE}/${id}`);
+  removeRecipe = async (id: string): Promise<void> => {
+    await this.privateHttp.delete(`/v1/recipes/custom/${id}`);
   };
 
-  uploadImage = async (id: string, image: PickedImage): Promise<RecipeDetailResponse> => {
-    const form = await buildImageForm('image', image, 'recipe.jpg');
-    const { data } = await this.privateHttp.post<RecipeDetailResponse>(`${BASE}/${id}/image`, form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      timeout: UPLOAD_TIMEOUT_MS,
-    });
+  uploadImage = async (
+    id: string,
+    image: PickedImage,
+  ): Promise<RecipeDetailResponse> => {
+    const form = await buildImageForm("image", image, "recipe.jpg");
+    const { data } = await this.privateHttp.post<RecipeDetailResponse>(
+      `/v1/recipes/custom/${id}/image`,
+      form,
+      { headers: { "Content-Type": "multipart/form-data" }, timeout: 60000 },
+    );
     return data;
   };
 }

@@ -390,7 +390,7 @@ export default function PantryHubScreen() {
                             {item.ingredientName}
                           </AppText>
                           <AppText variant="caption" className="mt-0.5">
-                            {item.quantity} {item.unit} ·{" "}
+                            {Math.round(item.quantity)} {item.unit} ·{" "}
                             {item.location === "FREEZER"
                               ? "Tủ đông"
                               : item.location === "PANTRY_SHELF"

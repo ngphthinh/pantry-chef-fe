@@ -1,10 +1,14 @@
 /** feature/cookbook/dto — endpoint: /v1/saved-recipes, /v1/collections */
-import type { UUID } from './common';
-import type { RecipeDetailResponse } from './recipe';
+import type { UUID } from "./common";
+import type { RecipeDetailResponse } from "./recipe";
 
 // ───────── Request ─────────
-export interface CollectionCreateRequest { name: string }
-export interface CollectionUpdateRequest { name: string }
+export interface CollectionCreateRequest {
+  name: string;
+}
+export interface CollectionUpdateRequest {
+  name: string;
+}
 
 /** Phải có đúng một trong hai: externalId (API ngoài) hoặc recipeId (DB). */
 export type SavedRecipeCreateRequest =
@@ -19,7 +23,11 @@ export interface SavedRecipeUpdateRequest {
 }
 
 // ───────── Response ─────────
-export interface CollectionResponse { id: UUID; name: string; recipeCount: number }
+export interface CollectionResponse {
+  id: UUID;
+  name: string;
+  recipeCount: number;
+}
 
 export interface SavedRecipeResponse {
   id: UUID;
@@ -28,6 +36,8 @@ export interface SavedRecipeResponse {
   rating: number | null;
   note: string | null;
   favorite: boolean;
+  recipeImageUrl?: string;
+  imageUrl?: string;
 }
 
 export interface SavedRecipeDetailResponse {
@@ -36,4 +46,18 @@ export interface SavedRecipeDetailResponse {
   note: string | null;
   favorite: boolean;
   recipe: RecipeDetailResponse;
+}
+
+export interface SavedRecipeQuery {
+  cursor?: string;
+  size?: number; // 1–50, mặc định 10
+  favorite?: boolean; // tab "Yêu thích"
+  collectionId?: string; // màn hình collection/[id]
+}
+
+export interface CollectionResponseDetail {
+  id: UUID;
+  name: string;
+  recipeCount: number;
+  recipes: SavedRecipeResponse[];
 }

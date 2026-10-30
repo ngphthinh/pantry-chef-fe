@@ -1,40 +1,49 @@
-import { useCallback, useRef, useState } from 'react';
-import { getErrorMessage } from '@/core/http/apiError';
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  parseDecimal,
+  parseInteger,
+  formatDecimal,
+} from "@/core/format/decimal";
+import type { ActionResult } from "@/core/http/actionResult";
+import { useCuisine } from "@/features/cuisine/useCuisine";
 import type {
   Difficulty,
+  PickedImage,
   RecipeCreateRequest,
   RecipeDetailResponse,
   Unit,
-} from '@/types';
-import { useCustomRecipes } from './useCustomRecipes';
-import { customRecipeValidators as v, parseNumber } from './validation';
-
-const SECONDS_PER_MINUTE = 60;
+} from "@/types";
+import { useCustomRecipe } from "./useCustomRecipe";
+import { useCustomRecipeDetail } from "./useCustomRecipeDetail";
+import { useRecipeImagePicker } from "./useRecipeImagePicker";
+import { customRecipeValidators } from "./validation";
 
 export interface IngredientRow {
+  /** Khoá ổn định cho danh sách, không gửi lên BE. */
   key: string;
   name: string;
   amount: string;
-  unit: Unit | '';
+  unit: Unit | "";
 }
 
 export interface StepRow {
   key: string;
   text: string;
+  /** Nhập theo phút cho dễ; BE lưu theo giây. */
   timerMinutes: string;
 }
 
-export interface CustomRecipeFormValues {
+interface FormValues {
   title: string;
   servings: string;
   readyInMinutes: string;
-  difficulty: Difficulty | '';
+  difficulty: Difficulty | "";
   cuisineId: string;
   ingredients: IngredientRow[];
   steps: StepRow[];
 }
 
-export interface CustomRecipeFormErrors {
+interface FormErrors {
   title?: string;
   servings?: string;
   readyInMinutes?: string;
@@ -42,169 +51,252 @@ export interface CustomRecipeFormErrors {
   steps?: string;
 }
 
-export type SubmitResult =
-  | { ok: true; recipe: RecipeDetailResponse }
-  | { ok: false; kind: 'validation' | 'request'; message: string };
+export interface SaveOutcome {
+  id: string;
+  /** Công thức đã lưu nhưng ảnh chưa tải lên được. */
+  imageFailed: boolean;
+}
+
+let rowSeq = 0;
+const nextKey = () => `row-${++rowSeq}`;
+
+const blankIngredient = (): IngredientRow => ({
+  key: nextKey(),
+  name: "",
+  amount: "",
+  unit: "",
+});
+const blankStep = (): StepRow => ({
+  key: nextKey(),
+  text: "",
+  timerMinutes: "",
+});
+
+const emptyValues = (): FormValues => ({
+  title: "",
+  servings: "2",
+  readyInMinutes: "",
+  difficulty: "",
+  cuisineId: "",
+  ingredients: [blankIngredient()],
+  steps: [blankStep()],
+});
+
+const fromDetail = (recipe: RecipeDetailResponse): FormValues => ({
+  title: recipe.title,
+  servings: recipe.servings === null ? "" : String(recipe.servings),
+  readyInMinutes:
+    recipe.readyInMinutes === null ? "" : String(recipe.readyInMinutes),
+  difficulty: recipe.difficulty ?? "",
+  cuisineId: recipe.cuisine?.id ?? "",
+  ingredients: recipe.ingredients.length
+    ? recipe.ingredients.map((i) => ({
+        key: nextKey(),
+        name: i.name,
+        amount: i.amount === null ? "" : formatDecimal(i.amount),
+        unit: i.unit ?? "",
+      }))
+    : [blankIngredient()],
+  steps: recipe.steps.length
+    ? [...recipe.steps]
+        .sort((a, b) => a.stepOrder - b.stepOrder)
+        .map((s) => ({
+          key: nextKey(),
+          text: s.text,
+          timerMinutes:
+            s.timerSeconds === null ? "" : formatDecimal(s.timerSeconds / 60),
+        }))
+    : [blankStep()],
+});
+
+/** Đổi giá trị trong form thành body gửi BE. Dòng bỏ trống bị bỏ qua. */
+const toRequest = (values: FormValues): RecipeCreateRequest => ({
+  title: values.title.trim(),
+  servings: parseInteger(values.servings) ?? 1,
+  readyInMinutes: parseInteger(values.readyInMinutes) ?? undefined,
+  difficulty: values.difficulty || undefined,
+  cuisineId: values.cuisineId || undefined,
+  ingredients: values.ingredients
+    .filter((r) => r.name.trim())
+    .map((r) => {
+      const amount = parseDecimal(r.amount) ?? undefined;
+      // Có đơn vị mà không có số lượng thì vô nghĩa ("vừa đủ" không đi kèm đơn vị).
+      return {
+        name: r.name.trim(),
+        amount,
+        unit: amount !== undefined ? r.unit || undefined : undefined,
+      };
+    }),
+  steps: values.steps
+    .filter((r) => r.text.trim())
+    .map((r) => {
+      const minutes = parseDecimal(r.timerMinutes);
+      return {
+        text: r.text.trim(),
+        timerSeconds: minutes !== null ? Math.round(minutes * 60) : undefined,
+      };
+    }),
+});
 
 /**
- * Logic form tạo/sửa công thức tự tạo: giữ giá trị, thêm/xoá dòng nguyên liệu và bước, kiểm tra,
- * đổi chuỗi -> số (phút -> giây) và gọi API. Truyền `initial` để sửa (PUT thay toàn bộ).
+ * Form tạo / sửa công thức tự tạo. Truyền `recipeId` để vào chế độ sửa: hook tự tải công thức
+ * và điền sẵn vào form.
  */
-export function useCustomRecipeForm(initial?: RecipeDetailResponse | null) {
-  const { create, update, isSaving } = useCustomRecipes();
-  const nextKey = useRef(0);
-  const newKey = () => `row-${nextKey.current++}`;
+export function useCustomRecipeForm(recipeId?: string) {
+  const isEdit = Boolean(recipeId);
+  const { create, update, isSaving } = useCustomRecipe();
+  const detail = useCustomRecipeDetail(recipeId);
+  const cuisines = useCuisine();
+  const { pick } = useRecipeImagePicker();
 
-  const [values, setValues] = useState<CustomRecipeFormValues>(() => ({
-    title: initial?.title ?? '',
-    servings: initial?.servings ? String(initial.servings) : '2',
-    readyInMinutes: initial?.readyInMinutes ? String(initial.readyInMinutes) : '',
-    difficulty: initial?.difficulty ?? '',
-    cuisineId: initial?.cuisine?.id ?? '',
-    ingredients: initial?.ingredients.length
-      ? initial.ingredients.map((i) => ({
-          key: newKey(),
-          name: i.name,
-          amount: i.amount !== null ? String(i.amount) : '',
-          unit: i.unit ?? '',
-        }))
-      : [{ key: newKey(), name: '', amount: '', unit: '' }],
-    steps: initial?.steps.length
-      ? [...initial.steps]
-          .sort((a, b) => a.stepOrder - b.stepOrder)
-          .map((s) => ({
-            key: newKey(),
-            text: s.text,
-            timerMinutes: s.timerSeconds ? String(Math.round(s.timerSeconds / SECONDS_PER_MINUTE)) : '',
-          }))
-      : [{ key: newKey(), text: '', timerMinutes: '' }],
-  }));
-  const [errors, setErrors] = useState<CustomRecipeFormErrors>({});
+  const [values, setValues] = useState<FormValues>(emptyValues);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [image, setImage] = useState<PickedImage | null>(null);
+  const hydrated = useRef(false);
+
+  const { load: loadDetail, recipe } = detail;
+  const { load: loadCuisines } = cuisines;
+
+  useEffect(() => {
+    void loadCuisines();
+  }, [loadCuisines]);
+
+  useEffect(() => {
+    if (recipeId) void loadDetail();
+  }, [recipeId, loadDetail]);
+
+  // Điền sẵn một lần khi công thức cần sửa về tới; các lần cập nhật sau không ghi đè phần đang gõ dở.
+  useEffect(() => {
+    if (recipe && !hydrated.current) {
+      hydrated.current = true;
+      setValues(fromDetail(recipe));
+    }
+  }, [recipe]);
 
   const setField = useCallback(
-    <K extends 'title' | 'servings' | 'readyInMinutes' | 'difficulty' | 'cuisineId'>(
-      key: K,
-      value: CustomRecipeFormValues[K],
-    ) => {
+    <K extends keyof FormValues>(key: K, value: FormValues[K]) => {
       setValues((prev) => ({ ...prev, [key]: value }));
       setErrors((prev) => ({ ...prev, [key]: undefined }));
     },
     [],
   );
 
-  const updateIngredient = useCallback((key: string, patch: Partial<Omit<IngredientRow, 'key'>>) => {
-    setValues((prev) => ({
-      ...prev,
-      ingredients: prev.ingredients.map((r) => (r.key === key ? { ...r, ...patch } : r)),
-    }));
-    setErrors((prev) => ({ ...prev, ingredients: undefined }));
-  }, []);
+  // ───────── Nguyên liệu ─────────
 
   const addIngredient = useCallback(
     () =>
       setValues((prev) => ({
         ...prev,
-        ingredients: [...prev.ingredients, { key: newKey(), name: '', amount: '', unit: '' }],
+        ingredients: [...prev.ingredients, blankIngredient()],
       })),
     [],
   );
 
-  const removeIngredient = useCallback(
-    (key: string) =>
+  const updateIngredient = useCallback(
+    (key: string, patch: Partial<Omit<IngredientRow, "key">>) => {
       setValues((prev) => ({
         ...prev,
-        ingredients: prev.ingredients.length > 1 ? prev.ingredients.filter((r) => r.key !== key) : prev.ingredients,
-      })),
+        ingredients: prev.ingredients.map((r) =>
+          r.key === key ? { ...r, ...patch } : r,
+        ),
+      }));
+      setErrors((prev) => ({ ...prev, ingredients: undefined }));
+    },
     [],
   );
 
-  const updateStep = useCallback((key: string, patch: Partial<Omit<StepRow, 'key'>>) => {
-    setValues((prev) => ({
-      ...prev,
-      steps: prev.steps.map((r) => (r.key === key ? { ...r, ...patch } : r)),
-    }));
-    setErrors((prev) => ({ ...prev, steps: undefined }));
+  /** Luôn giữ lại ít nhất một dòng để người dùng còn chỗ nhập. */
+  const removeIngredient = useCallback((key: string) => {
+    setValues((prev) => {
+      const rest = prev.ingredients.filter((r) => r.key !== key);
+      return { ...prev, ingredients: rest.length ? rest : [blankIngredient()] };
+    });
   }, []);
+
+  // ───────── Các bước ─────────
 
   const addStep = useCallback(
     () =>
-      setValues((prev) => ({
-        ...prev,
-        steps: [...prev.steps, { key: newKey(), text: '', timerMinutes: '' }],
-      })),
+      setValues((prev) => ({ ...prev, steps: [...prev.steps, blankStep()] })),
     [],
   );
 
-  const removeStep = useCallback(
-    (key: string) =>
+  const updateStep = useCallback(
+    (key: string, patch: Partial<Omit<StepRow, "key">>) => {
       setValues((prev) => ({
         ...prev,
-        steps: prev.steps.length > 1 ? prev.steps.filter((r) => r.key !== key) : prev.steps,
-      })),
+        steps: prev.steps.map((r) => (r.key === key ? { ...r, ...patch } : r)),
+      }));
+      setErrors((prev) => ({ ...prev, steps: undefined }));
+    },
     [],
   );
 
-  const validate = useCallback((form: CustomRecipeFormValues): boolean => {
-    const ingredientError = form.ingredients
-      .map((r, i) => {
-        const message = v.ingredientName(r.name) ?? v.ingredientAmount(r.amount);
-        return message ? `Nguyên liệu ${i + 1}: ${message}` : null;
-      })
-      .find(Boolean);
-    const stepError = form.steps
-      .map((r, i) => {
-        const message = v.stepText(r.text) ?? v.stepTimerMinutes(r.timerMinutes);
-        return message ? `Bước ${i + 1}: ${message}` : null;
-      })
-      .find(Boolean);
+  const removeStep = useCallback((key: string) => {
+    setValues((prev) => {
+      const rest = prev.steps.filter((r) => r.key !== key);
+      return { ...prev, steps: rest.length ? rest : [blankStep()] };
+    });
+  }, []);
 
-    const next: CustomRecipeFormErrors = {
-      title: v.title(form.title) ?? undefined,
-      servings: v.servings(form.servings) ?? undefined,
-      readyInMinutes: v.readyInMinutes(form.readyInMinutes) ?? undefined,
-      ingredients: ingredientError ?? undefined,
-      steps: stepError ?? undefined,
+  // ───────── Ảnh ─────────
+
+  /** Chọn ảnh mới; trả thông báo lỗi nếu có (rỗng khi người dùng tự huỷ). */
+  const pickImage = useCallback(async (): Promise<string | null> => {
+    const result = await pick();
+    if (result.ok) {
+      setImage(result.image);
+      return null;
+    }
+    return result.message ?? null;
+  }, [pick]);
+
+  // ───────── Lưu ─────────
+
+  const validate = useCallback((v: FormValues): boolean => {
+    const next: FormErrors = {
+      title: customRecipeValidators.title(v.title) ?? undefined,
+      servings: customRecipeValidators.servings(v.servings) ?? undefined,
+      readyInMinutes:
+        customRecipeValidators.readyInMinutes(v.readyInMinutes) ?? undefined,
+      ingredients:
+        customRecipeValidators.ingredients(v.ingredients) ?? undefined,
+      steps: customRecipeValidators.steps(v.steps) ?? undefined,
     };
     setErrors(next);
     return Object.values(next).every((e) => !e);
   }, []);
 
-  const toRequest = (form: CustomRecipeFormValues): RecipeCreateRequest => ({
-    title: form.title.trim(),
-    servings: parseNumber(form.servings),
-    readyInMinutes: form.readyInMinutes.trim() ? parseNumber(form.readyInMinutes) : undefined,
-    difficulty: form.difficulty || undefined,
-    cuisineId: form.cuisineId || undefined,
-    ingredients: form.ingredients.map((r) => ({
-      name: r.name.trim(),
-      amount: r.amount.trim() ? parseNumber(r.amount) : undefined,
-      unit: r.unit || undefined,
-    })),
-    steps: form.steps.map((r) => ({
-      text: r.text.trim(),
-      timerSeconds: r.timerMinutes.trim() ? Math.round(parseNumber(r.timerMinutes) * SECONDS_PER_MINUTE) : undefined,
-    })),
-  });
+  const submit = useCallback(async (): Promise<ActionResult<SaveOutcome>> => {
+    if (!validate(values))
+      return { ok: false, message: "Vui lòng kiểm tra lại thông tin." };
 
-  /** Màn hình chỉ hiển thị kết quả: không tự bắt lỗi hay đổi kiểu dữ liệu. */
-  const submit = useCallback(async (): Promise<SubmitResult> => {
-    if (!validate(values)) {
-      return { ok: false, kind: 'validation', message: 'Vui lòng kiểm tra lại thông tin.' };
-    }
-    try {
-      const body = toRequest(values);
-      const recipe = initial ? await update(initial.id, body) : await create(body);
-      return { ok: true, recipe };
-    } catch (e) {
-      return { ok: false, kind: 'request', message: getErrorMessage(e) };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [validate, values, initial, update, create]);
+    const body = toRequest(values);
+    const result = recipeId
+      ? await update(recipeId, body, image)
+      : await create(body, image);
+    if (!result.ok) return result;
+
+    return {
+      ok: true,
+      data: { id: result.data.recipe.id, imageFailed: result.data.imageFailed },
+    };
+  }, [create, image, recipeId, update, validate, values]);
+
+  const cuisineOptions = useMemo(
+    () => cuisines.items.map((c) => ({ value: c.id, label: c.name })),
+    [cuisines.items],
+  );
 
   return {
+    isEdit,
     values,
     errors,
-    isEditing: !!initial,
+    cuisineOptions,
+    /** Ảnh mới chọn, hoặc ảnh hiện có của công thức khi sửa. */
+    imageUri: image?.uri ?? recipe?.imageUrl ?? null,
+    isLoading: detail.isLoading,
+    loadError: detail.loadError,
     isSubmitting: isSaving,
     setField,
     addIngredient,
@@ -213,6 +305,8 @@ export function useCustomRecipeForm(initial?: RecipeDetailResponse | null) {
     addStep,
     updateStep,
     removeStep,
+    pickImage,
     submit,
+    reload: loadDetail,
   };
 }

@@ -4,10 +4,11 @@ import { AppText } from "@/components/ui/AppText";
 import { Card } from "@/components/ui/Card";
 import { MenuGroup, type MenuItem } from "@/components/ui/MenuGroup";
 import { Screen } from "@/components/ui/Screen";
-import { useAuth } from "@/features/auth/useAuth";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/core/theme/colors";
-import { useUser } from "@/features/auth/useUser";
+import { useAdminAccess } from "@/features/admin/useAdminAccess";
+import { confirmAction, notify } from "@/core/ui/dialogs";
+import { useMoreMenu } from "@/features/more/useMoreMenu";
 
 interface Section {
   title: string;
@@ -21,7 +22,7 @@ const SECTIONS: Section[] = [
       {
         icon: "cart-outline",
         title: "Danh sách mua sắm",
-        route: "shopping/index",
+        route: "shopping",
       },
     ],
   },
@@ -31,12 +32,12 @@ const SECTIONS: Section[] = [
       {
         icon: "create-outline",
         title: "Món tự tạo",
-        route: "recipe/custom/index",
+        route: "recipe/custom",
       },
       {
         icon: "folder-outline",
         title: "Bộ sưu tập",
-        route: "collection/index",
+        route: "collection",
       },
     ],
   },
@@ -47,6 +48,11 @@ const SECTIONS: Section[] = [
         icon: "sparkles-outline",
         title: "Ý tưởng món từ tủ",
         route: "ai/ideas",
+      },
+      {
+        icon: "swap-horizontal-outline",
+        title: "Nguyên liệu thay thế",
+        route: "ai/substitutions",
       },
       {
         icon: "calendar-outline",
@@ -107,30 +113,55 @@ const SECTIONS: Section[] = [
   },
 ];
 
+/** Chỉ hiện với admin. Các màn hình này còn được chặn thêm ở app/admin/_layout.tsx. */
+const ADMIN_SECTION: Section = {
+  title: "Quản trị",
+  items: [
+    {
+      icon: "people-outline",
+      title: "Quản lý người dùng",
+      route: "admin/users",
+    },
+    {
+      icon: "chatbubbles-outline",
+      title: "Phản hồi từ người dùng",
+      route: "admin/feedback",
+    },
+    {
+      icon: "fast-food-outline",
+      title: "Quản lí ẩm thực",
+      route: "admin/cuisine",
+    },
+    {
+      icon: "pricetags-outline",
+      title: "Danh mục nguyên liệu",
+      route: "admin/ingredient-categories",
+    },
+  ],
+};
+
 export default function MoreHub() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
-  const { deleteAccount } = useUser();
+  const { isAdmin } = useAdminAccess();
+  const { profile, signOut, deleteAccount } = useMoreMenu();
   const go = (route: string) => router.push(`/${route}` as Href);
 
-  const confirmDeleteAccount = () => {
-    Alert.alert(
-      "Xóa tài khoản",
-      "Bạn có chắc chắn muốn xóa tài khoản? Hành động này có thể không thể hoàn tác.",
-      [
-        {
-          text: "Hủy",
-          style: "cancel",
-        },
-        {
-          text: "Xóa tài khoản",
-          style: "destructive",
-          onPress: () => {
-            void deleteAccount();
-          },
-        },
-      ],
-    );
+  const handleSignOut = async () => {
+    const result = await signOut();
+    if (!result.ok) notify("Lỗi", result.message);
+  };
+
+  const handleDeleteAccount = async () => {
+    const ok = await confirmAction({
+      title: "Xóa tài khoản",
+      message:
+        "Bạn có chắc chắn muốn xóa tài khoản? Hành động này có thể không thể hoàn tác.",
+      confirmText: "Xóa tài khoản",
+      destructive: true,
+    });
+    if (!ok) return;
+    const result = await deleteAccount();
+    if (!result.ok) notify("Lỗi", result.message);
   };
 
   const account: MenuItem[] = [
@@ -139,16 +170,18 @@ export default function MoreHub() {
       title: "Đăng xuất",
       route: "POST /auth/logout",
       tone: "danger",
-      onPress: signOut,
+      onPress: () => void handleSignOut(),
     },
     {
       icon: "warning-outline",
       title: "Xóa tài khoản",
       route: "settings/delete-account",
       tone: "danger",
-      onPress: confirmDeleteAccount,
+      onPress: () => void handleDeleteAccount(),
     },
   ];
+
+  const sections = isAdmin ? [...SECTIONS, ADMIN_SECTION] : SECTIONS;
 
   return (
     <Screen>
@@ -158,15 +191,15 @@ export default function MoreHub() {
         <Card className="flex-row items-center gap-4 rounded-2xl border border-border bg-surface p-4">
           {/* Avatar */}
           <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-brandSoft dark:bg-successBg-dark">
-            {user?.avatarUri ? (
+            {profile?.avatarUri ? (
               <Image
-                source={{ uri: user.avatarUri }}
+                source={{ uri: profile.avatarUri }}
                 className="h-14 w-14"
                 resizeMode="cover"
               />
             ) : (
               <AppText variant="heading" className="text-brand">
-                {user?.displayName?.trim()?.charAt(0)?.toUpperCase() ?? "?"}
+                {profile?.initial?.trim()?.charAt(0)?.toUpperCase() ?? "?"}
               </AppText>
             )}
           </View>
@@ -174,11 +207,11 @@ export default function MoreHub() {
           {/* User information */}
           <View className="flex-1 gap-1">
             <AppText variant="heading" numberOfLines={1}>
-              {user?.displayName?.trim() || "Người dùng"}
+              {profile?.name?.trim() || "Người dùng"}
             </AppText>
 
             <AppText variant="caption" numberOfLines={1}>
-              {user?.email || "Chưa cập nhật email"}
+              {profile?.email || "Chưa cập nhật email"}
             </AppText>
 
             <AppText variant="caption" className="text-brand">
@@ -192,7 +225,7 @@ export default function MoreHub() {
           </View>
         </Card>
       </Pressable>
-      {SECTIONS.map((s) => (
+      {sections.map((s) => (
         <MenuGroup
           key={s.title}
           title={s.title}

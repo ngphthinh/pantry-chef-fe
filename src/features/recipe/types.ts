@@ -3,7 +3,7 @@ import type {
   Difficulty,
   RecipeDetailResponse,
   RecipeSummaryResponse,
-} from '@/types';
+} from "@/types";
 
 /**
  * Tham số tìm theo nguyên liệu. `cursor` là offset dạng chuỗi, lấy từ `nextCursor` của lần gọi trước.
@@ -28,13 +28,21 @@ export interface RecipeNameQuery extends RecipePageQuery {
 }
 
 /** Các danh sách phân trang trong slice, mỗi danh sách có con trỏ riêng. */
-export type RecipeFeedKey = 'search' | 'suggestions' | 'byName' | 'popular';
+export type RecipeFeedKey = "search" | "suggestions" | "byName" | "popular";
 
 export interface IRecipeApi {
-  search(query: RecipeSearchQuery): Promise<CursorResponse<RecipeSummaryResponse>>;
-  suggestions(query: RecipePageQuery): Promise<CursorResponse<RecipeSummaryResponse>>;
-  byName(query: RecipeNameQuery): Promise<CursorResponse<RecipeSummaryResponse>>;
-  popular(query: RecipePageQuery): Promise<CursorResponse<RecipeSummaryResponse>>;
+  search(
+    query: RecipeSearchQuery,
+  ): Promise<CursorResponse<RecipeSummaryResponse>>;
+  suggestions(
+    query: RecipePageQuery,
+  ): Promise<CursorResponse<RecipeSummaryResponse>>;
+  byName(
+    query: RecipeNameQuery,
+  ): Promise<CursorResponse<RecipeSummaryResponse>>;
+  popular(
+    query: RecipePageQuery,
+  ): Promise<CursorResponse<RecipeSummaryResponse>>;
   random(count?: number): Promise<RecipeSummaryResponse[]>;
   getDetail(externalId: string): Promise<RecipeDetailResponse>;
   similar(externalId: string): Promise<RecipeSummaryResponse[]>;

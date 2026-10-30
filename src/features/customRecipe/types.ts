@@ -5,19 +5,36 @@ import type {
   RecipeDetailResponse,
   RecipeSummaryResponse,
   RecipeUpdateRequest,
-} from '@/types';
+} from "@/types";
 
-/** `cursor` ở đây là UUID của món cuối trang trước (khác với cursor offset của công thức ngoài). */
 export interface CustomRecipeQuery {
-  cursor?: string | null;
+  /** `nextCursor` của trang trước (UUID). */
+  cursor?: string;
+  /** Tối đa 50. */
   size?: number;
 }
 
+/** Kết quả lưu công thức: công thức đã lưu và việc ảnh có tải lên được không. */
+export interface SaveRecipeResult {
+  recipe: RecipeDetailResponse;
+  /** true nếu công thức đã lưu nhưng ảnh tải lên thất bại. */
+  imageFailed: boolean;
+}
+
 export interface ICustomRecipeApi {
-  list(query: CustomRecipeQuery): Promise<CursorResponse<RecipeSummaryResponse>>;
-  create(body: RecipeCreateRequest): Promise<RecipeDetailResponse>;
-  getById(id: string): Promise<RecipeDetailResponse>;
-  update(id: string, body: RecipeUpdateRequest): Promise<RecipeDetailResponse>;
-  remove(id: string): Promise<void>;
+  getRecipes(
+    query: CustomRecipeQuery,
+  ): Promise<CursorResponse<RecipeSummaryResponse>>;
+  getRecipe(id: string): Promise<RecipeDetailResponse>;
+  createRecipe(body: RecipeCreateRequest): Promise<RecipeDetailResponse>;
+  /** PUT thay toàn bộ nguyên liệu và các bước. */
+  updateRecipe(
+    id: string,
+    body: RecipeUpdateRequest,
+  ): Promise<RecipeDetailResponse>;
+  removeRecipe(id: string): Promise<void>;
+}
+
+export interface ICustomRecipeImageApi {
   uploadImage(id: string, image: PickedImage): Promise<RecipeDetailResponse>;
 }

@@ -1,25 +1,28 @@
-import { TextInput, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
-import { Chip } from '@/components/ui/Chip';
-import { Screen } from '@/components/ui/Screen';
-import { BackHeader } from '@/components/recipe/BackHeader';
-import { RecipeList } from '@/components/recipe/RecipeList';
-import { useAppTheme } from '@/core/theme/useAppTheme';
-import { useOpenRecipe } from '@/features/recipe/useOpenRecipe';
-import { useRecipeDiscover, type DiscoverMode } from '@/features/recipe/useRecipeDiscover';
+import { TextInput, View } from "react-native";
+import { useLocalSearchParams } from "expo-router";
+import { AppText } from "@/components/ui/AppText";
+import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
+import { Screen } from "@/components/ui/Screen";
+import { BackHeader } from "@/components/recipe/BackHeader";
+import { RecipeList } from "@/components/recipe/RecipeList";
+import { useAppTheme } from "@/core/theme/useAppTheme";
+import { useOpenRecipe } from "@/features/recipe/useOpenRecipe";
+import {
+  useRecipeDiscover,
+  type DiscoverMode,
+} from "@/features/recipe/useRecipeDiscover";
 
 const MODES: { mode: DiscoverMode; label: string }[] = [
-  { mode: 'popular', label: 'Phổ biến' },
-  { mode: 'random', label: 'Ngẫu nhiên' },
-  { mode: 'name', label: 'Theo tên' },
+  { mode: "popular", label: "Phổ biến" },
+  { mode: "random", label: "Ngẫu nhiên" },
+  { mode: "name", label: "Theo tên" },
 ];
 
 export default function DiscoverScreen() {
   const { q } = useLocalSearchParams<{ q?: string }>();
   const { palette } = useAppTheme();
-  const discover = useRecipeDiscover(q ?? '');
+  const discover = useRecipeDiscover(q ?? "");
   const openRecipe = useOpenRecipe();
 
   const header = (
@@ -35,7 +38,7 @@ export default function DiscoverScreen() {
         ))}
       </View>
 
-      {discover.mode === 'name' ? (
+      {discover.mode === "name" ? (
         <TextInput
           value={discover.keyword}
           onChangeText={discover.setKeyword}
@@ -46,8 +49,13 @@ export default function DiscoverScreen() {
         />
       ) : null}
 
-      {discover.mode === 'random' ? (
-        <Button title="Gợi ý món khác" variant="secondary" loading={discover.isLoading} onPress={discover.reroll} />
+      {discover.mode === "random" ? (
+        <Button
+          title="Gợi ý món khác"
+          variant="primary"
+          loading={discover.isLoading}
+          onPress={discover.reroll}
+        />
       ) : null}
 
       {discover.needsKeyword ? (
@@ -58,7 +66,10 @@ export default function DiscoverScreen() {
 
   return (
     <Screen scroll={false}>
-      <BackHeader title="Khám phá món" subtitle="Món của bạn và món từ kho công thức" />
+      <BackHeader
+        title="Khám phá món"
+        subtitle="Món của bạn và món từ kho công thức"
+      />
       <RecipeList
         items={discover.items}
         isLoading={discover.isLoading}

@@ -47,5 +47,16 @@ export class MealPlanService {
   getShoppingList = (id: string): Promise<ShoppingItemResponse[]> =>
     this.mealPlan.getShoppingList(id);
 
-
+  createFromAiDraft = (draft: AiMealPlanResponse): Promise<MealPlanResponse> => {
+    const weekStart = draft.weekStart.includes('T')
+      ? draft.weekStart.split('T')[0]
+      : draft.weekStart;
+    const entries: MealPlanEntryCreateRequest[] = draft.entries.map((e) => ({
+      date: e.date.includes('T') ? e.date.split('T')[0] : e.date,
+      mealType: e.mealType,
+      recipeId: e.recipeId,
+      servings: e.servings ?? undefined,
+    }));
+    return this.mealPlan.create({ weekStart, entries });
+  };
 }

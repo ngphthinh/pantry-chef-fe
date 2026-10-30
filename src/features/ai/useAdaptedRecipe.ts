@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { adaptRecipe, adaptedRecipeCleared } from "./aiSlice";
-import { formatDifficulty, formatIngredient, formatTimer } from "./Recipeformat";
+import { formatDifficulty, formatIngredient, formatTimer } from "./recipeformat";
 
 
 export interface AdaptedRecipeView {
