@@ -137,7 +137,7 @@ export default function IngredientCategoriesScreen() {
   });
 
   return (
-    <PageScreen title="Danh mục nguyên liệu" scroll={false}>
+    <PageScreen title="Danh mục nguyên liệu">
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>Danh mục nguyên liệu</Text>
@@ -196,8 +196,7 @@ export default function IngredientCategoriesScreen() {
         visible={visible}
         transparent
         animationType="slide"
-        onRequestClose={() => setVisible(false)}
-      >
+        onRequestClose={() => setVisible(false)}>
         <View style={styles.overlay}>
           <View style={styles.modal}>
             <Text style={styles.modalTitle}>
@@ -229,16 +228,14 @@ export default function IngredientCategoriesScreen() {
               <Pressable
                 style={styles.cancelButton}
                 onPress={() => setVisible(false)}
-                disabled={saving}
-              >
+                disabled={saving}>
                 <Text>Hủy</Text>
               </Pressable>
 
               <Pressable
                 style={styles.saveButton}
                 onPress={() => void saveCategory()}
-                disabled={saving}
-              >
+                disabled={saving}>
                 {saving ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (

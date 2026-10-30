@@ -26,6 +26,8 @@ interface ListScreenProps<T> {
   refreshing?: boolean;
   /** Gọi khi người dùng bắt đầu kéo cuộn. */
   onScrollBeginDrag?: () => void;
+  /** Header dính ở trên khi cuộn. Nên dùng với header gọn (tiêu đề, tìm kiếm, tab). */
+  stickyHeader?: boolean;
 }
 
 export function ListScreen<T>({
@@ -41,18 +43,32 @@ export function ListScreen<T>({
   onRefresh,
   refreshing = false,
   onScrollBeginDrag,
+  stickyHeader = true,
 }: ListScreenProps<T>) {
   const insets = useSafeAreaInsets();
+  const sticky = stickyHeader && !!header;
 
   return (
-    <View className="flex-1 bg-canvas dark:bg-canvas-dark" style={{ paddingTop: insets.top }}>
+    <View
+      className="flex-1 bg-canvas dark:bg-canvas-dark"
+      style={{ paddingTop: insets.top }}>
       <FlatList
         data={data}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         numColumns={numColumns}
         columnWrapperStyle={numColumns > 1 ? { gap } : undefined}
-        ListHeaderComponent={header}
+        ListHeaderComponent={
+          header ? (
+            <View
+              className={
+                sticky ? "bg-canvas pb-3 dark:bg-canvas-dark" : undefined
+              }>
+              {header}
+            </View>
+          ) : undefined
+        }
+        stickyHeaderIndices={sticky ? [0] : undefined}
         ListEmptyComponent={empty ?? undefined}
         ListFooterComponent={
           isLoadingMore ? (

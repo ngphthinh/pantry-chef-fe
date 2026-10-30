@@ -2,7 +2,7 @@ import type { CuisineRequest, CuisineResponse } from "@/types";
 
 export interface ICuisineApi {
   /** Công khai, không cần đăng nhập. */
-  list(): Promise<CuisineResponse[]>;
+  list(opts?: { force?: boolean }): Promise<CuisineResponse[]>;
 }
 
 /** Chỉ ADMIN mới gọi được. */
