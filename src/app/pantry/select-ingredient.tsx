@@ -21,11 +21,8 @@ import { useIngredientCategories } from "@/features/ingredient/useIngredientCate
 import { useIngredientSearch } from "@/features/ingredient/useIngredientSearch";
 import type { IngredientResponse } from "@/types";
 
-/**
- * Chọn nguyên liệu từ danh mục chuẩn.
- *  - Mặc định: chuyển sang `pantry/new` kèm ingredientId, ingredientName, defaultUnit.
- *  - `?pick=1`: màn hình gọi đã đăng ký `ingredientPicker.request(...)`; chọn xong gọi lại và tự quay về.
- */
+const ADD_INGREDIENT_ROUTE = "/pantry/new-ingredient";
+
 export default function SelectIngredientScreen() {
   const router = useRouter();
   const { brand, palette } = useAppTheme();
@@ -34,9 +31,13 @@ export default function SelectIngredientScreen() {
 
   const { categories } = useIngredientCategories();
   const [categoryId, setCategoryId] = useState("");
-  const search = useIngredientSearch({ categoryId: categoryId || undefined, pageSize: 30 });
+  const search = useIngredientSearch({
+    categoryId: categoryId || undefined,
+    pageSize: 30,
+  });
 
-  // Thoát mà không chọn thì bỏ yêu cầu đang chờ (đã chọn rồi thì lệnh này không làm gì)
+  const keyword = search.keyword.trim();
+
   useEffect(
     () => () => {
       if (pickMode) ingredientPicker.cancel();
@@ -51,10 +52,14 @@ export default function SelectIngredientScreen() {
       router.back();
       return;
     }
-    router.replace({ pathname: "/pantry/new", params: toPantryNewParams(picked) });
+    router.replace({
+      pathname: "/pantry/new",
+      params: toPantryNewParams(picked),
+    });
   };
 
-  const goBack = () => (router.canGoBack() ? router.back() : router.replace("/"));
+  const goBack = () =>
+    router.canGoBack() ? router.back() : router.replace("/");
 
   const header = (
     <View className="gap-4">
@@ -69,7 +74,9 @@ export default function SelectIngredientScreen() {
         </Pressable>
         <View className="flex-1">
           <AppText variant="title">Chọn nguyên liệu</AppText>
-          <AppText variant="caption">Tìm từ danh mục chuẩn hóa của hệ thống</AppText>
+          <AppText variant="caption">
+            Tìm từ danh mục chuẩn hóa của hệ thống
+          </AppText>
         </View>
       </View>
 
@@ -95,10 +102,13 @@ export default function SelectIngredientScreen() {
       {!pickMode && (
         <Pressable
           onPress={() => router.replace("/pantry/barcode" as Href)}
+          accessibilityRole="button"
           className="flex-row items-center gap-2 self-start active:opacity-70"
         >
           <Ionicons name="barcode-outline" size={18} color={brand} />
-          <AppText className="font-semibold text-brand">Quét mã vạch thay vì gõ tên</AppText>
+          <AppText className="font-semibold text-brand">
+            Quét mã vạch thay vì gõ tên
+          </AppText>
         </Pressable>
       )}
 
@@ -116,26 +126,40 @@ export default function SelectIngredientScreen() {
           <AppText variant="error" className="text-center">
             {search.error}
           </AppText>
-          <Button title="Thử lại" variant="outline" onPress={() => void search.retry()} />
+          <Button
+            title="Thử lại"
+            variant="outline"
+            onPress={() => void search.retry()}
+          />
         </Card>
       )}
     </View>
   );
+
+  const handleAddIngredient = () => {
+    router.push({
+      pathname: ADD_INGREDIENT_ROUTE,
+      params: {
+        ...(keyword ? { name: keyword } : {}),
+        ...(pickMode ? { pick: "1" } : {}),
+      },
+    } as Href);
+  };
 
   const empty = search.isEmpty ? (
     <View className="gap-3">
       <EmptyState
         icon="search-outline"
         title="Không tìm thấy nguyên liệu"
-        message="Thử từ khoá khác, hoặc nếu nguyên liệu chưa có trong danh mục, hãy gửi phản hồi để chúng mình bổ sung."
+        message={
+          keyword
+            ? `Chưa có “${keyword}” trong danh mục. Bạn có muốn thêm nguyên liệu này không?`
+            : "Chưa có nguyên liệu nào khớp. Bạn có muốn thêm nguyên liệu mới không?"
+        }
       />
-      <Button
-        title="Gửi phản hồi"
-        variant="outline"
-        onPress={() => router.push("/settings/feedback" as Href)}
-      />
+      <Button title="Thêm nguyên liệu mới" onPress={handleAddIngredient} />
     </View>
-  ) : null;
+  ) : undefined;
 
   return (
     <Screen scroll={false}>
@@ -149,7 +173,7 @@ export default function SelectIngredientScreen() {
             <View className="items-center p-4">
               <ActivityIndicator color={brand} />
             </View>
-          ) : null
+          ) : undefined
         }
         onEndReached={() => void search.loadMore()}
         onEndReachedThreshold={0.4}
@@ -157,17 +181,28 @@ export default function SelectIngredientScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 32, gap: 16 }}
         renderItem={({ item }) => (
-          <Pressable onPress={() => handleSelect(item)} className="active:scale-[0.985]">
-            <Card className="flex-row items-center justify-between p-4 shadow-sm">
+          <Pressable
+            onPress={() => handleSelect(item)}
+            className="active:scale-[0.985]"
+          >
+            <Card className="flex-row items-center justify-between gap-3 p-4 shadow-sm">
               <View className="flex-1 flex-row items-center gap-3.5">
                 <View className="h-10 w-10 items-center justify-center rounded-2xl bg-brandSoft dark:bg-successBg-dark">
                   <Ionicons name="nutrition-outline" size={20} color={brand} />
                 </View>
                 <View className="flex-1">
-                  <AppText variant="heading" className="text-base font-semibold" numberOfLines={1}>
+                  <AppText
+                    variant="heading"
+                    className="text-base font-semibold"
+                    numberOfLines={1}
+                  >
                     {item.name}
                   </AppText>
-                  <AppText variant="caption" className="mt-0.5" numberOfLines={1}>
+                  <AppText
+                    variant="caption"
+                    className="mt-0.5"
+                    numberOfLines={1}
+                  >
                     {item.category?.name ?? "Nguyên liệu"}
                     {item.defaultUnit ? ` · Đơn vị: ${item.defaultUnit}` : ""}
                   </AppText>

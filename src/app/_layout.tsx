@@ -41,6 +41,7 @@ function RootNavigator() {
           <Stack.Screen name="pantry/[id]" />
           <Stack.Screen name="pantry/new" />
           <Stack.Screen name="pantry/select-ingredient" />
+          <Stack.Screen name="pantry/new-ingredient" />
           <Stack.Screen name="pantry/scan-review" />
           <Stack.Screen name="pantry/expiring" />
           <Stack.Screen name="search/results" />

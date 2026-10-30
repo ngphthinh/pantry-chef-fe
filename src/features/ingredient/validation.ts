@@ -23,6 +23,25 @@ export const ingredientValidators = {
     return null;
   },
 
+  ingredientName: (value: string): string | null => {
+    const name = value.trim();
+    if (!name) return "Vui lòng nhập tên nguyên liệu";
+    if (name.length > MAX_NAME_LENGTH)
+      return `Tên tối đa ${MAX_NAME_LENGTH} ký tự`;
+    return null;
+  },
+
+  ingredientCategory: (categoryId: string): string | null =>
+    categoryId ? null : "Vui lòng chọn danh mục",
+
+  /** Mã vạch không bắt buộc khi thêm nguyên liệu: để trống thì hợp lệ. */
+  optionalBarcode: (value: string): string | null => {
+    const code = value.trim();
+    if (!code) return null;
+    if (!BARCODE_PATTERN.test(code)) return "Mã vạch phải gồm 8–14 chữ số";
+    return null;
+  },
+
   barcode: (value: string): string | null => {
     const code = value.trim();
     if (!code) return "Vui lòng nhập mã vạch";

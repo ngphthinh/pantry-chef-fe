@@ -75,10 +75,21 @@ const SECTIONS: Section[] = [
         route: "settings/notifications",
       },
       {
+        icon: "nutrition-outline",
+        title: "Nguyên liệu",
+        route: "settings/ingredients",
+      },
+      {
+        icon: "pricetags-outline",
+        title: "Danh mục nguyên liệu",
+        route: "settings/ingredient-categories",
+      },
+      {
         icon: "ban-outline",
         title: "Nguyên liệu loại trừ",
         route: "settings/excluded-ingredients",
       },
+
       {
         icon: "lock-closed-outline",
         title: "Đổi mật khẩu",
@@ -131,11 +142,6 @@ const ADMIN_SECTION: Section = {
       icon: "fast-food-outline",
       title: "Quản lí ẩm thực",
       route: "admin/cuisine",
-    },
-    {
-      icon: "pricetags-outline",
-      title: "Danh mục nguyên liệu",
-      route: "admin/ingredient-categories",
     },
   ],
 };

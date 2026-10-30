@@ -27,8 +27,6 @@ export class IngredientService {
     private readonly categoryAdmin: IIngredientCategoryAdminApi,
   ) {}
 
-  // ───────── Nguyên liệu ─────────
-
   search = (
     query: IngredientQuery = {},
   ): Promise<CursorResponse<IngredientResponse>> =>
@@ -60,19 +58,41 @@ export class IngredientService {
     }
   };
 
-  /** Chỉ ADMIN. */
+  /** Người dùng thêm nguyên liệu của riêng mình; ADMIN thêm vào danh mục chung. */
   create = (body: IngredientCreateRequest): Promise<IngredientResponse> =>
-    this.ingredientAdmin.create(this.normalize(body));
-
-  /** Chỉ ADMIN. PUT thay thế toàn bộ nên luôn gửi đủ các trường. */
+    this.translateIngredientError(() =>
+      this.ingredientAdmin.create(this.normalize(body)),
+    );
   update = (
     id: string,
     body: IngredientUpdateRequest,
   ): Promise<IngredientResponse> =>
-    this.ingredientAdmin.update(id, this.normalize(body));
+    this.translateIngredientError(() =>
+      this.ingredientAdmin.update(id, this.normalize(body)),
+    );
 
-  /** Chỉ ADMIN. */
-  remove = (id: string): Promise<void> => this.ingredientAdmin.remove(id);
+  remove = (id: string): Promise<void> =>
+    this.translateIngredientError(() => this.ingredientAdmin.remove(id));
+
+  private translateIngredientError = async <T>(
+    run: () => Promise<T>,
+  ): Promise<T> => {
+    try {
+      return await run();
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.status === 403)
+          throw new Error("Bạn không có quyền thực hiện thao tác này.");
+        if (error.status === 404)
+          throw new Error(
+            "Không tìm thấy nguyên liệu hoặc danh mục. Danh sách có thể đã thay đổi, hãy tải lại.",
+          );
+        if (error.status === 409)
+          throw new Error("Mã vạch này đã được dùng cho nguyên liệu khác.");
+      }
+      throw error;
+    }
+  };
 
   // ───────── Nhóm nguyên liệu ─────────
 
@@ -105,7 +125,6 @@ export class IngredientService {
       "Danh mục này vẫn còn nguyên liệu nên chưa thể xoá.",
     );
 
-  /** 403 / 404 / 409 của nhóm nguyên liệu đổi thành thông điệp tiếng Việt; lỗi khác giữ nguyên. */
   private translateCategoryError = async <T>(
     run: () => Promise<T>,
     conflictMessage: string,
@@ -115,7 +134,7 @@ export class IngredientService {
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 403)
-          throw new Error("Chỉ quản trị viên mới thực hiện được thao tác này.");
+          throw new Error("Bạn không có quyền thực hiện thao tác này.");
         if (error.status === 404)
           throw new Error(
             "Không tìm thấy danh mục. Danh sách có thể đã thay đổi, hãy tải lại.",
