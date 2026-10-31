@@ -23,7 +23,12 @@ export interface RecipeFeedState {
   loaded: boolean;
 }
 
+export type RecipeSearchMode = 'ingredients' | 'name';
+
 export interface RecipeSearchCriteria {
+  /** 'ingredients': tìm theo nguyên liệu; 'name': tìm theo tên món (dùng `keyword`). */
+  mode: RecipeSearchMode;
+  keyword: string;
   ingredients: string[];
   cuisineId?: string;
   maxMinutes?: number;
@@ -54,7 +59,6 @@ const initialState: RecipeState = {
     search: emptyFeed(),
     suggestions: emptyFeed(),
     byName: emptyFeed(),
-    popular: emptyFeed(),
   },
   randomItems: [],
   similarItems: [],
@@ -64,13 +68,12 @@ const initialState: RecipeState = {
     search: 'idle',
     suggestions: 'idle',
     byName: 'idle',
-    popular: 'idle',
     random: 'idle',
     similar: 'idle',
     detail: 'idle',
     scale: 'idle',
   },
-  criteria: { ingredients: [] },
+  criteria: { mode: 'ingredients', keyword: '', ingredients: [] },
 };
 
 const recipeSlice = createSlice({
@@ -181,6 +184,13 @@ const loadFeed =
     );
   };
 
+/** Xoá danh sách đang hiện (và huỷ các lần tải đang chạy của danh sách đó). */
+export const clearFeed =
+  (feed: RecipeFeedKey): AppThunk =>
+  (dispatch) => {
+    dispatch(feedReset({ feed, requestKey: ++requestCounter }));
+  };
+
 export const fetchSearchResults =
   (append = false): AppThunk<Promise<void>> =>
   (dispatch, getState) => {
@@ -201,11 +211,6 @@ export const fetchByName =
   (q: string, append = false): AppThunk<Promise<void>> =>
   (dispatch) =>
     dispatch(loadFeed('byName', append, (cursor) => recipeService.byName({ q, cursor })));
-
-export const fetchPopular =
-  (append = false): AppThunk<Promise<void>> =>
-  (dispatch) =>
-    dispatch(loadFeed('popular', append, (cursor) => recipeService.popular({ cursor })));
 
 export const fetchRandom =
   (count?: number): AppThunk<Promise<void>> =>

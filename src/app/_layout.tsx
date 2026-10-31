@@ -40,7 +40,6 @@ function RootNavigator() {
           <Stack.Screen name="pantry/expiring" />
           <Stack.Screen name="search/results" />
           <Stack.Screen name="search/suggestions" />
-          <Stack.Screen name="search/discover" />
           <Stack.Screen name="recipe/external/[externalId]" />
           <Stack.Screen name="recipe/similar" />
           <Stack.Screen name="recipe/cooking" />

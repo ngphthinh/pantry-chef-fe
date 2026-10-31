@@ -28,7 +28,7 @@ export interface RecipeNameQuery extends RecipePageQuery {
 }
 
 /** Các danh sách phân trang trong slice, mỗi danh sách có con trỏ riêng. */
-export type RecipeFeedKey = "search" | "suggestions" | "byName" | "popular";
+export type RecipeFeedKey = "search" | "suggestions" | "byName";
 
 export interface IRecipeApi {
   search(
@@ -39,9 +39,6 @@ export interface IRecipeApi {
   ): Promise<CursorResponse<RecipeSummaryResponse>>;
   byName(
     query: RecipeNameQuery,
-  ): Promise<CursorResponse<RecipeSummaryResponse>>;
-  popular(
-    query: RecipePageQuery,
   ): Promise<CursorResponse<RecipeSummaryResponse>>;
   random(count?: number): Promise<RecipeSummaryResponse[]>;
   getDetail(externalId: string): Promise<RecipeDetailResponse>;

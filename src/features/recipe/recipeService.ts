@@ -10,13 +10,10 @@ import type {
   RecipeSearchQuery,
 } from "./types";
 
-/** Server chỉ dùng tối đa 10 nguyên liệu cho một lần tìm. */
-export const MAX_SEARCH_INGREDIENTS = 10;
-
 export class RecipeService {
   constructor(private readonly recipes: IRecipeApi) {}
 
-  /** Làm sạch danh sách nguyên liệu (bỏ trống, trùng) và cắt theo giới hạn của server. */
+  /** Làm sạch danh sách nguyên liệu (bỏ trống, trùng); không giới hạn số lượng. */
   search = (
     query: RecipeSearchQuery,
   ): Promise<CursorResponse<RecipeSummaryResponse>> => {
@@ -28,8 +25,7 @@ export class RecipeService {
         if (!name || seen.has(key)) return false;
         seen.add(key);
         return true;
-      })
-      .slice(0, MAX_SEARCH_INGREDIENTS);
+      });
     return this.recipes.search({ ...query, ingredients });
   };
 
@@ -42,11 +38,6 @@ export class RecipeService {
     query: RecipeNameQuery,
   ): Promise<CursorResponse<RecipeSummaryResponse>> =>
     this.recipes.byName({ ...query, q: query.q.trim() });
-
-  popular = (
-    query: RecipePageQuery = {},
-  ): Promise<CursorResponse<RecipeSummaryResponse>> =>
-    this.recipes.popular(query);
 
   random = (count?: number): Promise<RecipeSummaryResponse[]> =>
     this.recipes.random(count);
