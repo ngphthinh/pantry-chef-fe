@@ -1,4 +1,3 @@
-// ListScreen.tsx
 import type { ReactElement } from "react";
 import {
   ActivityIndicator,
@@ -15,8 +14,11 @@ interface ListScreenProps<T> {
   data: T[];
   keyExtractor: (item: T) => string;
   renderItem: ListRenderItem<T>;
+  /** Phần đầu danh sách (tiêu đề, ô tìm kiếm, bộ lọc...). Truyền ELEMENT, không truyền component. */
   header?: ReactElement;
+  /** Hiện khi danh sách rỗng (chỉ truyền khi đã tải xong, nếu không sẽ nháy lên lúc đang tải). */
   empty?: ReactElement | null;
+<<<<<<< HEAD
   /** Trạng thái đang tải dữ liệu lần đầu */
   isLoading?: boolean;
   /** Dòng chữ thông báo khi đang tải */
@@ -35,8 +37,19 @@ interface ListScreenProps<T> {
   onScrollBeginDrag?: () => void;
   /** Header dính ở trên khi cuộn. Nên dùng với header gọn (tiêu đề, tìm kiếm, tab). */
   stickyHeader?: boolean;
+=======
+  /** Gọi khi người dùng cuộn gần tới cuối. */
+  onEndReached?: () => void;
+  isLoadingMore?: boolean;
+>>>>>>> fd24daea9a52c4d8238b3ae106b931e44211d72c
 }
 
+/**
+ * Màn hình dạng danh sách cuộn vô hạn. Dùng FlatList làm vùng cuộn chính
+ * (không lồng trong ScrollView) nên onEndReached hoạt động đúng.
+ *
+ * Nếu màu nền / khoảng đệm không giống `Screen`, chỉ cần chỉnh ở file này.
+ */
 export function ListScreen<T>({
   data,
   keyExtractor,
@@ -47,6 +60,7 @@ export function ListScreen<T>({
   loadingMessage = "Đang tải dữ liệu...",
   onEndReached,
   isLoadingMore = false,
+<<<<<<< HEAD
   hasNext,
   numColumns = 1,
   gap = 16,
@@ -54,6 +68,8 @@ export function ListScreen<T>({
   refreshing = false,
   onScrollBeginDrag,
   stickyHeader = true,
+=======
+>>>>>>> fd24daea9a52c4d8238b3ae106b931e44211d72c
 }: ListScreenProps<T>) {
   const insets = useSafeAreaInsets();
   const sticky = stickyHeader && !!header;
@@ -136,7 +152,7 @@ export function ListScreen<T>({
         contentContainerStyle={{
           padding: 20,
           paddingBottom: insets.bottom + 32,
-          gap,
+          gap: 16,
         }}
       />
     </View>

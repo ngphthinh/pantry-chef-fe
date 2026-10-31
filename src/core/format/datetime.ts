@@ -90,13 +90,3 @@ export function vnStartOfDayToUtcIso(date: string): string {
     Date.parse(`${date.trim()}T00:00:00Z`) - VN_OFFSET_MS,
   ).toISOString();
 }
-
-export const toIsoDate = (date: string): string => {
-  const [day, month, year] = date.split("-");
-  return `${year}-${month}-${day}`;
-};
-
-export const toDisplayDate = (date: string): string => {
-  const [year, month, day] = date.split("-");
-  return `${day}-${month}-${year}`;
-};

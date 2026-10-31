@@ -39,6 +39,8 @@ export function useRecipeDetail(externalId: string | undefined) {
       try {
         await dispatch(fetchRecipeDetail(externalId, force));
       } catch (e) {
+        // Ghi ra Metro để biết nguyên nhân thật (404, 429 hết quota, 502 API ngoài, timeout...)
+        console.warn('[recipe-detail] tải chi tiết thất bại:', externalId, e);
         setError(getErrorMessage(e));
       }
     },

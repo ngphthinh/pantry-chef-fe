@@ -56,15 +56,6 @@ export class HttpRecipeRepository implements IRecipeApi {
     return data;
   };
 
-  popular = async (
-    query: RecipePageQuery = {},
-  ): Promise<CursorResponse<RecipeSummaryResponse>> => {
-    const { data } = await this.privateHttp.get<
-      CursorResponse<RecipeSummaryResponse>
-    >(`${BASE}/popular`, { params: compact(query) });
-    return data;
-  };
-
   random = async (count?: number): Promise<RecipeSummaryResponse[]> => {
     const { data } = await this.privateHttp.get<RecipeSummaryResponse[]>(
       `${BASE}/random`,

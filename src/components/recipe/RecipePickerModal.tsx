@@ -16,7 +16,7 @@ import { customRecipeService, recipeService } from "@/core/di/container";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import type { RecipeSummaryResponse } from "@/types";
 
-type TabMode = "suggestions" | "popular" | "random" | "search" | "custom";
+type TabMode = "suggestions" | "random" | "search" | "custom";
 
 interface RecipePickerModalProps {
   visible: boolean;
@@ -48,8 +48,6 @@ export function RecipePickerModal({
       let results: RecipeSummaryResponse[] = [];
       if (mode === "suggestions") {
         results = (await recipeService.suggestions({ size: 20 })).content || [];
-      } else if (mode === "popular") {
-        results = (await recipeService.popular({ size: 20 })).content || [];
       } else if (mode === "random") {
         results = await recipeService.random(8);
       } else if (mode === "custom") {
@@ -59,7 +57,7 @@ export function RecipePickerModal({
         results = queryText
           ? (await recipeService.byName({ q: queryText, size: 20 })).content ||
             []
-          : (await recipeService.popular({ size: 20 })).content || [];
+          : (await recipeService.suggestions({ size: 20 })).content || [];
       }
       if (myId === requestId.current) setRecipes(results); // bỏ kết quả cũ về muộn
     } catch (err: unknown) {
@@ -142,7 +140,7 @@ export function RecipePickerModal({
                 onPress={() => {
                   setSearchQuery("");
                   setSubmittedQuery("");
-                  if (activeTab === "search") setActiveTab("popular");
+                  if (activeTab === "search") setActiveTab("suggestions");
                 }}
                 className="p-1">
                 <Ionicons name="close-circle" size={18} color={palette.muted} />
@@ -175,26 +173,6 @@ export function RecipePickerModal({
                 activeTab === "suggestions" ? "text-white" : "text-muted"
               }`}>
               Gợi ý từ tủ
-            </AppText>
-          </Pressable>
-
-          <Pressable
-            onPress={() => handleTabChange("popular")}
-            className={`flex-row items-center gap-1.5 rounded-full px-3 py-1.5 ${
-              activeTab === "popular"
-                ? "bg-brand"
-                : "bg-soft dark:bg-surface-dark"
-            }`}>
-            <Ionicons
-              name="flame"
-              size={14}
-              color={activeTab === "popular" ? "#fff" : palette.muted}
-            />
-            <AppText
-              className={`text-xs font-semibold ${
-                activeTab === "popular" ? "text-white" : "text-muted"
-              }`}>
-              Phổ biến
             </AppText>
           </Pressable>
 

@@ -10,7 +10,6 @@ import { useRecipeSearchHub } from '@/features/recipe/useRecipeSearchHub';
 
 const SHORTCUTS: MenuItem[] = [
   { icon: 'briefcase-outline', title: 'Gợi ý theo tủ của tôi', route: 'search/suggestions' },
-  { icon: 'search-outline', title: 'Khám phá món', route: 'search/discover' },
   { icon: 'sparkles-outline', title: 'Ý tưởng từ AI', route: 'ai/ideas' },
 ];
 
@@ -20,8 +19,9 @@ export default function SearchHub() {
   const hub = useRecipeSearchHub();
   const go = (route: string) => router.push(`/${route}` as Href);
 
-  const searchByName = () =>
-    router.push({ pathname: '/search/discover', params: hub.keywordValue ? { q: hub.keywordValue } : {} });
+  const searchByName = () => {
+    if (hub.prepareNameSearch()) go('search/results');
+  };
 
   const searchByIngredients = () => {
     if (hub.prepareSearch()) go('search/results');
@@ -42,9 +42,7 @@ export default function SearchHub() {
 
       <View className="flex-row items-center justify-between">
         <AppText variant="label">Nguyên liệu trong tủ</AppText>
-        <AppText variant="caption">
-          Đã chọn {hub.selectedCount}/{hub.maxIngredients}
-        </AppText>
+        <AppText variant="caption">Đã chọn {hub.selectedCount}</AppText>
       </View>
 
       {hub.isPantryLoading && hub.pantryNames.length === 0 ? (

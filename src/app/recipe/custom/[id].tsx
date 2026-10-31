@@ -1,5 +1,12 @@
 import { useCallback } from "react";
-import { ActivityIndicator, Image, KeyboardAvoidingView, Platform, Pressable, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  View,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter, type Href } from "expo-router";
 
@@ -15,7 +22,8 @@ import { useCustomRecipe } from "@/features/customRecipe/useCustomRecipe";
 export default function CustomRecipesScreen() {
   const router = useRouter();
   const { palette, brand } = useAppTheme();
-  const { recipes, isLoading, isLoadingMore, loadError, load, loadMore } = useCustomRecipe();
+  const { recipes, isLoading, isLoadingMore, loadError, load, loadMore } =
+    useCustomRecipe();
 
   // Tải lại mỗi lần quay về (ví dụ sau khi tạo/sửa/xoá), vì danh sách chỉ giữ bản tóm tắt.
   useFocusEffect(
@@ -31,7 +39,11 @@ export default function CustomRecipesScreen() {
       <PageHeader
         title="Món tự tạo"
         right={
-          <Pressable onPress={openForm} hitSlop={10} accessibilityRole="button" accessibilityLabel="Tạo món mới">
+          <Pressable
+            onPress={openForm}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="Tạo món mới">
             <Ionicons name="add-circle" size={30} color={brand} />
           </Pressable>
         }
@@ -42,11 +54,18 @@ export default function CustomRecipesScreen() {
           <AppText variant="error" className="text-center">
             {loadError}
           </AppText>
-          <Button title="Thử lại" variant="outline" onPress={() => void load()} className="self-stretch" />
+          <Button
+            title="Thử lại"
+            variant="outline"
+            onPress={() => void load()}
+            className="self-stretch"
+          />
         </Card>
       ) : null}
 
-      {isLoading && recipes.length === 0 ? <ActivityIndicator color={brand} className="py-6" /> : null}
+      {isLoading && recipes.length === 0 ? (
+        <ActivityIndicator color={brand} className="py-6" />
+      ) : null}
     </View>
   );
 
@@ -64,7 +83,9 @@ export default function CustomRecipesScreen() {
     ) : null;
 
   return (
-    <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <KeyboardAvoidingView
+      className="flex-1"
+      behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ListScreen
         data={recipes}
         keyExtractor={(recipe) => recipe.id}
@@ -73,10 +94,15 @@ export default function CustomRecipesScreen() {
         onEndReached={() => void loadMore()}
         isLoadingMore={isLoadingMore}
         renderItem={({ item: recipe }) => (
-          <Pressable onPress={() => router.push(`/recipe/custom/${recipe.id}` as Href)}>
+          <Pressable
+            onPress={() => router.push(`/recipe/custom/${recipe.id}` as Href)}>
             <Card className="flex-row items-center gap-3 overflow-hidden p-3">
               {recipe.imageUrl ? (
-                <Image source={{ uri: recipe.imageUrl }} className="h-20 w-20 rounded-2xl" resizeMode="cover" />
+                <Image
+                  source={{ uri: recipe.imageUrl }}
+                  className="h-20 w-20 rounded-2xl"
+                  resizeMode="cover"
+                />
               ) : (
                 <View className="h-20 w-20 items-center justify-center rounded-2xl bg-soft dark:bg-soft-dark">
                   <Ionicons name="restaurant-outline" size={28} color={brand} />
@@ -86,9 +112,15 @@ export default function CustomRecipesScreen() {
                 <AppText className="font-bold" numberOfLines={2}>
                   {recipe.title}
                 </AppText>
-                {recipe.meta ? <AppText variant="caption">{recipe.meta}</AppText> : null}
+                {recipe.meta ? (
+                  <AppText variant="caption">{recipe.meta}</AppText>
+                ) : null}
               </View>
-              <Ionicons name="chevron-forward" size={18} color={palette.muted} />
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={palette.muted}
+              />
             </Card>
           </Pressable>
         )}
