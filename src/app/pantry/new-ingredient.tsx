@@ -1,12 +1,15 @@
 import { useCallback } from "react";
-import { View } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { Platform, Pressable, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 
 import { AppText } from "@/components/ui/AppText";
 import { Button } from "@/components/ui/Button";
 import { ChipGroup } from "@/components/ui/ChipGroup";
 import { PageScreen } from "@/components/ui/PageScreen";
 import { TextField } from "@/components/ui/TextField";
+import { useAppTheme } from "@/core/theme/useAppTheme";
+import { barcodePicker } from "@/features/ingredient/barcodePicker";
 import {
   ingredientPicker,
   toPantryNewParams,
@@ -20,6 +23,7 @@ const UNITS: Unit[] = ["G", "KG", "ML", "L", "PCS", "TBSP", "TSP", "CUP"];
 
 export default function NewIngredientScreen() {
   const router = useRouter();
+  const { palette } = useAppTheme();
   const { name: initialName, pick } = useLocalSearchParams<{
     name?: string;
     pick?: string;
@@ -33,7 +37,7 @@ export default function NewIngredientScreen() {
       const picked = toPickedIngredient(ingredient);
       if (pickMode) {
         ingredientPicker.resolve(picked);
-        router.dismiss(2);
+        router.dismiss(2); // bỏ cả màn này và màn chọn nguyên liệu
         return;
       }
       router.dismissTo({
@@ -91,17 +95,42 @@ export default function NewIngredientScreen() {
         />
       </View>
 
-      <TextField
-        label="Mã vạch (không bắt buộc)"
-        placeholder="8–14 chữ số"
-        keyboardType="number-pad"
-        maxLength={14}
-        value={form.barcode}
-        onChangeText={form.setBarcode}
-        error={form.errors.barcode}
-        onSubmitEditing={() => void form.submit()}
-        returnKeyType="done"
-      />
+      <View className="gap-2">
+        <View className="flex-row items-center justify-between">
+          <AppText variant="label">Mã vạch (không bắt buộc)</AppText>
+          {Platform.OS !== "web" && (
+            <Pressable
+              onPress={() => {
+                barcodePicker.request((code) => form.setBarcode(code));
+                router.push({
+                  pathname: "/pantry/barcode",
+                  params: { pick: "1" },
+                } as Href);
+              }}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Quét mã vạch"
+              className="h-9 w-9 items-center justify-center rounded-full bg-successBg active:opacity-70 dark:bg-successBg-dark"
+            >
+              <Ionicons
+                name="barcode-outline"
+                size={20}
+                color={palette.successInk}
+              />
+            </Pressable>
+          )}
+        </View>
+        <TextField
+          placeholder="8–14 chữ số"
+          keyboardType="number-pad"
+          maxLength={14}
+          value={form.barcode}
+          onChangeText={form.setBarcode}
+          error={form.errors.barcode}
+          onSubmitEditing={() => void form.submit()}
+          returnKeyType="done"
+        />
+      </View>
 
       {form.formError ? (
         <AppText variant="error">{form.formError}</AppText>

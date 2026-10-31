@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -10,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter, type Href } from "expo-router";
 
 import { AppText } from "@/components/ui/AppText";
 import { Badge } from "@/components/ui/Badge";
@@ -22,6 +23,7 @@ import { TextField } from "@/components/ui/TextField";
 import { brand } from "@/core/theme/colors";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { confirmAction, notify } from "@/core/ui/dialogs";
+import { barcodePicker } from "@/features/ingredient/barcodePicker";
 import { useIngredientCategories } from "@/features/ingredient/useIngredientCategories";
 import { useIngredientForm } from "@/features/ingredient/useIngredientForm";
 import { useIngredientManager } from "@/features/ingredient/useIngredientManager";
@@ -84,9 +86,30 @@ function IngredientEditorSheet({
   const { palette } = useAppTheme();
   const { categories } = useIngredientCategories();
   const form = useIngredientForm({ ingredient, onCreated: onSaved });
+  const router = useRouter();
+  // Ẩn hộp thoại khi sang màn quét (Modal sẽ che mất màn mới); form vẫn giữ nguyên trạng thái.
+  const [away, setAway] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      setAway(false);
+    }, []),
+  );
+
+  const startScan = () => {
+    Keyboard.dismiss();
+    barcodePicker.request((code) => form.setBarcode(code));
+    setAway(true);
+    router.push({ pathname: "/pantry/barcode", params: { pick: "1" } } as Href);
+  };
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={!away}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         className="flex-1 justify-end bg-black/40"
@@ -168,15 +191,34 @@ function IngredientEditorSheet({
               </View>
             </View>
 
-            <TextField
-              label="Mã vạch (không bắt buộc)"
-              placeholder="8–14 chữ số"
-              value={form.barcode}
-              onChangeText={form.setBarcode}
-              keyboardType="number-pad"
-              maxLength={14}
-              error={form.errors.barcode}
-            />
+            <View className="gap-2">
+              <View className="flex-row items-center justify-between">
+                <AppText variant="label">Mã vạch (không bắt buộc)</AppText>
+                {Platform.OS !== "web" && (
+                  <Pressable
+                    onPress={startScan}
+                    hitSlop={10}
+                    accessibilityRole="button"
+                    accessibilityLabel="Quét mã vạch"
+                    className="h-9 w-9 items-center justify-center rounded-full bg-successBg active:opacity-70 dark:bg-successBg-dark"
+                  >
+                    <Ionicons
+                      name="barcode-outline"
+                      size={20}
+                      color={palette.successInk}
+                    />
+                  </Pressable>
+                )}
+              </View>
+              <TextField
+                placeholder="8–14 chữ số"
+                value={form.barcode}
+                onChangeText={form.setBarcode}
+                keyboardType="number-pad"
+                maxLength={14}
+                error={form.errors.barcode}
+              />
+            </View>
           </ScrollView>
 
           {form.formError ? (
