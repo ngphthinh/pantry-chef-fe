@@ -35,6 +35,18 @@ import { HttpRecipeRepository } from "@/features/recipe/httpRecipeRepository";
 import { RecipeService } from "@/features/recipe/recipeService";
 import { AdminService } from "@/features/admin/adminService";
 import { HttpAdminRepository } from "@/features/admin/httpAdminrepository";
+import { HttpIngredientRepository } from "@/features/ingredient/httpIngredientRepository";
+import { HttpIngredientCategoryRepository } from "@/features/ingredient/httpIngredientCategoryRepository";
+import { IngredientService } from "@/features/ingredient/ingredientService";
+import { HttpExcludedIngredientRepository } from "@/features/excludedIngredient/httpExcludedIngredientRepository";
+import { ExcludedIngredientService } from "@/features/excludedIngredient/excludedIngredientService";
+import { HttpSyncRepository } from "@/features/sync/httpSyncRepository";
+import { SyncService } from "@/features/sync/syncService";
+import { HttpMetaRepository } from "@/features/meta/httpMetaRepository";
+import { CachedMetaRepository } from "@/features/meta/cachedMetaRepository";
+import { MetaService } from "@/features/meta/metaService";
+import { ExpoNotificationScheduler } from "@/features/expiryReminder/expoNotificationScheduler";
+import { ExpiryReminderService } from "@/features/expiryReminder/expiryReminderService";
 
 export const kvStorage = new AsyncKeyValueStorage();
 export const tokenStorage = new SecureTokenStorage();
@@ -106,4 +118,31 @@ export const statsService = new StatsService(
 );
 export const collectionService = new CollectionService(
   new HttpCollectionRepository(privateHttp),
+);
+const ingredientRepository = new HttpIngredientRepository(privateHttp);
+const ingredientCategoryRepository = new HttpIngredientCategoryRepository(
+  publicHttp,
+  privateHttp,
+);
+export const ingredientService = new IngredientService(
+  ingredientRepository,
+  ingredientRepository,
+  ingredientCategoryRepository,
+  ingredientCategoryRepository,
+);
+
+export const excludedIngredientService = new ExcludedIngredientService(
+  new HttpExcludedIngredientRepository(privateHttp),
+);
+
+export const syncService = new SyncService(new HttpSyncRepository(privateHttp));
+
+export const metaService = new MetaService(
+  new CachedMetaRepository(new HttpMetaRepository(privateHttp)),
+);
+
+export const expiryReminderService = new ExpiryReminderService(
+  kvStorage,
+  new ExpoNotificationScheduler(),
+  pantryService,
 );

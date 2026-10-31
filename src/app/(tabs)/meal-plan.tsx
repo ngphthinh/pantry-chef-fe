@@ -241,7 +241,7 @@ export default function MealPlanHubScreen() {
             {/* Copy Week Button */}
             <Pressable
               onPress={handleOpenCopyModal}
-              className="flex-row items-center gap-1.5 rounded-full border border-line bg-brandSoft px-3 py-1.5 shadow-xs dark:bg-surface-dark">
+              className="flex-row items-center gap-1.5 rounded-full border border-line bg-brandSoft px-3 py-1.5 shadow-xs active:scale-95 dark:bg-surface-dark">
               <Ionicons name="copy-outline" size={15} color={brand} />
               <AppText className="text-xs font-bold text-brand">
                 Sao chép tuần
@@ -254,22 +254,38 @@ export default function MealPlanHubScreen() {
         <View className="flex-row gap-2 py-1">
           <Pressable
             onPress={() => router.push("/meal-plan/add-entry" as Href)}
-            className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl bg-brandSoft p-2.5 shadow-xs active:scale-95 dark:bg-surface-dark">
-            <Ionicons name="add-circle" size={18} color={brand} />
+            className="flex-1 flex-row items-center justify-center gap-1 rounded-2xl bg-brandSoft p-2.5 shadow-xs active:scale-95 dark:bg-surface-dark">
+            <Ionicons name="add-circle" size={16} color={brand} />
             <AppText className="text-xs font-bold text-brand">Thêm bữa</AppText>
           </Pressable>
 
           <Pressable
+            onPress={() => {
+              if (currentPlan?.id) {
+                router.push(`/meal-plan/${currentPlan.id}` as Href);
+              } else {
+                Alert.alert(
+                  "Chưa có thực đơn",
+                  "Tuần này chưa có kế hoạch bữa ăn nào. Hãy nhấn 'Thêm bữa' để tạo trước nhé!",
+                );
+              }
+            }}
+            className="flex-1 flex-row items-center justify-center gap-1 rounded-2xl bg-brandSoft p-2.5 shadow-xs active:scale-95 dark:bg-surface-dark">
+            <Ionicons name="document-text-outline" size={16} color={brand} />
+            <AppText className="text-xs font-bold text-brand">Chi tiết</AppText>
+          </Pressable>
+
+          <Pressable
             onPress={() => router.push("/meal-plan/shopping-preview" as Href)}
-            className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl bg-brandSoft p-2.5 shadow-xs active:scale-95 dark:bg-surface-dark">
-            <Ionicons name="cart" size={18} color={brand} />
+            className="flex-1 flex-row items-center justify-center gap-1 rounded-2xl bg-brandSoft p-2.5 shadow-xs active:scale-95 dark:bg-surface-dark">
+            <Ionicons name="cart-outline" size={16} color={brand} />
             <AppText className="text-xs font-bold text-brand">Mua sắm</AppText>
           </Pressable>
 
           <Pressable
             onPress={() => router.push("/ai/meal-plan" as Href)}
-            className="flex-1 flex-row items-center justify-center gap-1.5 rounded-2xl bg-brandSoft p-2.5 shadow-xs active:scale-95 dark:bg-surface-dark">
-            <Ionicons name="sparkles" size={18} color={brand} />
+            className="flex-1 flex-row items-center justify-center gap-1 rounded-2xl bg-brandSoft p-2.5 shadow-xs active:scale-95 dark:bg-surface-dark">
+            <Ionicons name="sparkles" size={16} color={brand} />
             <AppText className="text-xs font-bold text-brand">AI gợi ý</AppText>
           </Pressable>
         </View>

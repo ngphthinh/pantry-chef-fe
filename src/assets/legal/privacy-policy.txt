@@ -1,0 +1,38 @@
+# Chính sách quyền riêng tư
+Cập nhật lần cuối: 30/10/2026
+
+Chính sách này giải thích Pantry Chef thu thập, sử dụng và bảo vệ thông tin của bạn như thế nào khi bạn dùng ứng dụng.
+
+## 1. Thông tin chúng tôi thu thập
+- Thông tin tài khoản: email, tên hiển thị và ảnh đại diện (nếu bạn tải lên).
+- Dữ liệu bạn nhập: tủ nguyên liệu, thực đơn, công thức tự tạo, món đã lưu, bộ sưu tập và danh sách mua sắm.
+- Tuỳ chọn cá nhân: giao diện sáng/tối và hệ đo lường.
+- Phản hồi bạn gửi, kèm phiên bản ứng dụng và thông tin thiết bị để chúng tôi dễ xử lý lỗi.
+- Ảnh bạn chụp hoặc chọn khi dùng tính năng nhận diện nguyên liệu.
+
+## 2. Mục đích sử dụng
+- Cung cấp và đồng bộ dữ liệu của bạn giữa các thiết bị.
+- Gợi ý món ăn, nguyên liệu thay thế và thực đơn phù hợp với những gì bạn có.
+- Cải thiện chất lượng ứng dụng và xử lý phản hồi.
+
+## 3. Dịch vụ bên thứ ba
+- Ảnh dùng để nhận diện nguyên liệu và nội dung yêu cầu gợi ý được gửi tới dịch vụ AI bên ngoài để xử lý.
+- Một số công thức gợi ý được lấy từ nhà cung cấp công thức bên ngoài.
+- Chúng tôi không bán thông tin cá nhân của bạn cho bên thứ ba.
+
+## 4. Gợi ý của AI
+Gợi ý của AI chỉ nhằm hỗ trợ nấu ăn và tham khảo. Đây không phải lời khuyên y tế hay dinh dưỡng. Bạn nên kiểm tra thành phần, hạn sử dụng và tình trạng dị ứng trước khi chế biến.
+
+## 5. Lưu trữ và bảo mật
+Dữ liệu được truyền qua kết nối mã hoá và chỉ người dùng đã đăng nhập mới truy cập được dữ liệu của chính mình. Không hệ thống nào an toàn tuyệt đối, vì vậy hãy giữ bí mật mật khẩu của bạn.
+
+## 6. Quyền của bạn
+- Xem và chỉnh sửa thông tin cá nhân trong phần Hồ sơ.
+- Đổi mật khẩu bất cứ lúc nào.
+- Xoá tài khoản trong phần Hồ sơ. Khi đó dữ liệu gắn với tài khoản sẽ bị xoá theo.
+
+## 7. Thay đổi chính sách
+Chúng tôi có thể cập nhật chính sách này. Ngày cập nhật gần nhất luôn được ghi ở đầu trang.
+
+## 8. Liên hệ
+Nếu có câu hỏi, hãy gửi phản hồi trong ứng dụng hoặc liên hệ: pantrychef12@gmail.com

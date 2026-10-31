@@ -53,6 +53,8 @@ export interface SavedRecipeQuery {
   size?: number; // 1–50, mặc định 10
   favorite?: boolean; // tab "Yêu thích"
   collectionId?: string; // màn hình collection/[id]
+  keyword?: string;
+  minRating?: number;   // 1–5
 }
 
 export interface CollectionResponseDetail {

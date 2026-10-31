@@ -1,5 +1,6 @@
 import { CACHE_KEYS } from "@/core/cache/cacheKeys";
 import { isOfflineError, jsonCache } from "@/core/cache/jsonCache";
+import {CollectionResponseDetail} from "@/types";
 import type {
     CollectionCreateRequest,
     CollectionResponse,
@@ -9,6 +10,10 @@ import type { ICollectionApi } from "./types";
 
 export class CachedCollectionRepository implements ICollectionApi {
     constructor(private readonly remote: ICollectionApi) {}
+
+    async getById(id: string): Promise<CollectionResponseDetail> {
+        return this.getById(id);
+    }
 
     list = async (): Promise<CollectionResponse[]> => {
         try {

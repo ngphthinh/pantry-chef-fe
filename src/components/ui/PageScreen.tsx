@@ -15,7 +15,12 @@ interface PageScreenProps {
 }
 
 /** Khung cho màn hình con (không nằm trong tab): tiêu đề + nút quay lại + tránh bàn phím. */
-export function PageScreen({ title, right, className, children }: PageScreenProps) {
+export function PageScreen({
+  title,
+  right,
+  className,
+  children,
+}: PageScreenProps) {
   const router = useRouter();
   const { palette } = useAppTheme();
 
@@ -25,7 +30,9 @@ export function PageScreen({ title, right, className, children }: PageScreenProp
   };
 
   return (
-    <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <KeyboardAvoidingView
+      className="flex-1"
+      behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <Screen className={className}>
         <View className="flex-row items-center gap-2">
           <Pressable
@@ -33,8 +40,7 @@ export function PageScreen({ title, right, className, children }: PageScreenProp
             hitSlop={10}
             accessibilityRole="button"
             accessibilityLabel="Quay lại"
-            className="h-10 w-10 items-center justify-center rounded-full active:opacity-70"
-          >
+            className="h-10 w-10 items-center justify-center rounded-full active:opacity-70">
             <Ionicons name="chevron-back" size={24} color={palette.ink} />
           </Pressable>
           <AppText variant="heading" className="flex-1" numberOfLines={1}>

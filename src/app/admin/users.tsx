@@ -12,38 +12,11 @@ import { AppText } from "@/components/ui/AppText";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ListScreen } from "@/components/ui/ListScreen";
-import { brand } from "@/core/theme/colors";
+import { useAppTheme } from "@/core/theme/useAppTheme";
 import {
   useAdminUsers,
   type AdminUserItem,
 } from "@/features/admin/useAdminUsers";
-
-const MUTED = "#9CA3AF";
-
-// Class viết nguyên văn để NativeWind nhận diện. Mỗi người một màu theo avatarSeed.
-const AVATAR_TONES = [
-  {
-    bg: "bg-emerald-100 dark:bg-emerald-900",
-    text: "text-emerald-700 dark:text-emerald-200",
-  },
-  { bg: "bg-sky-100 dark:bg-sky-900", text: "text-sky-700 dark:text-sky-200" },
-  {
-    bg: "bg-violet-100 dark:bg-violet-900",
-    text: "text-violet-700 dark:text-violet-200",
-  },
-  {
-    bg: "bg-amber-100 dark:bg-amber-900",
-    text: "text-amber-700 dark:text-amber-200",
-  },
-  {
-    bg: "bg-rose-100 dark:bg-rose-900",
-    text: "text-rose-700 dark:text-rose-200",
-  },
-  {
-    bg: "bg-teal-100 dark:bg-teal-900",
-    text: "text-teal-700 dark:text-teal-200",
-  },
-];
 
 function SearchBar({
   value,
@@ -54,25 +27,26 @@ function SearchBar({
   onChangeText: (text: string) => void;
   placeholder: string;
 }) {
+  const { brand, palette } = useAppTheme();
   return (
-    <View className="flex-row items-center gap-2 rounded-2xl border border-border bg-surface px-4">
-      <Ionicons name="search-outline" size={20} color={brand.DEFAULT} />
+    <View className="flex-row items-center gap-2 rounded-2xl border border-line bg-surface px-4 shadow-sm dark:border-line-dark">
+      <Ionicons name="search" size={20} color={brand} />
       <TextInput
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={MUTED}
+        placeholderTextColor={palette.muted}
         autoCapitalize="none"
         autoCorrect={false}
         returnKeyType="search"
-        className="flex-1 py-3 text-base text-black dark:text-white"
+        className="flex-1 py-3 text-base text-ink dark:text-ink-dark"
       />
       {value ? (
         <Pressable
           onPress={() => onChangeText("")}
           hitSlop={10}
           accessibilityLabel="Xoá từ khoá">
-          <Ionicons name="close-circle" size={20} color={MUTED} />
+          <Ionicons name="close-circle" size={20} color={palette.muted} />
         </Pressable>
       ) : null}
     </View>
@@ -80,12 +54,16 @@ function SearchBar({
 }
 
 function UserCard({ user }: { user: AdminUserItem }) {
-  const tone = AVATAR_TONES[user.avatarSeed % AVATAR_TONES.length];
+  const { brand, palette } = useAppTheme();
+  // Xoay màu theo avatarSeed, lấy từ palette để đúng dark mode
+  const tones = [brand, palette.successInk, palette.warnInk, palette.muted];
+  const color = tones[user.avatarSeed % tones.length];
 
   return (
-    <Card className="flex-row items-center gap-4 p-4">
+    <Card className="flex-row items-center gap-4 p-4 shadow-sm">
       <View
-        className={`h-14 w-14 items-center justify-center overflow-hidden rounded-full ${tone.bg}`}>
+        className="h-14 w-14 items-center justify-center overflow-hidden rounded-full"
+        style={{ backgroundColor: `${color}22` }}>
         {user.avatarUri ? (
           <Image
             source={{ uri: user.avatarUri }}
@@ -93,18 +71,18 @@ function UserCard({ user }: { user: AdminUserItem }) {
             resizeMode="cover"
           />
         ) : (
-          <AppText variant="heading" className={tone.text}>
+          <AppText variant="heading" style={{ color }}>
             {user.initial}
           </AppText>
         )}
       </View>
 
       <View className="flex-1 gap-1">
-        <AppText variant="heading" numberOfLines={1}>
+        <AppText variant="heading" className="text-base" numberOfLines={1}>
           {user.name}
         </AppText>
-        <View className="flex-row items-center gap-1">
-          <Ionicons name="mail-outline" size={14} color={MUTED} />
+        <View className="flex-row items-center gap-1.5">
+          <Ionicons name="mail-outline" size={14} color={palette.muted} />
           <View className="flex-1">
             <AppText variant="caption" numberOfLines={1}>
               {user.email || "Chưa cập nhật email"}
@@ -120,10 +98,10 @@ function UserCard({ user }: { user: AdminUserItem }) {
 function UserSkeleton() {
   return (
     <Card className="flex-row items-center gap-4 p-4">
-      <View className="h-14 w-14 rounded-full bg-slate-200 dark:bg-slate-700" />
+      <View className="h-14 w-14 rounded-full bg-soft dark:bg-soft-dark" />
       <View className="flex-1 gap-2">
-        <View className="h-4 w-1/2 rounded-md bg-slate-200 dark:bg-slate-700" />
-        <View className="h-3 w-3/4 rounded-md bg-slate-200 dark:bg-slate-700" />
+        <View className="h-4 w-1/2 rounded-md bg-soft dark:bg-soft-dark" />
+        <View className="h-3 w-3/4 rounded-md bg-soft dark:bg-soft-dark" />
       </View>
     </Card>
   );
@@ -131,6 +109,7 @@ function UserSkeleton() {
 
 export default function AdminUsersScreen() {
   const router = useRouter();
+  const { brand, palette } = useAppTheme();
   const {
     items,
     keyword,
@@ -151,8 +130,9 @@ export default function AdminUsersScreen() {
       <View className="flex-row items-center gap-3">
         <Pressable
           onPress={() => router.back()}
-          className="h-10 w-10 items-center justify-center rounded-full bg-surface">
-          <Ionicons name="arrow-back" size={22} color={brand.DEFAULT} />
+          hitSlop={8}
+          className="h-10 w-10 items-center justify-center rounded-full bg-soft active:scale-90 dark:bg-surface-dark">
+          <Ionicons name="arrow-back" size={20} color={palette.ink} />
         </Pressable>
 
         <View className="flex-1">
@@ -160,8 +140,8 @@ export default function AdminUsersScreen() {
           <AppText variant="caption">Tài khoản trong hệ thống</AppText>
         </View>
 
-        <View className="h-10 w-10 items-center justify-center rounded-full bg-brandSoft dark:bg-successBg-dark">
-          <Ionicons name="people" size={20} color={brand.DEFAULT} />
+        <View className="h-10 w-10 items-center justify-center rounded-2xl bg-brandSoft dark:bg-surface-dark">
+          <Ionicons name="people" size={20} color={brand} />
         </View>
       </View>
 
@@ -173,23 +153,34 @@ export default function AdminUsersScreen() {
 
       {countLabel ? (
         <View className="flex-row items-center justify-between px-1">
-          <AppText variant="label">{countLabel}</AppText>
+          <AppText
+            variant="label"
+            className="text-xs font-bold uppercase tracking-wider text-muted dark:text-muted-dark">
+            {countLabel}
+          </AppText>
           {isRefreshing ? (
-            <ActivityIndicator size="small" color={brand.DEFAULT} />
+            <ActivityIndicator size="small" color={brand} />
           ) : null}
         </View>
       ) : null}
 
       {error ? (
-        <Card className="gap-3 border border-danger p-4">
-          <View className="flex-row items-center gap-2">
-            <Ionicons name="alert-circle" size={20} color="#DC2626" />
-            <AppText variant="heading" className="text-danger">
-              Có lỗi xảy ra
-            </AppText>
+        <Card className="items-center gap-3 border border-dangerInk/40 bg-dangerBg/40 p-5 dark:border-dangerInk-dark/40 dark:bg-dangerBg-dark">
+          <View className="h-14 w-14 items-center justify-center rounded-full bg-surface dark:bg-soft-dark">
+            <Ionicons name="alert-circle" size={28} color={palette.dangerInk} />
           </View>
-          <AppText variant="caption">{error}</AppText>
-          <Button title="Thử lại" onPress={retry} />
+          <AppText variant="heading" className="text-base">
+            Có lỗi xảy ra
+          </AppText>
+          <AppText variant="caption" className="text-center">
+            {error}
+          </AppText>
+          <Button
+            title="Thử lại"
+            variant="outline"
+            onPress={retry}
+            className="self-stretch"
+          />
         </Card>
       ) : null}
 
@@ -206,8 +197,8 @@ export default function AdminUsersScreen() {
 
   const empty = isEmpty ? (
     <View className="items-center gap-3 px-6 py-10">
-      <View className="h-16 w-16 items-center justify-center rounded-full bg-brandSoft dark:bg-successBg-dark">
-        <Ionicons name="people-outline" size={30} color={brand.DEFAULT} />
+      <View className="h-16 w-16 items-center justify-center rounded-full bg-brandSoft dark:bg-surface-dark">
+        <Ionicons name="people-outline" size={30} color={brand} />
       </View>
       <AppText variant="heading">Không có người dùng</AppText>
       <AppText variant="caption" className="text-center">

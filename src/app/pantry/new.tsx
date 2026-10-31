@@ -1,22 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
-import { AppText } from '@/components/ui/AppText';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { DatePickerModal } from '@/components/ui/DatePickerModal';
-import { Screen } from '@/components/ui/Screen';
-import { TextField } from '@/components/ui/TextField';
-import { useAppTheme } from '@/core/theme/useAppTheme';
-import { usePantryForm } from '@/features/pantry/usePantryForm';
-import type { StorageLocation, Unit } from '@/types';
+import React, { useEffect, useState } from "react";
+import { Alert, Pressable, ScrollView, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
+import { AppText } from "@/components/ui/AppText";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { DatePickerModal } from "@/components/ui/DatePickerModal";
+import { Screen } from "@/components/ui/Screen";
+import { TextField } from "@/components/ui/TextField";
+import { useAppTheme } from "@/core/theme/useAppTheme";
+import { usePantryForm } from "@/features/pantry/usePantryForm";
+import type { StorageLocation, Unit } from "@/types";
 
-const UNITS: Unit[] = ['G', 'KG', 'ML', 'L', 'PCS', 'TBSP', 'TSP', 'CUP'];
-const LOCATIONS: { value: StorageLocation; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { value: 'FRIDGE', label: 'Tủ mát', icon: 'leaf-outline' },
-  { value: 'FREEZER', label: 'Tủ đông', icon: 'snow-outline' },
-  { value: 'PANTRY_SHELF', label: 'Kệ bếp', icon: 'cube-outline' },
+const UNITS: Unit[] = ["G", "KG", "ML", "L", "PCS", "TBSP", "TSP", "CUP"];
+const LOCATIONS: {
+  value: StorageLocation;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+}[] = [
+  { value: "FRIDGE", label: "Tủ mát", icon: "leaf-outline" },
+  { value: "FREEZER", label: "Tủ đông", icon: "snow-outline" },
+  { value: "PANTRY_SHELF", label: "Kệ bếp", icon: "cube-outline" },
 ];
 
 export default function NewPantryItemScreen() {
@@ -34,24 +38,35 @@ export default function NewPantryItemScreen() {
   // Nhận ingredientId & ingredientName từ màn hình chọn nguyên liệu hoặc quét barcode (của Việt)
   useEffect(() => {
     if (params.ingredientId) {
-      setField('ingredientId', params.ingredientId);
+      setField("ingredientId", params.ingredientId);
     }
     if (params.ingredientName) {
-      setField('ingredientName', params.ingredientName);
+      setField("ingredientName", params.ingredientName);
     }
     if (params.defaultUnit && UNITS.includes(params.defaultUnit as Unit)) {
-      setField('unit', params.defaultUnit as Unit);
+      setField("unit", params.defaultUnit as Unit);
     }
-  }, [params.ingredientId, params.ingredientName, params.defaultUnit, setField]);
+  }, [
+    params.ingredientId,
+    params.ingredientName,
+    params.defaultUnit,
+    setField,
+  ]);
 
   const handleSubmit = async () => {
     try {
-      await submit();
-      Alert.alert('Thành công', 'Đã thêm nguyên liệu vào tủ đồ!', [
-        { text: 'OK', onPress: () => router.back() },
+      const saved = await submit();
+      if (saved === null) return;
+      Alert.alert("Thành công", "Đã thêm nguyên liệu vào tủ đồ!", [
+        { text: "OK", onPress: () => router.back() },
       ]);
-    } catch {
-      Alert.alert('Lỗi', 'Không thể thêm món. Vui lòng kiểm tra lại thông tin.');
+    } catch (err) {
+      Alert.alert(
+        "Lỗi",
+        err instanceof Error
+          ? err.message
+          : "Không thể thêm món. Vui lòng kiểm tra lại thông tin.",
+      );
     }
   };
 
@@ -69,7 +84,10 @@ export default function NewPantryItemScreen() {
           <AppText variant="title">Thêm nguyên liệu</AppText>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} className="gap-4 pb-12">
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          className="gap-4 pb-12"
+        >
           {/* Ingredient Selector Card */}
           <Card className="p-4 shadow-sm">
             <AppText variant="label" className="mb-2">
@@ -80,10 +98,14 @@ export default function NewPantryItemScreen() {
               <View className="flex-row items-center justify-between rounded-2xl bg-brandSoft p-3 dark:bg-surface-dark">
                 <View className="flex-row items-center gap-2.5">
                   <Ionicons name="checkmark-circle" size={20} color={brand} />
-                  <AppText className="font-bold text-brand">{values.ingredientName}</AppText>
+                  <AppText className="font-bold text-brand">
+                    {values.ingredientName}
+                  </AppText>
                 </View>
                 <Pressable
-                  onPress={() => router.push('/pantry/select-ingredient' as Href)}
+                  onPress={() =>
+                    router.push("/pantry/select-ingredient" as Href)
+                  }
                   className="rounded-lg bg-brand/10 px-2.5 py-1"
                 >
                   <AppText variant="caption" className="font-bold text-brand">
@@ -93,14 +115,24 @@ export default function NewPantryItemScreen() {
               </View>
             ) : (
               <Pressable
-                onPress={() => router.push('/pantry/select-ingredient' as Href)}
+                onPress={() => router.push("/pantry/select-ingredient" as Href)}
                 className="flex-row items-center justify-between rounded-2xl border border-dashed border-line p-3.5 active:bg-soft"
               >
                 <View className="flex-row items-center gap-2">
-                  <Ionicons name="search-outline" size={18} color={palette.muted} />
-                  <AppText className="text-muted">Chọn từ danh mục nguyên liệu...</AppText>
+                  <Ionicons
+                    name="search-outline"
+                    size={18}
+                    color={palette.muted}
+                  />
+                  <AppText className="text-muted">
+                    Chọn từ danh mục nguyên liệu...
+                  </AppText>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color={palette.muted} />
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color={palette.muted}
+                />
               </Pressable>
             )}
 
@@ -118,7 +150,7 @@ export default function NewPantryItemScreen() {
               placeholder="Ví dụ: 500"
               keyboardType="numeric"
               value={values.quantity}
-              onChangeText={(text) => setField('quantity', text)}
+              onChangeText={(text) => setField("quantity", text)}
               error={errors.quantity}
             />
 
@@ -126,25 +158,28 @@ export default function NewPantryItemScreen() {
               Đơn vị đo
             </AppText>
             <View className="flex-row flex-wrap gap-2">
-              {UNITS.map((u) => (
-                <Pressable
-                  key={u}
-                  onPress={() => setField('unit', u)}
-                  className={`rounded-xl px-3.5 py-2 ${
-                    values.unit === u
-                      ? 'bg-brand text-white shadow-sm'
-                      : 'bg-soft dark:bg-soft-dark'
-                  }`}
-                >
-                  <AppText
-                    className={`font-semibold ${
-                      values.unit === u ? 'text-white' : 'text-ink dark:text-ink-dark'
+              {UNITS.map((u) => {
+                const isSelected = values.unit === u;
+                return (
+                  <Pressable
+                    key={u}
+                    onPress={() => setField("unit", u)}
+                    className={`rounded-xl px-3.5 py-2 ${
+                      isSelected ? "bg-brand" : "bg-soft dark:bg-soft-dark"
                     }`}
                   >
-                    {u}
-                  </AppText>
-                </Pressable>
-              ))}
+                    <AppText
+                      className={`font-semibold ${
+                        isSelected
+                          ? "text-white"
+                          : "text-ink dark:text-ink-dark"
+                      }`}
+                    >
+                      {u}
+                    </AppText>
+                  </Pressable>
+                );
+              })}
             </View>
           </Card>
 
@@ -159,11 +194,11 @@ export default function NewPantryItemScreen() {
                 return (
                   <Pressable
                     key={loc.value}
-                    onPress={() => setField('location', loc.value)}
-                    className={`flex-1 items-center gap-1.5 rounded-2xl p-3 shadow-sm ${
+                    onPress={() => setField("location", loc.value)}
+                    className={`flex-1 items-center gap-1.5 rounded-2xl border-2 p-3 ${
                       isSelected
-                        ? 'border-2 border-brand bg-brandSoft dark:bg-surface-dark'
-                        : 'bg-soft dark:bg-soft-dark'
+                        ? "border-brand bg-brandSoft dark:bg-surface-dark"
+                        : "border-transparent bg-soft dark:bg-soft-dark"
                     }`}
                   >
                     <Ionicons
@@ -173,7 +208,7 @@ export default function NewPantryItemScreen() {
                     />
                     <AppText
                       className={`text-xs font-bold ${
-                        isSelected ? 'text-brand' : 'text-muted'
+                        isSelected ? "text-brand" : "text-muted"
                       }`}
                     >
                       {loc.label}
@@ -202,11 +237,11 @@ export default function NewPantryItemScreen() {
                   <AppText
                     className={
                       values.expiryDate
-                        ? 'font-bold text-ink dark:text-ink-dark'
-                        : 'text-muted'
+                        ? "font-bold text-ink dark:text-ink-dark"
+                        : "text-muted"
                     }
                   >
-                    {values.expiryDate || 'Chạm để chọn từ lịch...'}
+                    {values.expiryDate || "Chạm để chọn từ lịch..."}
                   </AppText>
                   <AppText variant="caption">
                     Không cho phép chọn ngày trong quá khứ
@@ -218,14 +253,22 @@ export default function NewPantryItemScreen() {
                 <Pressable
                   onPress={(e) => {
                     e.stopPropagation();
-                    setField('expiryDate', '');
+                    setField("expiryDate", "");
                   }}
                   className="p-1"
                 >
-                  <Ionicons name="close-circle" size={18} color={palette.muted} />
+                  <Ionicons
+                    name="close-circle"
+                    size={18}
+                    color={palette.muted}
+                  />
                 </Pressable>
               ) : (
-                <Ionicons name="chevron-forward" size={18} color={palette.muted} />
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={palette.muted}
+                />
               )}
             </Pressable>
 
@@ -238,10 +281,10 @@ export default function NewPantryItemScreen() {
             {/* Quick Presets */}
             <View className="mt-3 flex-row flex-wrap gap-2">
               {[
-                { label: '+3 ngày', days: 3 },
-                { label: '+1 tuần', days: 7 },
-                { label: '+2 tuần', days: 14 },
-                { label: '+1 tháng', days: 30 },
+                { label: "+3 ngày", days: 3 },
+                { label: "+1 tuần", days: 7 },
+                { label: "+2 tuần", days: 14 },
+                { label: "+1 tháng", days: 30 },
               ].map((p) => (
                 <Pressable
                   key={p.days}
@@ -249,13 +292,15 @@ export default function NewPantryItemScreen() {
                     const d = new Date();
                     d.setDate(d.getDate() + p.days);
                     const y = d.getFullYear();
-                    const m = String(d.getMonth() + 1).padStart(2, '0');
-                    const day = String(d.getDate()).padStart(2, '0');
-                    setField('expiryDate', `${y}-${m}-${day}`);
+                    const m = String(d.getMonth() + 1).padStart(2, "0");
+                    const day = String(d.getDate()).padStart(2, "0");
+                    setField("expiryDate", `${y}-${m}-${day}`);
                   }}
                   className="rounded-xl border border-line bg-brandSoft px-3 py-1.5 dark:bg-surface-dark"
                 >
-                  <AppText className="text-xs font-bold text-brand">{p.label}</AppText>
+                  <AppText className="text-xs font-bold text-brand">
+                    {p.label}
+                  </AppText>
                 </Pressable>
               ))}
             </View>
@@ -263,7 +308,7 @@ export default function NewPantryItemScreen() {
 
           {/* Submit */}
           <Button
-            title={isSaving ? 'Đang lưu...' : 'Thêm vào tủ nguyên liệu'}
+            title={isSaving ? "Đang lưu..." : "Thêm vào tủ nguyên liệu"}
             onPress={handleSubmit}
             variant="primary"
             disabled={isSaving}
@@ -275,7 +320,7 @@ export default function NewPantryItemScreen() {
         <DatePickerModal
           visible={calendarOpen}
           onClose={() => setCalendarOpen(false)}
-          onSelectDate={(date) => setField('expiryDate', date)}
+          onSelectDate={(date) => setField("expiryDate", date)}
           currentValue={values.expiryDate}
           minDate={new Date()}
         />

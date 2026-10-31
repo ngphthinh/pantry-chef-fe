@@ -48,7 +48,7 @@ export function MenuGroup({ title, items, onNavigate }: MenuGroupProps) {
                   )}>
                   {item.title}
                 </AppText>
-                <AppText variant="caption">{item.route}</AppText>
+                {/* <AppText variant="caption">{item.route}</AppText> */}
               </View>
               <Ionicons
                 name="chevron-forward"

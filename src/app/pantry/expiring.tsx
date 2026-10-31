@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { Screen } from "@/components/ui/Screen";
+import { PantryItemThumbnail } from "@/components/pantry/PantryItemThumbnail";
 import { TextField } from "@/components/ui/TextField";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { toDisplayDate } from "@/core/format/datetime";
@@ -228,13 +229,14 @@ export default function PantryExpiringScreen() {
               <Card key={item.id} className="p-4 shadow-sm">
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center gap-3">
-                    <View className="h-11 w-11 items-center justify-center rounded-2xl bg-warnBg shadow-inner dark:bg-warnBg-dark">
-                      <Ionicons
-                        name="alarm-outline"
-                        size={22}
-                        color={palette.warnInk}
-                      />
-                    </View>
+                    <PantryItemThumbnail
+                      photoUri={item.photoUri}
+                      location={item.location}
+                      className="h-11 w-11"
+                      fallbackIcon="alarm-outline"
+                      fallbackIconColor={palette.warnInk}
+                      fallbackBgClassName="bg-warnBg dark:bg-warnBg-dark"
+                    />
                     <View>
                       <AppText variant="heading">{item.ingredientName}</AppText>
                       <AppText variant="caption">

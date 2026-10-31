@@ -3,8 +3,10 @@ import { shoppingService } from "@/core/di/container";
 import { unauthenticated } from "@/features/auth/authSlice";
 import type { AppThunk } from "@/store/hooks";
 import type {
+  PantryItemResponse,
   ShoppingItemCreateRequest,
   ShoppingItemResponse,
+  ShoppingItemStatus,
   ShoppingListDetailResponse,
   ShoppingListResponse,
 } from "@/types";
@@ -150,6 +152,28 @@ export const renameShoppingList =
     });
   };
 
+/** Tạo từ thực đơn (BE đã trừ đồ trong tủ). Lưu luôn chi tiết để mở ngay mà không phải tải lại. */
+export const createShoppingListFromMealPlan =
+  (mealPlanId: string): AppThunk<Promise<ShoppingListDetailResponse>> =>
+  async (dispatch) =>
+    withStatus(dispatch, "saving", async () => {
+      const detail = await shoppingService.createListFromMealPlan(mealPlanId);
+      dispatch(listUpserted({ id: detail.id, name: detail.name }));
+      dispatch(detailLoaded(detail));
+      return detail;
+    });
+
+/** Tạo từ một công thức. Lưu luôn chi tiết để mở ngay mà không phải tải lại. */
+export const createShoppingListFromRecipe =
+  (recipeId: string): AppThunk<Promise<ShoppingListDetailResponse>> =>
+  async (dispatch) =>
+    withStatus(dispatch, "saving", async () => {
+      const detail = await shoppingService.createListFromRecipe(recipeId);
+      dispatch(listUpserted({ id: detail.id, name: detail.name }));
+      dispatch(detailLoaded(detail));
+      return detail;
+    });
+
 export const deleteShoppingList =
   (id: string): AppThunk<Promise<void>> =>
   async (dispatch) => {
@@ -193,6 +217,26 @@ export const toggleShoppingItem =
   async (dispatch) => {
     dispatch(itemUpserted(await shoppingService.toggleItem(listId, item)));
   };
+
+/** Chuyển các mục đã mua vào tủ rồi tải lại chi tiết, vì BE xoá các mục đã chuyển khỏi danh sách. */
+export const moveShoppingItemsToPantry =
+  (listId: string): AppThunk<Promise<PantryItemResponse[]>> =>
+  async (dispatch) =>
+    withStatus(dispatch, "saving", async () => {
+      const moved = await shoppingService.moveBoughtToPantry(listId);
+      dispatch(detailLoaded(await shoppingService.getList(listId)));
+      return moved;
+    });
+
+/** Chọn / bỏ chọn tất cả mục. Trả về số mục không cập nhật được. */
+export const setAllShoppingItemsStatus =
+  (listId: string, items: ShoppingItemResponse[], status: ShoppingItemStatus): AppThunk<Promise<number>> =>
+  async (dispatch) =>
+    withStatus(dispatch, "saving", async () => {
+      const { updated, failed } = await shoppingService.setItemsStatus(listId, items, status);
+      updated.forEach((item) => dispatch(itemUpserted(item)));
+      return failed;
+    });
 
 export const deleteShoppingItem =
   (listId: string, itemId: string): AppThunk<Promise<void>> =>

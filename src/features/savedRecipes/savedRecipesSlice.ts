@@ -1,5 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
+import { collectionRemoved, collectionUpserted } from "@/features/collections/collectionsSlice";
+import type { CursorResponse } from "@/types";
 import { savedRecipeService } from "@/core/di/container";
 import { unauthenticated } from "@/features/auth/authSlice";
 import type { AppThunk } from "@/store/hooks";
@@ -19,6 +21,7 @@ interface SavedRecipesState {
     status: SavedRecipesStatus;
     hasNext: boolean;
     nextCursor?: string | null;
+    queryKey: string | null;
 }
 
 const initialState: SavedRecipesState = {
@@ -26,7 +29,24 @@ const initialState: SavedRecipesState = {
     detail: null,
     status: "idle",
     hasNext: false,
+    queryKey: null,
 };
+
+export interface SavedQuery {
+    favorite?: boolean;
+    collectionId?: string;
+    keyword?: string;
+    minRating?: number;
+}
+
+export function savedQueryKey(q: SavedQuery): string {
+    return JSON.stringify([
+        q.favorite ?? null,
+        q.collectionId ?? null,
+        q.keyword ?? null,
+        q.minRating ?? null,
+    ]);
+}
 
 const savedRecipesSlice = createSlice({
     name: "savedRecipes",
@@ -42,12 +62,17 @@ const savedRecipesSlice = createSlice({
                 hasNext: boolean;
                 nextCursor?: string | null;
                 replace: boolean;
+                queryKey: string;
             }>,
         ) {
-            const { items, hasNext, nextCursor, replace } = action.payload;
+            const { items, hasNext, nextCursor, replace, queryKey } = action.payload;
             state.items = replace ? items : [...state.items, ...items];
             state.hasNext = hasNext;
             state.nextCursor = nextCursor;
+            if(replace) state.queryKey = queryKey;
+        },
+        invalidated(state) {                        // thêm
+            state.queryKey = null;
         },
         detailLoaded(state, action: PayloadAction<SavedRecipeDetailResponse>) {
             state.detail = action.payload;
@@ -73,10 +98,12 @@ const savedRecipesSlice = createSlice({
     extraReducers: (builder) => {
         // Đăng xuất thì xoá sạch dữ liệu của tài khoản cũ.
         builder.addCase(unauthenticated, () => initialState);
+        builder.addCase(collectionUpserted, (state) => { state.queryKey = null; });
+        builder.addCase(collectionRemoved, (state) => { state.queryKey = null; });
     },
 });
 
-export const { statusChanged, pageLoaded, detailLoaded, itemUpserted, itemRemoved, cleared } =
+export const { statusChanged, pageLoaded, detailLoaded, itemUpserted, itemRemoved, cleared, invalidated } =
     savedRecipesSlice.actions;
 export default savedRecipesSlice.reducer;
 
@@ -93,24 +120,29 @@ const withStatus = async <T>(
     }
 };
 
-/** Tải trang đầu (loadMore = false) hoặc trang kế tiếp (loadMore = true). */
+let latestListRequest = 0;
+
 export const fetchSavedRecipes =
     (query: Omit<SavedRecipeQuery, "cursor"> = {}, loadMore = false): AppThunk<Promise<void>> =>
         async (dispatch, getState) => {
             const { hasNext, nextCursor, status } = getState().savedRecipes;
             if (loadMore && (!hasNext || status !== "idle")) return;
 
+            const requestId = ++latestListRequest;
+
             await withStatus(dispatch, loadMore ? "loadingMore" : "loading", async () => {
                 const page = await savedRecipeService.list({
                     ...query,
-                    cursor: loadMore && nextCursor ? nextCursor : undefined,
+                    cursor: loadMore ? (nextCursor ?? undefined) : undefined,
                 });
+                if (requestId !== latestListRequest) return; // đã có yêu cầu mới hơn, bỏ kết quả này
                 dispatch(
                     pageLoaded({
                         items: page.content,
                         hasNext: page.hasNext,
                         nextCursor: page.nextCursor,
                         replace: !loadMore,
+                        queryKey: savedQueryKey(query),
                     }),
                 );
             });
@@ -124,11 +156,14 @@ export const fetchSavedRecipeDetail =
             });
         };
 
-/** Không đụng vào danh sách; danh sách tự tải lại khi người dùng mở tab Đã lưu. */
 export const addSavedRecipe =
     (body: SavedRecipeCreateRequest): AppThunk<Promise<SavedRecipeResponse>> =>
         async (dispatch) =>
-            withStatus(dispatch, "saving", () => savedRecipeService.create(body));
+            withStatus(dispatch, "saving", async () => {
+                const created = await savedRecipeService.create(body);
+                dispatch(invalidated());
+                return created;
+            });
 
 export const updateSavedRecipe =
     (id: string, body: SavedRecipeUpdateRequest): AppThunk<Promise<void>> =>
@@ -155,3 +190,8 @@ export const removeSavedRecipe =
                 dispatch(itemRemoved(id));
             });
         };
+
+export const fetchSavedRecipePage =
+    (query: SavedRecipeQuery): AppThunk<Promise<CursorResponse<SavedRecipeResponse>>> =>
+        async () =>
+            savedRecipeService.list(query);
