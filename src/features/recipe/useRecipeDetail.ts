@@ -3,6 +3,7 @@ import { getErrorMessage } from '@/core/http/apiError';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import type { RecipeDetailResponse } from '@/types';
 import { fetchRecipeDetail, scaleRecipe } from './recipeSlice';
+import { useSavedRecipes } from '../savedRecipes/useSavedRecipes';
 
 export type ActionResult = { ok: true } | { ok: false; message: string };
 
@@ -26,6 +27,7 @@ export function useRecipeDetail(externalId: string | undefined) {
 
   const latestServings = useRef<number | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { add } = useSavedRecipes();
 
   const clearTimer = () => {
     if (timer.current) clearTimeout(timer.current);
@@ -93,8 +95,17 @@ export function useRecipeDetail(externalId: string | undefined) {
    * (hoặc `{ recipeId: detail.id }`). Khi có hook của saved-recipe thì gọi ở đây và trả `{ ok: true }`.
    */
   const saveRecipe = useCallback(async (): Promise<ActionResult> => {
-    return { ok: false, message: 'Tính năng lưu công thức đang được nối với phần Đã lưu.' };
-  }, []);
+    const current = scaled ?? base;
+    if (!current) return { ok: false, message: 'Công thức chưa tải xong.' };
+
+    // custom = true -> lưu theo id; custom = false -> lưu theo externalId
+    const body = current.custom
+      ? { recipeId: current.id }
+      : { externalId: current.externalId ?? externalId ?? '' };
+
+    const result = await add(body);
+    return result.ok ? { ok: true } : { ok: false, message: result.message };
+  }, [add, base, scaled, externalId]);
 
   const detail = scaled ?? base ?? null;
 

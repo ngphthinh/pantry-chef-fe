@@ -79,8 +79,10 @@ export function useMealPlanEntryForm(
           ? String(recipe.servings)
           : values.servings;
 
-        if (!finalRecipeId && recipe.externalId) {
-          // Gọi chi tiết để backend đồng bộ vào DB và lấy UUID nội bộ
+        if (!recipe.custom && recipe.externalId) {
+          // Món chung (seed / Spoonacular): luôn gọi chi tiết theo externalId để backend
+          // bổ sung nguyên liệu và các bước, rồi lấy id nội bộ.
+          // Món tự tạo (custom = true) dùng thẳng recipe.id, không gọi.
           const detail = await recipeService.getDetail(recipe.externalId);
           finalRecipeId = detail.id;
           finalTitle = detail.title || finalTitle;

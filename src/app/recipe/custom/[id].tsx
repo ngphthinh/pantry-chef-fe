@@ -27,12 +27,12 @@ export default function CustomRecipeDetailScreen() {
     void load();
   }, [load]);
 
-  const handleCreateShoppingList = async () => {
-    if (!recipe) return;
-    const result = await createFromRecipe(recipe.id);
-    if (result.ok) router.push(`/shopping/${result.data.id}` as Href);
-    else showAlert("Chưa tạo được danh sách", result.message);
-  };
+  // const handleCreateShoppingList = async () => {
+  //   if (!recipe) return;
+  //   const result = await createFromRecipe(recipe.id);
+  //   if (result.ok) router.push(`/shopping/${result.data.id}` as Href);
+  //   else showAlert("Chưa tạo được danh sách", result.message);
+  // };
 
   const handleRemove = async () => {
     const result = await confirmAndRemove();
@@ -110,11 +110,11 @@ export default function CustomRecipeDetailScreen() {
           </View>
 
           <View className="gap-3">
-            <Button
+            {/* <Button
               title="Tạo danh sách mua"
               loading={isCreatingList}
               onPress={() => void handleCreateShoppingList()}
-            />
+            /> */}
             <Button
               title="Sửa công thức"
               variant="outline"

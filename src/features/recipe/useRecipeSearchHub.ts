@@ -29,10 +29,18 @@ export function useRecipeSearchHub() {
 
   // Tủ chưa có dữ liệu thì tải một lần; lỗi chỉ làm mất chip, trang vẫn dùng được
   useEffect(() => {
-    if (items.length === 0) void loadItems().catch(() => undefined);
-    // chỉ chạy khi vào trang
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  (async () => {
+    try {
+      let page = await loadItems({ size: 50 });
+      while (page.hasNext && page.nextCursor) {
+        page = await loadItems({ size: 50, cursor: page.nextCursor }, true);
+      }
+    } catch {
+      // lỗi chỉ làm thiếu chip, trang vẫn dùng được
+    }
+  })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 
   // Khi người dùng chưa tự chọn thì mặc định chọn toàn bộ nguyên liệu trong tủ
   useEffect(() => {
