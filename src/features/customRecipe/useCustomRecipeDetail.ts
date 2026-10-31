@@ -6,6 +6,10 @@ import { formatQuantity } from "@/features/unit/unitOptions";
 import { deleteCustomRecipe, fetchCustomRecipeDetail } from "./customRecipeSlice";
 import { formatRecipeMeta, formatTimer } from "./recipeFormat";
 
+/** BE trả 404 khi công thức đã bị xoá hoặc không thuộc tài khoản đang đăng nhập. */
+const NOT_FOUND_STATUS = 404;
+const NOT_FOUND_MESSAGE = "Công thức này không còn tồn tại hoặc không thuộc tài khoản của bạn.";
+
 export interface IngredientLine {
   id: string;
   name: string;
@@ -27,6 +31,7 @@ export function useCustomRecipeDetail(recipeId: string | undefined) {
   const stored = useAppSelector((s) => s.customRecipe.detail);
   const status = useAppSelector((s) => s.customRecipe.status);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
   // Store giữ một chi tiết duy nhất; chỉ trả về khi đúng công thức đang xem.
   const recipe = recipeId && stored?.id === recipeId ? stored : null;
@@ -37,7 +42,9 @@ export function useCustomRecipeDetail(recipeId: string | undefined) {
       () => dispatch(fetchCustomRecipeDetail(recipeId)),
       "Không tải được công thức.",
     );
-    setLoadError(result.ok ? null : result.message);
+    const missing = !result.ok && result.status === NOT_FOUND_STATUS;
+    setNotFound(missing);
+    setLoadError(result.ok ? null : missing ? NOT_FOUND_MESSAGE : result.message);
   }, [dispatch, recipeId]);
 
   /** Hỏi xác nhận rồi mới xoá. Trả `null` nếu người dùng huỷ. */
@@ -90,9 +97,11 @@ export function useCustomRecipeDetail(recipeId: string | undefined) {
       isLoading: status === "loadingDetail",
       isSaving: status === "saving",
       loadError,
+      /** true khi công thức không tồn tại: thử lại cũng vô ích, nên màn hình đưa người dùng về danh sách. */
+      notFound,
       load,
       confirmAndRemove,
     }),
-    [recipe, meta, ingredientLines, stepLines, status, loadError, load, confirmAndRemove],
+    [recipe, meta, ingredientLines, stepLines, status, loadError, notFound, load, confirmAndRemove],
   );
 }
