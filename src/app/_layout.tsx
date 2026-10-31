@@ -33,14 +33,14 @@ function RootNavigator() {
         screenOptions={{
           headerShown: false,
           contentStyle: { backgroundColor: palette.canvas },
-        }}
-      >
+        }}>
         {/* Khu vực đã đăng nhập */}
         <Stack.Protected guard={isAuthed}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="pantry/[id]" />
           <Stack.Screen name="pantry/new" />
           <Stack.Screen name="pantry/select-ingredient" />
+          <Stack.Screen name="pantry/new-ingredient" />
           <Stack.Screen name="pantry/scan-review" />
           <Stack.Screen name="pantry/expiring" />
           <Stack.Screen name="search/results" />
