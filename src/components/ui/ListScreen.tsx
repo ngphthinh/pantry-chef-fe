@@ -18,7 +18,6 @@ interface ListScreenProps<T> {
   header?: ReactElement;
   /** Hiện khi danh sách rỗng (chỉ truyền khi đã tải xong, nếu không sẽ nháy lên lúc đang tải). */
   empty?: ReactElement | null;
-<<<<<<< HEAD
   /** Trạng thái đang tải dữ liệu lần đầu */
   isLoading?: boolean;
   /** Dòng chữ thông báo khi đang tải */
@@ -37,11 +36,6 @@ interface ListScreenProps<T> {
   onScrollBeginDrag?: () => void;
   /** Header dính ở trên khi cuộn. Nên dùng với header gọn (tiêu đề, tìm kiếm, tab). */
   stickyHeader?: boolean;
-=======
-  /** Gọi khi người dùng cuộn gần tới cuối. */
-  onEndReached?: () => void;
-  isLoadingMore?: boolean;
->>>>>>> fd24daea9a52c4d8238b3ae106b931e44211d72c
 }
 
 /**
@@ -60,7 +54,6 @@ export function ListScreen<T>({
   loadingMessage = "Đang tải dữ liệu...",
   onEndReached,
   isLoadingMore = false,
-<<<<<<< HEAD
   hasNext,
   numColumns = 1,
   gap = 16,
@@ -68,8 +61,6 @@ export function ListScreen<T>({
   refreshing = false,
   onScrollBeginDrag,
   stickyHeader = true,
-=======
->>>>>>> fd24daea9a52c4d8238b3ae106b931e44211d72c
 }: ListScreenProps<T>) {
   const insets = useSafeAreaInsets();
   const sticky = stickyHeader && !!header;

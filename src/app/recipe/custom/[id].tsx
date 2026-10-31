@@ -1,56 +1,80 @@
-import { useCallback } from "react";
-import {
-  ActivityIndicator,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  View,
-} from "react-native";
+// app/recipe/custom/[id].tsx  (CustomRecipeDetailScreen)
+import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useFocusEffect, useRouter, type Href } from "expo-router";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 
+import { SavedRecipeImage } from "@/components/saved/SavedRecipeImage";
 import { AppText } from "@/components/ui/AppText";
+import { BackHeader } from "@/components/ui/BackHeader";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { ListScreen } from "@/components/ui/ListScreen";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { Screen } from "@/components/ui/Screen";
+import { cn } from "@/components/ui/cn";
+import { showAlert } from "@/components/ui/dialogs";
 import { useAppTheme } from "@/core/theme/useAppTheme";
-import { useCustomRecipe } from "@/features/customRecipe/useCustomRecipe";
+import { useCustomRecipeDetail } from "@/features/customRecipe/useCustomRecipeDetail";
 
-export default function CustomRecipesScreen() {
-  const router = useRouter();
-  const { palette, brand } = useAppTheme();
-  const { recipes, isLoading, isLoadingMore, loadError, load, loadMore } =
-    useCustomRecipe();
-
-  // Tải lại mỗi lần quay về (ví dụ sau khi tạo/sửa/xoá), vì danh sách chỉ giữ bản tóm tắt.
-  useFocusEffect(
-    useCallback(() => {
-      void load();
-    }, [load]),
+function SectionTitle({
+  icon,
+  label,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+}) {
+  const { brand } = useAppTheme();
+  return (
+    <View className="flex-row items-center gap-2 px-1">
+      <View className="h-8 w-8 items-center justify-center rounded-xl bg-brandSoft dark:bg-surface-dark">
+        <Ionicons name={icon} size={16} color={brand} />
+      </View>
+      <AppText variant="heading" className="text-base">
+        {label}
+      </AppText>
+    </View>
   );
+}
 
-  const openForm = () => router.push("/recipe/custom/form" as Href);
+export default function CustomRecipeDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const { brand } = useAppTheme();
+  const {
+    recipe,
+    meta,
+    ingredientLines,
+    stepLines,
+    isLoading,
+    loadError,
+    load,
+    confirmAndRemove,
+  } = useCustomRecipeDetail(id);
 
-  const header = (
-    <View className="gap-4">
-      <PageHeader
-        title="Món tự tạo"
-        right={
-          <Pressable
-            onPress={openForm}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel="Tạo món mới">
-            <Ionicons name="add-circle" size={30} color={brand} />
-          </Pressable>
-        }
-      />
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-      {loadError ? (
-        <Card className="items-center gap-3 p-4">
+  const handleRemove = async () => {
+    const result = await confirmAndRemove();
+    if (!result) return;
+    if (result.ok) router.back();
+    else showAlert("Lỗi", result.message);
+  };
+
+  return (
+    <Screen>
+      <BackHeader title="Công thức của tôi" fallbackHref={"/saved" as Href} />
+
+      {isLoading && !recipe ? (
+        <View className="items-center py-16">
+          <ActivityIndicator size="large" color={brand} />
+        </View>
+      ) : null}
+
+      {loadError && !recipe ? (
+        <Card className="items-center gap-3 p-5 shadow-sm">
+          <Ionicons name="alert-circle" size={32} color={brand} />
           <AppText variant="error" className="text-center">
             {loadError}
           </AppText>
@@ -63,68 +87,108 @@ export default function CustomRecipesScreen() {
         </Card>
       ) : null}
 
-      {isLoading && recipes.length === 0 ? (
-        <ActivityIndicator color={brand} className="py-6" />
-      ) : null}
-    </View>
-  );
+      {recipe ? (
+        <View className="gap-5 pb-10">
+          {/* Hero */}
+          <SavedRecipeImage
+            uri={recipe.imageUrl}
+            className="h-56 w-full rounded-3xl"
+          />
 
-  // Chỉ truyền khi đã tải xong, nếu không sẽ nháy "chưa tạo món nào" lúc đang tải.
-  const empty =
-    !isLoading && !loadError ? (
-      <View className="gap-4">
-        <EmptyState
-          icon="create-outline"
-          title="Bạn chưa tạo món nào"
-          message="Ghi lại công thức gia truyền của bạn để nấu lại bất cứ lúc nào."
-        />
-        <Button title="Tạo món đầu tiên" onPress={openForm} />
-      </View>
-    ) : null;
+          {/* Title + badges */}
+          <View className="gap-2">
+            <AppText variant="title">{recipe.title}</AppText>
+            <View className="flex-row flex-wrap items-center gap-2">
+              {recipe.servings ? (
+                <Badge tone="success" label={`${recipe.servings} khẩu phần`} />
+              ) : null}
+              {recipe.cuisine ? (
+                <Badge tone="warn" label={recipe.cuisine.name} />
+              ) : null}
+              {meta ? <AppText variant="caption">{meta}</AppText> : null}
+            </View>
+          </View>
 
-  return (
-    <KeyboardAvoidingView
-      className="flex-1"
-      behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ListScreen
-        data={recipes}
-        keyExtractor={(recipe) => recipe.id}
-        header={header}
-        empty={empty}
-        onEndReached={() => void loadMore()}
-        isLoadingMore={isLoadingMore}
-        renderItem={({ item: recipe }) => (
-          <Pressable
-            onPress={() => router.push(`/recipe/custom/${recipe.id}` as Href)}>
-            <Card className="flex-row items-center gap-3 overflow-hidden p-3">
-              {recipe.imageUrl ? (
-                <Image
-                  source={{ uri: recipe.imageUrl }}
-                  className="h-20 w-20 rounded-2xl"
-                  resizeMode="cover"
-                />
-              ) : (
-                <View className="h-20 w-20 items-center justify-center rounded-2xl bg-soft dark:bg-soft-dark">
-                  <Ionicons name="restaurant-outline" size={28} color={brand} />
-                </View>
-              )}
-              <View className="flex-1 gap-1">
-                <AppText className="font-bold" numberOfLines={2}>
-                  {recipe.title}
+          {/* Ingredients */}
+          <View className="gap-2.5">
+            <SectionTitle icon="basket" label="Nguyên liệu" />
+            <Card className="overflow-hidden shadow-sm">
+              {ingredientLines.length === 0 ? (
+                <AppText variant="caption" className="p-4">
+                  Chưa có dữ liệu nguyên liệu.
                 </AppText>
-                {recipe.meta ? (
-                  <AppText variant="caption">{recipe.meta}</AppText>
-                ) : null}
-              </View>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={palette.muted}
-              />
+              ) : (
+                ingredientLines.map((line, index) => (
+                  <View
+                    key={line.id}
+                    className={cn(
+                      "flex-row items-center justify-between gap-3 px-4 py-3",
+                      index > 0 && "border-t border-line dark:border-line-dark",
+                    )}>
+                    <AppText className="flex-1 font-semibold">
+                      {line.name}
+                    </AppText>
+                    <View className="rounded-full bg-brandSoft px-2.5 py-1 dark:bg-surface-dark">
+                      <AppText className="text-xs font-bold text-brand">
+                        {line.amountLabel}
+                      </AppText>
+                    </View>
+                  </View>
+                ))
+              )}
             </Card>
-          </Pressable>
-        )}
-      />
-    </KeyboardAvoidingView>
+          </View>
+
+          {/* Steps */}
+          <View className="gap-2.5">
+            <SectionTitle icon="list" label="Các bước" />
+            {stepLines.length === 0 ? (
+              <AppText variant="caption" className="px-1">
+                Chưa có dữ liệu các bước.
+              </AppText>
+            ) : (
+              stepLines.map((step) => (
+                <Card key={step.id} className="flex-row gap-3 p-4 shadow-sm">
+                  <View className="h-8 w-8 items-center justify-center rounded-full bg-brand">
+                    <AppText className="font-bold text-white">
+                      {step.order}
+                    </AppText>
+                  </View>
+                  <View className="flex-1 gap-1.5">
+                    <AppText>{step.text}</AppText>
+                    {step.timerLabel ? (
+                      <View className="flex-row items-center gap-1">
+                        <Ionicons
+                          name="timer-outline"
+                          size={13}
+                          color={brand}
+                        />
+                        <AppText variant="caption">{step.timerLabel}</AppText>
+                      </View>
+                    ) : null}
+                  </View>
+                </Card>
+              ))
+            )}
+          </View>
+
+          {/* Actions */}
+          <View className="gap-3">
+            <Button
+              title="Sửa công thức"
+              variant="primary"
+              onPress={() =>
+                router.push(`/recipe/custom/form?id=${recipe.id}` as Href)
+              }
+            />
+            <Button
+              title="Xoá công thức"
+              variant="danger"
+              onPress={() => void handleRemove()}
+            />
+          </View>
+        </View>
+      ) : null}
+    </Screen>
   );
 }
