@@ -10,6 +10,7 @@ import { useRecipeSearchHub } from '@/features/recipe/useRecipeSearchHub';
 
 const SHORTCUTS: MenuItem[] = [
   { icon: 'briefcase-outline', title: 'Gợi ý theo tủ của tôi', route: 'search/suggestions' },
+  { icon: 'compass-outline', title: 'Khám phá món', route: 'search/discover' },
   { icon: 'sparkles-outline', title: 'Ý tưởng từ AI', route: 'ai/ideas' },
 ];
 

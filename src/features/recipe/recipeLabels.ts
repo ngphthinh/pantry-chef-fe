@@ -74,7 +74,9 @@ export function formatTimer(totalSeconds: number): string {
  * có externalId -> chi tiết công thức ngoài (kể cả món seed đã lưu); công thức tự tạo -> màn của custom recipe.
  */
 export function recipeHref(recipe: RecipeSummaryResponse): string | null {
-  return recipe.externalId ? `/recipe/external/${encodeURIComponent(recipe.externalId)}` : null;
+  if (recipe.externalId) return `/recipe/external/${encodeURIComponent(recipe.externalId)}`;
+  if (recipe.custom && recipe.id) return `/recipe/custom/${recipe.id}`;
+  return null;
 }
 
 export const recipeKey = (recipe: RecipeSummaryResponse, index: number): string =>

@@ -41,8 +41,6 @@ export function useRecipeDetail(externalId: string | undefined) {
       try {
         await dispatch(fetchRecipeDetail(externalId, force));
       } catch (e) {
-        // Ghi ra Metro để biết nguyên nhân thật (404, 429 hết quota, 502 API ngoài, timeout...)
-        console.warn('[recipe-detail] tải chi tiết thất bại:', externalId, e);
         setError(getErrorMessage(e));
       }
     },
@@ -90,15 +88,11 @@ export function useRecipeDetail(externalId: string | undefined) {
     [dispatch, externalId, currentServings, baseServings],
   );
 
-  /**
-   * TODO(Thuận): nối API lưu công thức. Hợp đồng: POST /v1/saved-recipes với `{ externalId }`
-   * (hoặc `{ recipeId: detail.id }`). Khi có hook của saved-recipe thì gọi ở đây và trả `{ ok: true }`.
-   */
+  /** Lưu công thức: custom -> theo `recipeId`, công thức ngoài -> theo `externalId`. */
   const saveRecipe = useCallback(async (): Promise<ActionResult> => {
     const current = scaled ?? base;
     if (!current) return { ok: false, message: 'Công thức chưa tải xong.' };
 
-    // custom = true -> lưu theo id; custom = false -> lưu theo externalId
     const body = current.custom
       ? { recipeId: current.id }
       : { externalId: current.externalId ?? externalId ?? '' };

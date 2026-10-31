@@ -14,7 +14,6 @@ import {
 } from "@/features/recipe/useRecipeDiscover";
 
 const MODES: { mode: DiscoverMode; label: string }[] = [
-  { mode: "popular", label: "Phổ biến" },
   { mode: "random", label: "Ngẫu nhiên" },
   { mode: "name", label: "Theo tên" },
 ];
