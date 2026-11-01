@@ -1,3 +1,4 @@
+export const privacyPolicy = `
 # Chính sách quyền riêng tư
 Cập nhật lần cuối: 30/10/2026
 
@@ -35,4 +36,5 @@ Dữ liệu được truyền qua kết nối mã hoá và chỉ người dùng 
 Chúng tôi có thể cập nhật chính sách này. Ngày cập nhật gần nhất luôn được ghi ở đầu trang.
 
 ## 8. Liên hệ
-Nếu có câu hỏi, hãy gửi phản hồi trong ứng dụng hoặc liên hệ: pantrychef12@gmail.com
+Nếu có câu hỏi, hãy gửi phản hồi trong ứng dụng hoặc liên hệ: pantrychef12@gmail.com.
+`;

@@ -44,10 +44,5 @@ export default function SavedHub() {
     return <CustomRecipeList header={header} />;
   }
 
-  return (
-    <Screen>
-      {header}
-      <CollectionList />
-    </Screen>
-  );
+  return <CollectionList header={header} />;
 }

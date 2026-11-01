@@ -18,7 +18,10 @@ import { Chip } from "@/components/ui/Chip";
 import { ListScreen } from "@/components/ui/ListScreen";
 import { PantryItemThumbnail } from "@/components/pantry/PantryItemThumbnail";
 import { useAppTheme } from "@/core/theme/useAppTheme";
-import { usePantry, type EnrichedPantryItem } from "@/features/pantry/usePantry";
+import {
+  usePantry,
+  type EnrichedPantryItem,
+} from "@/features/pantry/usePantry";
 import type { StorageLocation } from "@/types";
 
 const TONE_MAP = {
@@ -39,7 +42,7 @@ const ACTIONS: {
   },
   {
     title: "Quét ảnh AI",
-    route: "/pantry/scan-review",
+    route: "/pantry/scan",
     icon: "camera-outline",
   },
   {
@@ -151,10 +154,7 @@ export default function PantryHubScreen() {
   };
 
   const categories = useMemo(() => {
-    return [
-      "Tất cả",
-      ...new Set(items.map((i) => i.categoryName || "Khác")),
-    ];
+    return ["Tất cả", ...new Set(items.map((i) => i.categoryName || "Khác"))];
   }, [items]);
 
   // Lọc theo vị trí và danh mục
@@ -330,8 +330,7 @@ export default function PantryHubScreen() {
       index > 0 ? sortedFilteredItems[index - 1]?.categoryName || "Khác" : null;
     const currentCat = item.categoryName || "Khác";
     const isNewCategory =
-      selectedCategory === "Tất cả" &&
-      (index === 0 || prevCat !== currentCat);
+      selectedCategory === "Tất cả" && (index === 0 || prevCat !== currentCat);
 
     return (
       <View className="gap-2">
@@ -393,9 +392,7 @@ export default function PantryHubScreen() {
           />
         </View>
         <AppText variant="heading" className="text-center">
-          {isFiltering
-            ? "Không tìm thấy nguyên liệu"
-            : "Chưa có nguyên liệu"}
+          {isFiltering ? "Không tìm thấy nguyên liệu" : "Chưa có nguyên liệu"}
         </AppText>
         <AppText variant="caption" className="mt-1 text-center">
           {isFiltering
@@ -426,7 +423,9 @@ export default function PantryHubScreen() {
         isLoading={isLoading && items.length === 0}
         loadingMessage="Đang tải danh sách nguyên liệu..."
         onEndReached={handleLoadMore}
-        isLoadingMore={isLoadingMore || (isLoading && items.length > 0 && hasNext)}
+        isLoadingMore={
+          isLoadingMore || (isLoading && items.length > 0 && hasNext)
+        }
         hasNext={hasNext}
         onRefresh={onRefresh}
         refreshing={refreshing}

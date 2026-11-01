@@ -1,106 +1,299 @@
-import { ActivityIndicator, Pressable, View } from "react-native";
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  TextInput,
+  View,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { AppText } from "@/components/ui/AppText";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Chip } from "@/components/ui/Chip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageScreen } from "@/components/ui/PageScreen";
 import { TextField } from "@/components/ui/TextField";
-import { brand } from "@/core/theme/colors";
+import { cn } from "@/components/ui/cn";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { confirmAction, notify } from "@/core/ui/dialogs";
-import { useExcludedIngredientForm } from "@/features/excludedIngredient/useExcludedIngredientForm";
-import { useExcludedIngredients } from "@/features/excludedIngredient/useExcludedIngredients";
+import { useAdminAccess } from "@/features/admin/useAdminAccess";
+import { useIngredientCategoryForm } from "@/features/ingredient/useIngredientCategoryForm";
+import { useIngredientCategoryManager } from "@/features/ingredient/useIngredientCategoryManager";
+import type { IngredientCategoryResponse } from "@/types";
 
-export default function ExcludedIngredientsScreen() {
-  const { palette } = useAppTheme();
-  const list = useExcludedIngredients();
-  const form = useExcludedIngredientForm();
+export default function IngredientCategoriesScreen() {
+  const { palette, brand } = useAppTheme();
+  const { isAdmin } = useAdminAccess();
+  const manager = useIngredientCategoryManager();
+  const form = useIngredientCategoryForm(manager.save);
 
-  const handleRemove = async (id: string, name: string) => {
+  // Khớp BE: danh mục hệ thống chỉ ADMIN sửa / xoá.
+  const canEdit = (category: IngredientCategoryResponse) =>
+    isAdmin || !category.system;
+
+  const handleDelete = async (category: IngredientCategoryResponse) => {
     const ok = await confirmAction({
-      title: "Bỏ nguyên liệu loại trừ",
-      message: `Bỏ “${name}” khỏi danh sách? Gợi ý món và AI sẽ có thể dùng lại nguyên liệu này.`,
-      confirmText: "Bỏ",
+      title: "Xoá danh mục",
+      message: `Xoá “${category.name}”? Chỉ xoá được khi không còn nguyên liệu nào thuộc danh mục này.`,
+      confirmText: "Xoá",
       destructive: true,
     });
     if (!ok) return;
-    const result = await list.remove(id);
-    if (!result.ok) notify("Lỗi", result.message);
+    const result = await manager.remove(category.id);
+    if (!result.ok) notify("Không thể xoá", result.message);
   };
 
   return (
-    <PageScreen title="Nguyên liệu loại trừ">
-      <AppText variant="caption">
-        Những nguyên liệu bạn không ăn được hoặc không muốn dùng (dị ứng, ăn kiêng). Gợi ý món và AI sẽ tránh chúng.
-      </AppText>
-      <View className="gap-3">
-        <TextField
-          label="Thêm nguyên liệu"
-          placeholder="Ví dụ: Đậu phộng"
-          autoCapitalize="sentences"
-          value={form.name}
-          onChangeText={form.setName}
-          error={form.error}
-          onSubmitEditing={() => void form.submit()}
-          returnKeyType="done"
-        />
+    <PageScreen title="Danh mục nguyên liệu">
+      <View className="gap-4 pb-10">
+        {/* Search + add */}
+        <View className="flex-row items-center gap-3">
+          <View className="flex-1 flex-row items-center gap-2 rounded-full border border-line bg-surface px-4 dark:border-line-dark dark:bg-surface-dark">
+            <Ionicons name="search" size={18} color={palette.muted} />
+            <TextInput
+              value={manager.keyword}
+              onChangeText={manager.setKeyword}
+              placeholder="Tìm theo tên hoặc mã"
+              placeholderTextColor={palette.muted}
+              returnKeyType="search"
+              autoCapitalize="none"
+              autoCorrect={false}
+              className="flex-1 py-3 text-base text-ink dark:text-ink-dark"
+            />
+            {manager.keyword ? (
+              <Pressable hitSlop={10} onPress={() => manager.setKeyword("")}>
+                <Ionicons name="close-circle" size={18} color={palette.muted} />
+              </Pressable>
+            ) : null}
+          </View>
 
-        {form.suggestions.length > 0 && (
-          <View className="gap-2">
-            <AppText variant="label">Gợi ý từ danh mục</AppText>
-            <View className="flex-row flex-wrap gap-2">
-              {form.suggestions.map((s) => (
-                <Chip key={s.id} label={s.name} onPress={() => void form.submit(s.name)} />
-              ))}
-            </View>
+          <Pressable
+            onPress={() => form.open()}
+            accessibilityRole="button"
+            accessibilityLabel="Thêm danh mục"
+            className="h-12 w-12 items-center justify-center rounded-full bg-brand shadow-md active:scale-90">
+            <Ionicons name="add" size={26} color="#FFFFFF" />
+          </Pressable>
+        </View>
+
+        <View className="flex-row items-center justify-between px-1">
+          <AppText variant="caption" className="flex-1">
+            {isAdmin
+              ? "Bạn quản lý cả danh mục hệ thống và danh mục riêng."
+              : "Danh mục hệ thống chỉ xem được."}
+          </AppText>
+          <View className="flex-row items-center gap-2">
+            {manager.isRefreshing && (
+              <ActivityIndicator size="small" color={brand} />
+            )}
+            <AppText className="text-xs font-bold text-brand">
+              {manager.total} mục
+            </AppText>
+          </View>
+        </View>
+
+        {manager.isInitialLoading && (
+          <View className="items-center py-10">
+            <ActivityIndicator size="large" color={brand} />
           </View>
         )}
 
-        <Button title="Thêm vào danh sách" loading={form.isSaving} onPress={() => void form.submit()} />
-      </View>
-      <View className="gap-2">
-        <AppText variant="label">Đang loại trừ ({list.items.length})</AppText>
-
-        {list.isLoading && <ActivityIndicator color={brand.DEFAULT} />}
-
-        {list.error && list.items.length === 0 && (
+        {manager.error && (
           <Card className="items-center gap-3 p-5">
+            <Ionicons name="alert-circle" size={28} color={palette.dangerInk} />
             <AppText variant="error" className="text-center">
-              {list.error}
+              {manager.error}
             </AppText>
-            <Button title="Thử lại" variant="outline" onPress={() => void list.load()} />
+            <Button
+              title="Thử lại"
+              variant="outline"
+              className="self-stretch"
+              onPress={() => void manager.reload()}
+            />
           </Card>
         )}
 
-        {!list.isLoading && !list.error && list.items.length === 0 && (
+        {manager.isEmpty && (
           <EmptyState
-            icon="ban-outline"
-            title="Chưa loại trừ nguyên liệu nào"
-            message="Thêm nguyên liệu bạn muốn tránh ở trên."
+            icon="pricetags-outline"
+            title={
+              manager.hasFilter
+                ? "Không tìm thấy danh mục"
+                : "Chưa có danh mục nào"
+            }
+            message={
+              manager.hasFilter
+                ? "Thử từ khoá khác."
+                : "Bấm nút + để tạo danh mục đầu tiên."
+            }
           />
         )}
 
-        {list.items.map((item) => (
-          <Card key={item.id} className="flex-row items-center gap-3 p-4">
-            <Ionicons name="ban-outline" size={20} color={palette.dangerInk} />
-            <AppText className="flex-1 font-semibold" numberOfLines={1}>
-              {item.name}
-            </AppText>
-            <Pressable
-              onPress={() => void handleRemove(item.id, item.name)}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel={`Bỏ ${item.name}`}
-              className="h-9 w-9 items-center justify-center rounded-full bg-dangerBg active:opacity-70 dark:bg-dangerBg-dark"
-            >
-              <Ionicons name="trash-outline" size={18} color={palette.dangerInk} />
-            </Pressable>
+        {manager.items.length > 0 && (
+          <Card className="overflow-hidden shadow-sm">
+            {manager.items.map((category, index) => {
+              const editable = canEdit(category);
+              return (
+                <Pressable
+                  key={category.id}
+                  disabled={!editable}
+                  onPress={() => form.open(category)}
+                  className={cn(
+                    "flex-row items-center gap-3 px-4 py-3.5 active:bg-soft dark:active:bg-soft-dark",
+                    index > 0 && "border-t border-line dark:border-line-dark",
+                  )}>
+                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-brandSoft dark:bg-soft-dark">
+                    <Ionicons
+                      name={category.system ? "pricetags" : "pricetag"}
+                      size={18}
+                      color={brand}
+                    />
+                  </View>
+
+                  <View className="flex-1">
+                    <AppText className="font-semibold" numberOfLines={1}>
+                      {category.name}
+                    </AppText>
+                    <View className="flex-row items-center gap-1.5">
+                      <AppText variant="caption">{category.code}</AppText>
+                      {category.system && (
+                        <>
+                          <AppText variant="caption">·</AppText>
+                          <Ionicons
+                            name="lock-closed"
+                            size={11}
+                            color={palette.warnInk}
+                          />
+                          <AppText
+                            variant="caption"
+                            className="font-semibold text-warnInk dark:text-warnInk-dark">
+                            Hệ thống
+                          </AppText>
+                        </>
+                      )}
+                    </View>
+                  </View>
+
+                  {editable ? (
+                    <View className="flex-row items-center gap-4">
+                      <Pressable
+                        onPress={() => form.open(category)}
+                        hitSlop={10}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Sửa ${category.name}`}>
+                        <Ionicons
+                          name="create-outline"
+                          size={20}
+                          color={palette.muted}
+                        />
+                      </Pressable>
+                      <Pressable
+                        onPress={() => void handleDelete(category)}
+                        hitSlop={10}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Xoá ${category.name}`}>
+                        <Ionicons
+                          name="trash-outline"
+                          size={20}
+                          color={palette.dangerInk}
+                        />
+                      </Pressable>
+                    </View>
+                  ) : (
+                    <Ionicons
+                      name="lock-closed-outline"
+                      size={18}
+                      color={palette.muted}
+                    />
+                  )}
+                </Pressable>
+              );
+            })}
           </Card>
-        ))}
+        )}
       </View>
+
+      {/* Hộp thoại thêm / sửa */}
+      <Modal
+        visible={form.visible}
+        transparent
+        animationType="slide"
+        onRequestClose={form.close}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          className="flex-1 justify-end bg-black/50">
+          <Pressable
+            className="flex-1"
+            onPress={form.close}
+            accessibilityLabel="Đóng"
+          />
+
+          <View className="gap-4 rounded-t-3xl bg-surface p-5 pb-8 dark:bg-surface-dark">
+            <View className="h-1 w-10 self-center rounded-full bg-line dark:bg-line-dark" />
+
+            <View className="flex-row items-center justify-between">
+              <AppText variant="heading" className="text-lg">
+                {form.isEditing ? "Sửa danh mục" : "Thêm danh mục"}
+              </AppText>
+              <Pressable hitSlop={10} onPress={form.close}>
+                <Ionicons name="close" size={22} color={palette.muted} />
+              </Pressable>
+            </View>
+
+            {!form.isEditing && (
+              <AppText variant="caption">
+                {isAdmin
+                  ? "Danh mục bạn tạo sẽ là danh mục chung của hệ thống, mọi người đều thấy."
+                  : "Danh mục bạn tạo chỉ mình bạn thấy và dùng."}
+              </AppText>
+            )}
+
+            <TextField
+              label="Mã danh mục"
+              placeholder="Ví dụ: VEGETABLE"
+              value={form.code}
+              onChangeText={form.setCode}
+              autoCapitalize="characters"
+              maxLength={50}
+              error={form.errors.code}
+            />
+
+            <TextField
+              label="Tên danh mục"
+              placeholder="Ví dụ: Rau củ"
+              autoCapitalize="sentences"
+              value={form.name}
+              onChangeText={form.setName}
+              maxLength={255}
+              error={form.errors.name}
+              onSubmitEditing={() => void form.submit()}
+              returnKeyType="done"
+            />
+
+            {form.formError ? (
+              <AppText variant="error">{form.formError}</AppText>
+            ) : null}
+
+            <View className="flex-row gap-3">
+              <Button
+                title="Huỷ"
+                variant="outline"
+                className="flex-1"
+                disabled={form.isSubmitting}
+                onPress={form.close}
+              />
+              <Button
+                title="Lưu"
+                className="flex-1"
+                loading={form.isSubmitting}
+                onPress={() => void form.submit()}
+              />
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </PageScreen>
   );
 }

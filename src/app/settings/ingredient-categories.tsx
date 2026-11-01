@@ -15,7 +15,6 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageScreen } from "@/components/ui/PageScreen";
 import { TextField } from "@/components/ui/TextField";
-import { brand } from "@/core/theme/colors";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { confirmAction, notify } from "@/core/ui/dialogs";
 import { useAdminAccess } from "@/features/admin/useAdminAccess";
@@ -24,7 +23,7 @@ import { useIngredientCategoryManager } from "@/features/ingredient/useIngredien
 import type { IngredientCategoryResponse } from "@/types";
 
 export default function IngredientCategoriesScreen() {
-  const { palette } = useAppTheme();
+  const { palette, brand } = useAppTheme();
   const { isAdmin } = useAdminAccess();
   const manager = useIngredientCategoryManager();
   const form = useIngredientCategoryForm(manager.save);
@@ -47,50 +46,76 @@ export default function IngredientCategoriesScreen() {
 
   return (
     <PageScreen title="Danh mục nguyên liệu">
-      <AppText variant="caption">
-        Nhóm dùng để phân loại nguyên liệu và lọc trong tủ.{" "}
-        {isAdmin
-          ? "Bạn quản lý cả danh mục hệ thống lẫn danh mục riêng của mình."
-          : "Bạn có thể tạo danh mục riêng; danh mục hệ thống chỉ xem được."}
-      </AppText>
+      <View className="gap-5 pb-10">
+        {/* Intro + search + add */}
+        <Card className="gap-3 bg-brandSoft/40 p-4 shadow-sm dark:bg-surface-dark">
+          <View className="flex-row items-center gap-3">
+            <View className="h-11 w-11 items-center justify-center rounded-2xl bg-surface dark:bg-soft-dark">
+              <Ionicons name="pricetags" size={22} color={brand} />
+            </View>
+            <AppText variant="caption" className="flex-1">
+              Nhóm dùng để phân loại nguyên liệu và lọc trong tủ.{" "}
+              {isAdmin
+                ? "Bạn quản lý cả danh mục hệ thống lẫn danh mục riêng của mình."
+                : "Bạn có thể tạo danh mục riêng; danh mục hệ thống chỉ xem được."}
+            </AppText>
+          </View>
 
-      <View className="gap-3">
-        <TextField
-          label="Tìm danh mục"
-          placeholder="Theo tên hoặc mã, ví dụ: rau"
-          value={manager.keyword}
-          onChangeText={manager.setKeyword}
-          returnKeyType="search"
-        />
+          <TextField
+            label="Tìm danh mục"
+            placeholder="Theo tên hoặc mã, ví dụ: rau"
+            value={manager.keyword}
+            onChangeText={manager.setKeyword}
+            returnKeyType="search"
+          />
 
-        <Button title="Thêm danh mục" onPress={() => form.open()} />
-      </View>
+          <Button title="Thêm danh mục" onPress={() => form.open()} />
+        </Card>
 
-      <View className="gap-2">
-        <View className="flex-row items-center justify-between">
-          <AppText variant="label">Danh mục ({manager.total})</AppText>
-          {manager.isRefreshing && (
-            <ActivityIndicator size="small" color={brand.DEFAULT} />
-          )}
+        {/* List header */}
+        <View className="flex-row items-center justify-between px-1">
+          <AppText
+            variant="label"
+            className="text-xs font-bold uppercase tracking-wider text-muted dark:text-muted-dark">
+            Danh mục
+          </AppText>
+          <View className="flex-row items-center gap-2">
+            {manager.isRefreshing && (
+              <ActivityIndicator size="small" color={brand} />
+            )}
+            <View className="rounded-full bg-brandSoft px-2.5 py-1 dark:bg-surface-dark">
+              <AppText className="text-xs font-bold text-brand">
+                {manager.total}
+              </AppText>
+            </View>
+          </View>
         </View>
 
         {manager.isInitialLoading && (
-          <View className="items-center py-8">
-            <ActivityIndicator size="large" color={brand.DEFAULT} />
-            <AppText variant="caption" className="mt-2">
+          <View className="items-center py-10">
+            <ActivityIndicator size="large" color={brand} />
+            <AppText variant="caption" className="mt-3">
               Đang tải...
             </AppText>
           </View>
         )}
 
         {manager.error && (
-          <Card className="items-center gap-3 p-5">
+          <Card className="items-center gap-3 p-5 shadow-sm">
+            <View className="h-14 w-14 items-center justify-center rounded-full bg-dangerBg dark:bg-dangerBg-dark">
+              <Ionicons
+                name="alert-circle"
+                size={28}
+                color={palette.dangerInk}
+              />
+            </View>
             <AppText variant="error" className="text-center">
               {manager.error}
             </AppText>
             <Button
               title="Thử lại"
               variant="outline"
+              className="self-stretch"
               onPress={() => void manager.reload()}
             />
           </Card>
@@ -112,76 +137,91 @@ export default function IngredientCategoriesScreen() {
           />
         )}
 
-        {manager.items.map((category) => {
-          const editable = canEdit(category);
-          return (
-            <Pressable
-              key={category.id}
-              disabled={!editable}
-              onPress={() => form.open(category)}
-              className="active:scale-[0.985]"
-            >
-              <Card className="flex-row items-center gap-3.5 p-4 shadow-sm">
-                <View className="h-10 w-10 items-center justify-center rounded-2xl bg-brandSoft dark:bg-successBg-dark">
-                  <Ionicons
-                    name={
-                      category.system
-                        ? "shield-checkmark-outline"
-                        : "pricetag-outline"
-                    }
-                    size={20}
-                    color={brand.DEFAULT}
+        <View className="gap-3">
+          {manager.items.map((category, index) => {
+            const editable = canEdit(category);
+            const tones = [
+              brand,
+              palette.warnInk,
+              palette.successInk,
+              palette.muted,
+            ];
+            const color = category.system
+              ? palette.warnInk
+              : tones[index % tones.length];
+
+            return (
+              <Pressable
+                key={category.id}
+                disabled={!editable}
+                onPress={() => form.open(category)}
+                className="active:scale-[0.985]">
+                <Card className="flex-row items-center overflow-hidden shadow-sm">
+                  <View
+                    className="self-stretch"
+                    style={{ width: 5, backgroundColor: color }}
                   />
-                </View>
 
-                <View className="flex-1 gap-1">
-                  <AppText
-                    variant="heading"
-                    className="text-base font-semibold"
-                    numberOfLines={1}
-                  >
-                    {category.name}
-                  </AppText>
-                  <View className="flex-row flex-wrap gap-2">
-                    <Badge label={category.code} tone="success" />
-                    {category.system && <Badge label="Hệ thống" tone="warn" />}
-                  </View>
-                </View>
+                  <View className="flex-1 flex-row items-center gap-3 p-3.5">
+                    <View
+                      className="h-12 w-12 items-center justify-center rounded-2xl"
+                      style={{ backgroundColor: `${color}22` }}>
+                      <Ionicons
+                        name={category.system ? "shield-checkmark" : "pricetag"}
+                        size={22}
+                        color={color}
+                      />
+                    </View>
 
-                {editable && (
-                  <View className="flex-row gap-2">
-                    <Pressable
-                      onPress={() => form.open(category)}
-                      hitSlop={10}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Sửa ${category.name}`}
-                      className="h-9 w-9 items-center justify-center rounded-full bg-successBg active:opacity-70 dark:bg-successBg-dark"
-                    >
-                      <Ionicons
-                        name="create-outline"
-                        size={18}
-                        color={palette.successInk}
-                      />
-                    </Pressable>
-                    <Pressable
-                      onPress={() => void handleDelete(category)}
-                      hitSlop={10}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Xoá ${category.name}`}
-                      className="h-9 w-9 items-center justify-center rounded-full bg-dangerBg active:opacity-70 dark:bg-dangerBg-dark"
-                    >
-                      <Ionicons
-                        name="trash-outline"
-                        size={18}
-                        color={palette.dangerInk}
-                      />
-                    </Pressable>
+                    <View className="flex-1 gap-1.5">
+                      <AppText
+                        variant="heading"
+                        className="text-base"
+                        numberOfLines={1}>
+                        {category.name}
+                      </AppText>
+                      <View className="flex-row flex-wrap gap-2">
+                        <Badge label={category.code} tone="success" />
+                        {category.system && (
+                          <Badge label="Hệ thống" tone="warn" />
+                        )}
+                      </View>
+                    </View>
+
+                    {editable && (
+                      <View className="flex-row gap-2">
+                        <Pressable
+                          onPress={() => form.open(category)}
+                          hitSlop={10}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Sửa ${category.name}`}
+                          className="h-9 w-9 items-center justify-center rounded-full bg-brandSoft active:scale-90 dark:bg-surface-dark">
+                          <Ionicons
+                            name="create-outline"
+                            size={18}
+                            color={brand}
+                          />
+                        </Pressable>
+                        <Pressable
+                          onPress={() => void handleDelete(category)}
+                          hitSlop={10}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Xoá ${category.name}`}
+                          className="h-9 w-9 items-center justify-center rounded-full bg-dangerBg active:scale-90 dark:bg-dangerBg-dark">
+                          <Ionicons
+                            name="trash-outline"
+                            size={18}
+                            color={palette.dangerInk}
+                          />
+                        </Pressable>
+                      </View>
+                    )}
                   </View>
-                )}
-              </Card>
-            </Pressable>
-          );
-        })}
+                </Card>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       {/* Hộp thoại thêm / sửa */}
@@ -189,27 +229,23 @@ export default function IngredientCategoriesScreen() {
         visible={form.visible}
         transparent
         animationType="slide"
-        onRequestClose={form.close}
-      >
+        onRequestClose={form.close}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
-          className="flex-1 justify-end bg-black/40"
-        >
+          className="flex-1 justify-end bg-black/50">
           <Pressable
             className="flex-1"
             onPress={form.close}
             accessibilityLabel="Đóng"
           />
 
-          <View className="gap-4 rounded-t-3xl border border-line bg-surface p-5 pb-8 dark:border-line-dark dark:bg-surface-dark">
+          <View className="gap-4 rounded-t-3xl border border-line bg-surface p-5 pb-8 shadow-2xl dark:border-line-dark dark:bg-surface-dark">
             <View className="flex-row items-center gap-3">
-              <View className="h-10 w-10 items-center justify-center rounded-2xl bg-brandSoft dark:bg-successBg-dark">
+              <View className="h-11 w-11 items-center justify-center rounded-2xl bg-brandSoft dark:bg-soft-dark">
                 <Ionicons
-                  name={
-                    form.isEditing ? "create-outline" : "add-circle-outline"
-                  }
-                  size={20}
-                  color={brand.DEFAULT}
+                  name={form.isEditing ? "create" : "add-circle"}
+                  size={22}
+                  color={brand}
                 />
               </View>
               <AppText variant="heading" className="flex-1">
@@ -220,18 +256,24 @@ export default function IngredientCategoriesScreen() {
                 hitSlop={10}
                 accessibilityRole="button"
                 accessibilityLabel="Đóng"
-                className="h-9 w-9 items-center justify-center rounded-full bg-soft dark:bg-surface-dark"
-              >
+                className="h-9 w-9 items-center justify-center rounded-full bg-soft active:scale-90 dark:bg-soft-dark">
                 <Ionicons name="close" size={18} color={palette.ink} />
               </Pressable>
             </View>
 
             {!form.isEditing && (
-              <AppText variant="caption">
-                {isAdmin
-                  ? "Danh mục bạn tạo sẽ là danh mục chung của hệ thống, mọi người đều thấy."
-                  : "Danh mục bạn tạo chỉ mình bạn thấy và dùng."}
-              </AppText>
+              <View className="flex-row items-start gap-2 rounded-2xl bg-soft p-3 dark:bg-soft-dark">
+                <Ionicons
+                  name="information-circle"
+                  size={18}
+                  color={palette.muted}
+                />
+                <AppText variant="caption" className="flex-1">
+                  {isAdmin
+                    ? "Danh mục bạn tạo sẽ là danh mục chung của hệ thống, mọi người đều thấy."
+                    : "Danh mục bạn tạo chỉ mình bạn thấy và dùng."}
+                </AppText>
+              </View>
             )}
 
             <TextField
@@ -257,7 +299,16 @@ export default function IngredientCategoriesScreen() {
             />
 
             {form.formError ? (
-              <AppText variant="error">{form.formError}</AppText>
+              <View className="flex-row items-center gap-2 rounded-2xl border border-dangerInk/40 bg-dangerBg/40 p-3 dark:border-dangerInk-dark/40 dark:bg-dangerBg-dark">
+                <Ionicons
+                  name="alert-circle"
+                  size={18}
+                  color={palette.dangerInk}
+                />
+                <AppText variant="error" className="flex-1">
+                  {form.formError}
+                </AppText>
+              </View>
             ) : null}
 
             <View className="flex-row gap-3">
