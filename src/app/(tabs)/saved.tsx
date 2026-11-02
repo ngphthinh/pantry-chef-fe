@@ -45,9 +45,8 @@ export default function SavedHub() {
   }
 
   return (
-    <Screen>
-      {header}
-      <CollectionList />
-    </Screen>
+      <View className="flex-1">
+          <CollectionList header={header} />
+      </View>
   );
 }

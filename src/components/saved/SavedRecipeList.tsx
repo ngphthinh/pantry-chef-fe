@@ -16,7 +16,11 @@ interface Props {
   favoriteOnly?: boolean;
   header: ReactElement;
 }
-
+type Sort = "rating_desc" | undefined;
+const SORTS: { label: string; value: Sort }[] = [
+    { label: "Sao cao → thấp", value: "rating_desc" },
+    { label: "Thứ tự lưu", value: undefined },
+];
 const RATING_FILTERS = [
   { label: "Mọi sao", value: undefined },
   { label: "từ 3★", value: 3 },
@@ -30,6 +34,7 @@ export function SavedRecipeList({ favoriteOnly = false, header }: Props) {
   const [text, setText] = useState("");
   const [minRating, setMinRating] = useState<number | undefined>();
   const keyword = useDebouncedValue(text.trim(), 400);
+  const [sort, setSort] = useState<Sort>("rating_desc");
 
   const {
     items,
@@ -43,7 +48,7 @@ export function SavedRecipeList({ favoriteOnly = false, header }: Props) {
   } = useSavedList({
     favorite: favoriteOnly ? true : undefined,
     keyword,
-    minRating,
+    minRating, sort
   });
 
   const isFiltering = keyword !== "" || minRating !== undefined;
@@ -97,6 +102,22 @@ export function SavedRecipeList({ favoriteOnly = false, header }: Props) {
             onChangeText={setText}
             placeholder="Nhập tên món..."
         />
+          <View className="flex-row flex-wrap gap-2">
+              {SORTS.map((s) => (
+                  <Pressable
+                      key={s.label}
+                      onPress={() => setSort(s.value)}
+                      className={cn(
+                          "rounded-full px-3 py-1.5",
+                          s.value === sort ? "bg-brand" : "bg-soft dark:bg-soft-dark",
+                      )}
+                  >
+                      <AppText className={cn("text-sm font-bold", s.value === sort && "text-white")}>
+                          {s.label}
+                      </AppText>
+                  </Pressable>
+              ))}
+          </View>
         <View className="flex-row flex-wrap gap-2">
           {RATING_FILTERS.map((f) => (
               <Pressable

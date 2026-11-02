@@ -3,12 +3,13 @@ import { useCallback, useEffect } from "react";
 import { useSavedList } from "@/features/savedRecipes/useSavedList";
 import { useCollections } from "./useCollections";
 
-export function useCollectionDetail(id: string) {
+export function useCollectionDetail(id: string, keyword?: string) {
   const { findById, loadOne, removeRecipe, remove, isSaving } =
     useCollections();
   const { items, hasNext, error, isLoading, isLoadingMore, refresh, loadMore } =
     useSavedList({
       collectionId: id,
+      keyword,
     });
 
   const collection = findById(id);

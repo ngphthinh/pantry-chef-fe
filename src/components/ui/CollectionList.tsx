@@ -1,5 +1,5 @@
 // components/ui/CollectionList.tsx
-import { useCallback, useRef, useState, type ReactElement } from "react";
+import {useCallback, useRef, useState, type ReactElement, useMemo} from "react";
 import { ActivityIndicator, Modal, Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter, type Href } from "expo-router";
@@ -13,6 +13,7 @@ import { useAppTheme } from "@/core/theme/useAppTheme";
 import { confirmAction, notify } from "@/core/ui/dialogs";
 import { useCollectionForm } from "@/features/collections/useCollectionForm";
 import { useCollections } from "@/features/collections/useCollections";
+import { normalizeText } from "@/core/utils/normalizeText";
 
 type Editing = { id: string; name: string } | "new" | null;
 
@@ -96,6 +97,12 @@ export function CollectionList({ header }: { header?: ReactElement }) {
   const { brand } = useAppTheme();
   const { items, isLoading, load, remove } = useCollections();
   const [editing, setEditing] = useState<Editing>(null);
+  const [text, setText] = useState("");
+
+  const visible = useMemo(() => {
+    const q = normalizeText(text);
+    return q ? items.filter((c) => normalizeText(c.name).includes(q)) : items;
+  }, [items, text]);
 
   useFocusEffect(
     useCallback(() => {
@@ -116,43 +123,53 @@ export function CollectionList({ header }: { header?: ReactElement }) {
   };
 
   const listHeader = (
-    <View className="gap-4">
-      {header}
+      <View className="gap-4">
+        {header}
 
-      <Card className="flex-row items-center gap-3 bg-brandSoft/50 p-4 shadow-sm dark:bg-surface-dark">
-        <View className="h-11 w-11 items-center justify-center rounded-2xl bg-surface dark:bg-soft-dark">
-          <Ionicons name="albums" size={22} color={brand} />
-        </View>
-        <View className="flex-1">
-          <AppText variant="heading" className="text-base">
-            Bộ sưu tập
-          </AppText>
-          <AppText variant="caption">Gom các món đã lưu theo chủ đề</AppText>
-        </View>
-        <Pressable
-          onPress={() => setEditing("new")}
-          accessibilityLabel="Tạo bộ sưu tập"
-          className="flex-row items-center gap-1 rounded-full bg-brand px-3.5 py-2 active:scale-95">
-          <Ionicons name="add" size={18} color="#FFFFFF" />
-          <AppText className="text-xs font-bold text-white">Tạo mới</AppText>
-        </Pressable>
-      </Card>
-
-      {items.length > 0 ? (
-        <View className="flex-row items-center justify-between px-1">
-          <AppText
-            variant="label"
-            className="text-xs font-bold uppercase tracking-wider text-muted dark:text-muted-dark">
-            Bộ sưu tập của bạn
-          </AppText>
-          <View className="rounded-full bg-brandSoft px-2.5 py-1 dark:bg-surface-dark">
-            <AppText className="text-xs font-bold text-brand">
-              {items.length}
-            </AppText>
+        <Card className="flex-row items-center gap-3 bg-brandSoft/50 p-4 shadow-sm dark:bg-surface-dark">
+          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-surface dark:bg-soft-dark">
+            <Ionicons name="albums" size={22} color={brand} />
           </View>
-        </View>
-      ) : null}
-    </View>
+          <View className="flex-1">
+            <AppText variant="heading" className="text-base">
+              Bộ sưu tập
+            </AppText>
+            <AppText variant="caption">Gom các món đã lưu theo chủ đề</AppText>
+          </View>
+          <Pressable
+              onPress={() => setEditing("new")}
+              accessibilityLabel="Tạo bộ sưu tập"
+              className="flex-row items-center gap-1 rounded-full bg-brand px-3.5 py-2 active:scale-95">
+            <Ionicons name="add" size={18} color="#FFFFFF" />
+            <AppText className="text-xs font-bold text-white">Tạo mới</AppText>
+          </Pressable>
+        </Card>
+
+        {/* Ô tìm kiếm bộ sưu tập (chỉ hiển thị khi đã có ít nhất 1 bộ sưu tập) */}
+        {items.length > 0 && (
+            <TextField
+                label="Tìm bộ sưu tập"
+                value={text}
+                onChangeText={setText}
+                placeholder="Nhập tên bộ sưu tập..."
+            />
+        )}
+
+        {items.length > 0 ? (
+            <View className="flex-row items-center justify-between px-1">
+              <AppText
+                  variant="label"
+                  className="text-xs font-bold uppercase tracking-wider text-muted dark:text-muted-dark">
+                Bộ sưu tập của bạn
+              </AppText>
+              <View className="rounded-full bg-brandSoft px-2.5 py-1 dark:bg-surface-dark">
+                <AppText className="text-xs font-bold text-brand">
+                  {items.length}
+                </AppText>
+              </View>
+            </View>
+        ) : null}
+      </View>
   );
 
   const empty = isLoading ? (
@@ -177,37 +194,62 @@ export function CollectionList({ header }: { header?: ReactElement }) {
   );
 
   return (
-    <>
-      <ListScreen
-        data={items}
-        keyExtractor={(i) => i.id}
-        header={listHeader}
-        empty={empty}
-        onRefresh={() => void load()}
-        renderItem={({ item, index }) => (
-          <CollectionRow
-            item={item}
-            index={index}
-            onPress={() =>
-              router.push(
-                `/collection/${item.id}?name=${encodeURIComponent(item.name)}` as Href,
+      <>
+        <ListScreen
+            data={visible}
+            keyExtractor={(i) => i.id}
+            header={listHeader}
+            empty={
+              isLoading && items.length === 0 ? (
+                  <View className="items-center py-10">
+                    <ActivityIndicator size="large" color={brand} />
+                    <AppText variant="caption" className="mt-3">
+                      Đang tải bộ sưu tập...
+                    </AppText>
+                  </View>
+              ) : items.length === 0 ? (
+                  <Card className="items-center gap-2 p-8 shadow-sm">
+                    <View className="h-16 w-16 items-center justify-center rounded-full bg-brandSoft dark:bg-soft-dark">
+                      <Ionicons name="folder-open" size={30} color={brand} />
+                    </View>
+                    <AppText variant="heading" className="mt-1">
+                      Chưa có bộ sưu tập
+                    </AppText>
+                    <AppText variant="caption" className="text-center">
+                      Hãy tạo bộ sưu tập đầu tiên để sắp xếp món đã lưu.
+                    </AppText>
+                  </Card>
+              ) : (
+                  <AppText variant="caption" className="text-center py-4">
+                    Không có bộ sưu tập nào khớp.
+                  </AppText>
               )
             }
-            onEdit={() => setEditing({ id: item.id, name: item.name })}
-            onDelete={() => void handleRemove(item.id, item.name)}
-          />
-        )}
-      />
-
-      {/* Chỉ mount khi mở, kèm key: tên ban đầu lấy từ useState nên phải mount mới mỗi lần. */}
-      {editing !== null && (
-        <CollectionDialog
-          key={editing === "new" ? "new" : editing.id}
-          collection={editing === "new" ? undefined : editing}
-          onClose={() => setEditing(null)}
+            onRefresh={() => void load()}
+            renderItem={({ item, index }) => (
+                <CollectionRow
+                    item={item}
+                    index={index}
+                    onPress={() =>
+                        router.push(
+                            `/collection/${item.id}?name=${encodeURIComponent(item.name)}` as Href,
+                        )
+                    }
+                    onEdit={() => setEditing({ id: item.id, name: item.name })}
+                    onDelete={() => void handleRemove(item.id, item.name)}
+                />
+            )}
         />
-      )}
-    </>
+
+        {/* Chỉ mount khi mở, kèm key: tên ban đầu lấy từ useState nên phải mount mới mỗi lần. */}
+        {editing !== null && (
+            <CollectionDialog
+                key={editing === "new" ? "new" : editing.id}
+                collection={editing === "new" ? undefined : editing}
+                onClose={() => setEditing(null)}
+            />
+        )}
+      </>
   );
 }
 

@@ -13,10 +13,18 @@ import { confirmAction, notify } from "@/core/ui/dialogs";
 import { useCollectionDetail } from "@/features/collections/useCollectionDetail";
 import { AddRecipesToCollectionModal } from "@/components/ui/AddRecipesToCollectionModal";
 
+import { TextField } from "@/components/ui/TextField";
+import { useDebouncedValue } from "@/core/hooks/useDebounceValue";
+
+
 
 export default function CollectionDetailScreen() {
     const { id, name } = useLocalSearchParams<{ id: string; name?: string }>();
     const router = useRouter();
+    const [renaming, setRenaming] = useState(false);
+    const [adding, setAdding] = useState(false);
+    const [text, setText] = useState("");
+    const keyword = useDebouncedValue(text.trim(), 400);
     const {
         collection,
         items,
@@ -27,9 +35,8 @@ export default function CollectionDetailScreen() {
         loadMore,
         removeFromCollection,
         deleteCollection,
-    } = useCollectionDetail(id);
-    const [renaming, setRenaming] = useState(false);
-    const [adding, setAdding] = useState(false);
+    } = useCollectionDetail(id, keyword);
+
 
     const title = collection?.name ?? name ?? "Bộ sưu tập";
 
@@ -51,27 +58,36 @@ export default function CollectionDetailScreen() {
         const result = await removeFromCollection(savedRecipeId);
         if (!result.ok) notify("Lỗi", result.message);
     };
-
+    const showSearch = (collection?.recipeCount ?? 1) > 0;
     const header = (
-
-        <BackHeader
-            title={title}
-            subtitle={collection ? `${collection.recipeCount} món` : undefined}
-            fallbackHref={"/collection" as Href}
-            right={
-                <View className="flex-row items-center gap-4">
-                    <Pressable hitSlop={8} onPress={() => setAdding(true)}>
-                        <Ionicons name="add-circle-outline" size={24} color={brand.DEFAULT} />
-                    </Pressable>
-                    <Pressable hitSlop={8} onPress={() => setRenaming(true)}>
-                        <Ionicons name="create-outline" size={22} color={brand.DEFAULT} />
-                    </Pressable>
-                    <Pressable hitSlop={8} onPress={() => void handleDelete()}>
-                        <Ionicons name="trash-outline" size={22} color="#DC2626" />
-                    </Pressable>
-                </View>
-            }
-        />
+        <View className = "gap-3">
+            <BackHeader
+                title={title}
+                subtitle={collection ? `${collection.recipeCount} món` : undefined}
+                fallbackHref={"/collection" as Href}
+                right={
+                    <View className="flex-row items-center gap-4">
+                        <Pressable hitSlop={8} onPress={() => setAdding(true)}>
+                            <Ionicons name="add-circle-outline" size={24} color={brand.DEFAULT} />
+                        </Pressable>
+                        <Pressable hitSlop={8} onPress={() => setRenaming(true)}>
+                            <Ionicons name="create-outline" size={22} color={brand.DEFAULT} />
+                        </Pressable>
+                        <Pressable hitSlop={8} onPress={() => void handleDelete()}>
+                            <Ionicons name="trash-outline" size={22} color="#DC2626" />
+                        </Pressable>
+                    </View>
+                }
+            />
+            {showSearch && (
+                <TextField
+                    label="Tìm món trong bộ sưu tập"
+                    value={text}
+                    onChangeText={setText}
+                    placeholder="Nhập tên món..."
+                />
+            )}
+        </View>
     );
 
     const empty = isLoading ? (
@@ -84,7 +100,9 @@ export default function CollectionDetailScreen() {
             </Pressable>
         </View>
     ) : (
-        <AppText variant="caption">Bộ sưu tập chưa có món nào. Bấm + để thêm.</AppText>
+        <AppText variant="caption">
+            {keyword ? "Không có món nào khớp." : "Bộ sưu tập chưa có món nào. Bấm + để thêm."}
+        </AppText>
     );
 
     return (
