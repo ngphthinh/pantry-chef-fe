@@ -37,6 +37,7 @@ export interface SavedQuery {
     collectionId?: string;
     keyword?: string;
     minRating?: number;
+    sort?: "rating_desc";
 }
 
 export function savedQueryKey(q: SavedQuery): string {
@@ -45,6 +46,7 @@ export function savedQueryKey(q: SavedQuery): string {
         q.collectionId ?? null,
         q.keyword ?? null,
         q.minRating ?? null,
+        q.sort ?? null,
     ]);
 }
 
@@ -170,6 +172,7 @@ export const updateSavedRecipe =
         async (dispatch) => {
             await withStatus(dispatch, "saving", async () => {
                 dispatch(itemUpserted(await savedRecipeService.update(id, body)));
+                if (body.rating !== undefined) dispatch(invalidated());
             });
         };
 

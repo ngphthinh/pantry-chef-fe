@@ -12,7 +12,7 @@ import { CACHE_KEYS } from "@/core/cache/cacheKeys";
 const LIST_PREFIX = CACHE_KEYS.savedRecipeListPrefix;
 const detailKey = (id: string) => `savedRecipes:detail:${id}`;
 const listKey = (q: SavedRecipeQuery) =>
-    `${LIST_PREFIX}fav=${q.favorite ?? "all"}:col=${q.collectionId ?? "none"}:min=${q.minRating ?? "any"}`;
+    `${LIST_PREFIX}fav=${q.favorite ?? "all"}:col=${q.collectionId ?? "none"}:min=${q.minRating ?? "any"}:sort=${q.sort ?? "default"}`;
 
 export class CachedSavedRecipeRepository implements ISavedRecipeApi {
     constructor(private readonly remote: ISavedRecipeApi) {}

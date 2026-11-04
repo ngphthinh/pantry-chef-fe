@@ -10,19 +10,20 @@ interface SavedListFilter {
   collectionId?: string;
   keyword?: string;
   minRating?: number;
+    sort?: "rating_desc";
 }
 
 const EMPTY: SavedRecipeResponse[] = [];
 
 export function useSavedList(filter: SavedListFilter = {}) {
-  const { favorite, collectionId, keyword, minRating } = filter;
+  const { favorite, collectionId, keyword, minRating, sort } = filter;
   const {
     items, hasNext, queryKey, isLoading, isLoadingMore, load, loadMore, toggleFavorite, remove,
   } = useSavedRecipes();
 
   const query = useMemo(
-      () => ({ favorite, collectionId, keyword: keyword || undefined, minRating }),
-      [favorite, collectionId, keyword, minRating],
+      () => ({ favorite, collectionId, keyword: keyword || undefined, minRating, sort }),
+      [favorite, collectionId, keyword, minRating, sort],
   );
   const key = useMemo(() => savedQueryKey(query), [query]);
 

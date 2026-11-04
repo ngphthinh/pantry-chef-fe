@@ -55,6 +55,7 @@ export interface SavedRecipeQuery {
   collectionId?: string; // màn hình collection/[id]
   keyword?: string;
   minRating?: number;   // 1–5
+  sort?: "rating_desc";
 }
 
 export interface CollectionResponseDetail {

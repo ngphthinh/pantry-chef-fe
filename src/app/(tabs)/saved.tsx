@@ -44,5 +44,9 @@ export default function SavedHub() {
     return <CustomRecipeList header={header} />;
   }
 
-  return <CollectionList header={header} />;
+  return (
+      <View className="flex-1">
+          <CollectionList header={header} />
+      </View>
+  );
 }
