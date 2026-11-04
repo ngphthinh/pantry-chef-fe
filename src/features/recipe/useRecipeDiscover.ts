@@ -1,24 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
-import { getErrorMessage } from "@/core/http/apiError";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchByName, fetchPopular, fetchRandom } from "./recipeSlice";
+import { useCallback, useEffect, useState } from 'react';
+import { getErrorMessage } from '@/core/http/apiError';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { fetchByName, fetchRandom } from './recipeSlice';
 
-export type DiscoverMode = "popular" | "random" | "name";
+export type DiscoverMode =  'random' | 'name';
 
 const RANDOM_COUNT = 6;
 const KEYWORD_DEBOUNCE_MS = 400;
 
-/** Màn "Khám phá món": phổ biến, ngẫu nhiên hoặc tìm theo tên (gõ xong 0,4 giây mới gọi API). */
-export function useRecipeDiscover(initialKeyword = "") {
+/** Màn "Khám phá món":  ngẫu nhiên hoặc tìm theo tên (gõ xong 0,4 giây mới gọi API). */
+export function useRecipeDiscover(initialKeyword = '') {
   const dispatch = useAppDispatch();
-  const popular = useAppSelector((s) => s.recipe.feeds.popular);
   const byName = useAppSelector((s) => s.recipe.feeds.byName);
   const randomItems = useAppSelector((s) => s.recipe.randomItems);
   const status = useAppSelector((s) => s.recipe.status);
 
-  const [mode, setModeState] = useState<DiscoverMode>(
-    initialKeyword.trim() ? "name" : "popular",
-  );
+  const [mode, setModeState] = useState<DiscoverMode>(initialKeyword.trim() ? 'name' : 'random');
   const [keyword, setKeyword] = useState(initialKeyword);
   const [query, setQuery] = useState(initialKeyword.trim());
   const [error, setError] = useState<string | null>(null);
@@ -41,18 +38,14 @@ export function useRecipeDiscover(initialKeyword = "") {
   }, []);
 
   useEffect(() => {
-    if (mode === "popular") void run(() => dispatch(fetchPopular(false)));
-    if (mode === "random") void run(() => dispatch(fetchRandom(RANDOM_COUNT)));
-    if (mode === "name" && query)
-      void run(() => dispatch(fetchByName(query, false)));
+    if (mode === 'random') void run(() => dispatch(fetchRandom(RANDOM_COUNT)));
+    if (mode === 'name' && query) void run(() => dispatch(fetchByName(query, false)));
   }, [mode, query, dispatch, run]);
 
   const setMode = useCallback((next: DiscoverMode) => setModeState(next), []);
 
   const loadMore = useCallback(() => {
-    if (mode === "popular") return run(() => dispatch(fetchPopular(true)));
-    if (mode === "name" && query)
-      return run(() => dispatch(fetchByName(query, true)));
+    if (mode === 'name' && query) return run(() => dispatch(fetchByName(query, true)));
     return Promise.resolve();
   }, [mode, query, dispatch, run]);
 
@@ -61,13 +54,8 @@ export function useRecipeDiscover(initialKeyword = "") {
     [dispatch, run],
   );
 
-  const feed = mode === "popular" ? popular : mode === "name" ? byName : null;
-  const task =
-    mode === "popular"
-      ? status.popular
-      : mode === "name"
-        ? status.byName
-        : status.random;
+  const feed =  mode === 'name' ? byName : null;
+  const task =  mode === 'name' ? status.byName : status.random;
 
   return {
     mode,
