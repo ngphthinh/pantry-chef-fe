@@ -89,6 +89,23 @@ export default function SelectIngredientScreen() {
         returnKeyType="search"
       />
 
+      {!pickMode && (
+        <Pressable
+          onPress={() =>
+            router.push({
+              pathname: "/pantry/barcode",
+              params: { from: "select" },
+            } as Href)
+          }
+          accessibilityRole="button"
+          accessibilityLabel="Quét mã vạch để chọn nguyên liệu"
+          className="h-12 flex-row items-center justify-center gap-2 rounded-full bg-brand px-6 active:opacity-80"
+        >
+          <Ionicons name="barcode-outline" size={22} color="#FFFFFF" />
+          <AppText className="font-bold text-white">Quét mã vạch</AppText>
+        </Pressable>
+      )}
+
       {categories.length > 0 && (
         <ChipGroup
           horizontal
@@ -97,19 +114,6 @@ export default function SelectIngredientScreen() {
           onChange={setCategoryId}
           onClear={() => setCategoryId("")}
         />
-      )}
-
-      {!pickMode && (
-        <Pressable
-          onPress={() => router.replace("/pantry/barcode" as Href)}
-          accessibilityRole="button"
-          className="flex-row items-center gap-2 self-start active:opacity-70"
-        >
-          <Ionicons name="barcode-outline" size={18} color={brand} />
-          <AppText className="font-semibold text-brand">
-            Quét mã vạch thay vì gõ tên
-          </AppText>
-        </Pressable>
       )}
 
       {search.isInitialLoading && (

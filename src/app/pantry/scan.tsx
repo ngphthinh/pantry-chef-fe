@@ -46,7 +46,8 @@ function SourceCard({
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      className="active:opacity-80">
+      className="active:opacity-80"
+    >
       <Card className="flex-row items-center gap-4 p-4">
         <View className="h-12 w-12 items-center justify-center rounded-full bg-brandSoft dark:bg-successBg-dark">
           <Ionicons name={icon} size={24} color={brand} />
@@ -172,13 +173,30 @@ export default function ScanIngredientsScreen() {
     );
   };
 
+  /** Chuyển các món đã chọn sang màn kiểm tra để gán nguyên liệu thật rồi lưu vào tủ. */
+  const addToPantry = () => {
+    const picked = ingredients
+      .filter((_, i) => selected.has(i))
+      .map((r) => ({
+        name: r.name,
+        nameEn: r.nameEn,
+        confidence: r.confidence,
+        quantityHint: r.quantityHint ?? null,
+      }));
+    router.push({
+      pathname: "/pantry/scan-review",
+      params: { items: JSON.stringify(picked) },
+    } as Href);
+  };
+
   return (
     <Screen>
       <View className="flex-row items-center gap-2">
         <Pressable
           onPress={() => router.back()}
           hitSlop={8}
-          accessibilityLabel="Quay lại">
+          accessibilityLabel="Quay lại"
+        >
           <Ionicons name="chevron-back" size={26} color={palette.ink} />
         </Pressable>
         <AppText variant="heading" className="flex-1">
@@ -216,7 +234,8 @@ export default function ScanIngredientsScreen() {
         <View className="gap-3">
           <View
             className="w-full items-center justify-center overflow-hidden rounded-3xl bg-soft dark:bg-soft-dark"
-            style={{ height: previewHeight }}>
+            style={{ height: previewHeight }}
+          >
             <Image
               source={{ uri: image.uri }}
               resizeMode="contain"
@@ -300,7 +319,8 @@ export default function ScanIngredientsScreen() {
                       className={cn(
                         "flex-row items-center gap-3 px-4 py-3 active:opacity-70",
                         i > 0 && "border-t border-line dark:border-line-dark",
-                      )}>
+                      )}
+                    >
                       <Ionicons
                         name={checked ? "checkbox" : "square-outline"}
                         size={24}
@@ -336,7 +356,13 @@ export default function ScanIngredientsScreen() {
               </View>
 
               <Button
+                title={`Thêm vào tủ (${selected.size})`}
+                disabled={selected.size === 0}
+                onPress={addToPantry}
+              />
+              <Button
                 title={`Tìm công thức (${selected.size})`}
+                variant="outline"
                 disabled={selected.size === 0}
                 onPress={searchRecipes}
               />
