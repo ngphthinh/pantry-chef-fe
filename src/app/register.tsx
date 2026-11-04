@@ -1,7 +1,7 @@
 // register.tsx
 import { useRouter } from "expo-router";
 import { useForm } from "@/components/ui/useForm";
-import { useAppTheme } from "@/core/theme/useAppTheme";
+import { useTheme } from "@/theme";
 import { useAuth } from "@/features/auth/useAuth";
 import { validators } from "@/features/auth/validation";
 import {
@@ -13,7 +13,7 @@ import { GlassInput3D } from "@/components/auth/GlassInput3D";
 import { TactileButton } from "@/components/ui/TactileButton";
 
 export default function RegisterScreen() {
-  const { isDark } = useAppTheme();
+  const { isDark } = useTheme();
   const { signUp } = useAuth();
   const router = useRouter();
 

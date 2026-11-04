@@ -4,7 +4,7 @@ import { View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AppText } from "@/components/ui/AppText";
 import { useForm } from "@/components/ui/useForm";
-import { useAppTheme } from "@/core/theme/useAppTheme";
+import { useTheme } from "@/theme";
 import { authService } from "@/core/di/container";
 import { validators } from "@/features/auth/validation";
 import { ForgotPasswordRequest } from "@/types";
@@ -17,7 +17,7 @@ import { GlassInput3D } from "@/components/auth/GlassInput3D";
 import { TactileButton } from "@/components/ui/TactileButton";
 
 export default function ForgotPasswordScreen() {
-  const { isDark, palette } = useAppTheme();
+  const { isDark, colors } = useTheme();
   const [sent, setSent] = useState(false);
 
   const form = useForm(
@@ -56,7 +56,7 @@ export default function ForgotPasswordScreen() {
         />
       ) : (
         <View className="mb-3 flex-row gap-2.5 rounded-[14px] border border-successInk bg-successBg p-3 dark:border-successInk-dark dark:bg-successBg-dark">
-          <Ionicons name="mail-open" size={18} color={palette.successInk} />
+          <Ionicons name="mail-open" size={18} color={colors.success} />
           <AppText className="flex-1 text-[13px]">
             Nếu email được cung cấp tồn tại trong hệ thống, bạn sẽ nhận được
             hướng dẫn đặt lại mật khẩu. Vui lòng kiểm tra hộp thư đến và thư mục

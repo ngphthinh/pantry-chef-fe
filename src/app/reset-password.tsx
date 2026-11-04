@@ -1,7 +1,7 @@
 // reset-password.tsx
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useForm } from "@/components/ui/useForm";
-import { useAppTheme } from "@/core/theme/useAppTheme";
+import { useTheme } from "@/theme";
 import { authService } from "@/core/di/container";
 import { validators } from "@/features/auth/validation";
 import {
@@ -14,7 +14,7 @@ import { TactileButton } from "@/components/ui/TactileButton";
 
 /** Mở bằng deep link: pantrychef://reset-password?token=... */
 export default function ResetPasswordScreen() {
-  const { isDark } = useAppTheme();
+  const { isDark } = useTheme();
   const router = useRouter();
   const { token } = useLocalSearchParams<{ token?: string }>();
 

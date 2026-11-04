@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { MenuGroup, type MenuItem } from "@/components/ui/MenuGroup";
 import { Screen } from "@/components/ui/Screen";
 import { Ionicons } from "@expo/vector-icons";
-import { brand } from "@/core/theme/colors";
+import { useTheme } from "@/theme";
 import { useAdminAccess } from "@/features/admin/useAdminAccess";
 import { confirmAction, notify } from "@/core/ui/dialogs";
 import { useMoreMenu } from "@/features/more/useMoreMenu";
@@ -153,6 +153,7 @@ const ADMIN_SECTION: Section = {
 
 export default function MoreHub() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const { isAdmin } = useAdminAccess();
   const { profile, signOut, deleteAccount } = useMoreMenu();
   const go = (route: string) => router.push(`/${route}` as Href);
@@ -198,41 +199,98 @@ export default function MoreHub() {
     <Screen>
       <AppText variant="title">Thêm</AppText>
 
-      <Pressable onPress={() => go("settings/profile")}>
-        <Card className="flex-row items-center gap-4 rounded-2xl border border-border bg-surface p-4">
-          {/* Avatar */}
-          <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-brandSoft dark:bg-successBg-dark">
+      <Pressable onPress={() => go("settings/profile")} className="active:scale-[0.99]">
+        <Card
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            padding: 16,
+            gap: 16,
+            borderRadius: 22,
+          }}>
+          {/* Avatar with Emerald Ring */}
+          <View
+            style={{
+              width: 58,
+              height: 58,
+              borderRadius: 29,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: isDark ? "rgba(16, 185, 129, 0.2)" : "#DCFCE7",
+              borderColor: colors.primary,
+              borderWidth: 2,
+            }}>
             {profile?.avatarUri ? (
               <Image
                 source={{ uri: profile.avatarUri }}
-                className="h-14 w-14"
+                style={{ width: 52, height: 52, borderRadius: 26 }}
                 resizeMode="cover"
               />
             ) : (
-              <AppText variant="heading" className="text-brand">
-                {profile?.initial?.trim()?.charAt(0)?.toUpperCase() ?? "?"}
+              <AppText
+                style={{
+                  fontSize: 22,
+                  fontWeight: "800",
+                  color: colors.primary,
+                }}>
+                {profile?.initial?.trim()?.charAt(0)?.toUpperCase() ?? "P"}
               </AppText>
             )}
           </View>
 
           {/* User information */}
-          <View className="flex-1 gap-1">
-            <AppText variant="heading" numberOfLines={1}>
-              {profile?.name?.trim() || "Người dùng"}
-            </AppText>
+          <View style={{ flex: 1, gap: 2 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <AppText
+                style={{
+                  fontSize: 16,
+                  fontWeight: "700",
+                  color: colors.textPrimary,
+                }}
+                numberOfLines={1}>
+                {profile?.name?.trim() || "Người dùng"}
+              </AppText>
+              <View
+                style={{
+                  backgroundColor: colors.primarySoft,
+                  paddingHorizontal: 7,
+                  paddingVertical: 2,
+                  borderRadius: 8,
+                }}>
+                <AppText style={{ fontSize: 10, fontWeight: "800", color: colors.primary }}>
+                  BẾP TRƯỞNG
+                </AppText>
+              </View>
+            </View>
 
-            <AppText variant="caption" numberOfLines={1}>
+            <AppText
+              style={{ fontSize: 13, color: colors.textSecondary }}
+              numberOfLines={1}>
               {profile?.email || "Chưa cập nhật email"}
             </AppText>
 
-            <AppText variant="caption" className="text-brand">
-              Xem hồ sơ cá nhân
+            <AppText
+              style={{
+                fontSize: 12,
+                fontWeight: "600",
+                color: colors.primary,
+                marginTop: 2,
+              }}>
+              Xem & chỉnh sửa hồ sơ →
             </AppText>
           </View>
 
           {/* Navigation indicator */}
-          <View className="items-center justify-center">
-            <Ionicons name="chevron-forward" size={20} color={brand.DEFAULT} />
+          <View
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              alignItems: "center",
+              justifyContent: "center",
+              backgroundColor: isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.04)",
+            }}>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
           </View>
         </Card>
       </Pressable>

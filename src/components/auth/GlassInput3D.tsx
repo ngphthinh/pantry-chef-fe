@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AppText } from "@/components/ui/AppText";
+import { useTheme } from "@/theme";
 
 interface GlassInput3DProps extends TextInputProps {
   label: string;
@@ -17,61 +18,75 @@ interface GlassInput3DProps extends TextInputProps {
 }
 
 /**
- * Không animation: đổi style trực tiếp theo state focus.
+ * Input hiệu ứng kính 3D hiện đại: đổi viền phát sáng khi focus,
+ * tương thích 100% với hệ thống Design Token.
  */
 export function GlassInput3D({
   label,
   iconName,
   error,
-  isDark = true,
+  isDark: propIsDark,
   secureTextEntry,
   value,
   onChangeText,
   ...props
 }: GlassInput3DProps) {
+  const theme = useTheme();
+  const isDark = propIsDark !== undefined ? propIsDark : theme.isDark;
+  const { colors, radius } = theme;
+
   const [isFocused, setIsFocused] = useState(false);
   const [hidden, setHidden] = useState(!!secureTextEntry);
 
-  const accent = isDark ? "#34D399" : "#2E7D4F";
-  const muted = isDark ? "#9CA3AF" : "#6B7280";
+  const accentColor = colors.primary;
+  const mutedColor = colors.textSecondary;
 
   const borderColor = error
-    ? isDark
-      ? "#F87171"
-      : "#DC2626"
+    ? colors.error
     : isFocused
-      ? accent
+      ? accentColor
       : isDark
-        ? "rgba(255, 255, 255, 0.12)"
+        ? colors.border
         : "rgba(0, 0, 0, 0.08)";
 
   const backgroundColor = isFocused
     ? isDark
-      ? "rgba(46, 125, 79, 0.12)"
+      ? "rgba(46, 125, 79, 0.16)"
       : "rgba(255, 255, 255, 0.95)"
     : isDark
-      ? "rgba(255, 255, 255, 0.04)"
-      : "rgba(255, 255, 255, 0.65)";
+      ? "rgba(255, 255, 255, 0.05)"
+      : "rgba(255, 255, 255, 0.75)";
 
   return (
     <View style={styles.container}>
       <AppText
         variant="caption"
-        style={[styles.label, { color: isFocused ? accent : muted }]}>
+        style={[
+          styles.label,
+          { color: isFocused ? accentColor : mutedColor },
+        ]}>
         {label}
       </AppText>
 
-      <View style={[styles.fieldWrapper, { borderColor, backgroundColor }]}>
+      <View
+        style={[
+          styles.fieldWrapper,
+          {
+            borderColor,
+            backgroundColor,
+            borderRadius: radius.xl,
+          },
+        ]}>
         <Ionicons
           name={iconName}
           size={20}
-          color={error ? "#EF4444" : isFocused ? accent : muted}
+          color={error ? colors.error : isFocused ? accentColor : mutedColor}
           style={styles.leadingIcon}
         />
 
         <TextInput
-          style={[styles.input, { color: isDark ? "#F9FAFB" : "#111827" }]}
-          placeholderTextColor={isDark ? "#6B7280" : "#9CA3AF"}
+          style={[styles.input, { color: colors.textPrimary }]}
+          placeholderTextColor={colors.textDisabled}
           autoCapitalize="none"
           secureTextEntry={hidden}
           value={value}
@@ -89,7 +104,7 @@ export function GlassInput3D({
             <Ionicons
               name={hidden ? "eye-outline" : "eye-off-outline"}
               size={20}
-              color={muted}
+              color={mutedColor}
             />
           </Pressable>
         ) : value && value.length > 0 ? (
@@ -100,7 +115,7 @@ export function GlassInput3D({
             <Ionicons
               name="close-circle"
               size={18}
-              color={isDark ? "#6B7280" : "#9CA3AF"}
+              color={colors.textDisabled}
             />
           </Pressable>
         ) : null}
@@ -111,9 +126,11 @@ export function GlassInput3D({
           <Ionicons
             name="alert-circle"
             size={14}
-            color={isDark ? "#F87171" : "#DC2626"}
+            color={colors.error}
           />
-          <AppText variant="error" style={styles.errorText}>
+          <AppText
+            variant="error"
+            style={[styles.errorText, { color: colors.error }]}>
             {error}
           </AppText>
         </View>
@@ -135,7 +152,6 @@ const styles = StyleSheet.create({
   },
   fieldWrapper: {
     height: 52,
-    borderRadius: 18,
     borderWidth: 1.2,
     flexDirection: "row",
     alignItems: "center",

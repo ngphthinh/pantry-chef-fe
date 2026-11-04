@@ -4,60 +4,52 @@ import type { PickedImage, RecipeCreateRequest, RecipeUpdateRequest } from '@/ty
 import {
   createCustomRecipe,
   deleteCustomRecipe,
-  fetchCustomRecipe,
+  fetchCustomRecipeDetail,
   fetchCustomRecipes,
   updateCustomRecipe,
-  uploadCustomRecipeImage,
 } from './customRecipeSlice';
 
 /**
- * Công thức tự tạo của người dùng (dữ liệu cho các màn `recipe/custom/*` của Thiệu).
- * Mọi hàm ném lỗi gốc (ApiError); màn hình/hook form bắt lỗi và hiển thị.
+ * Công thức tự tạo của người dùng (dữ liệu cho các màn `recipe/custom/*`).
  */
 export function useCustomRecipes() {
   const dispatch = useAppDispatch();
   const items = useAppSelector((s) => s.customRecipe.items);
-  const details = useAppSelector((s) => s.customRecipe.details);
+  const detail = useAppSelector((s) => s.customRecipe.detail);
   const status = useAppSelector((s) => s.customRecipe.status);
   const hasNext = useAppSelector((s) => s.customRecipe.hasNext);
-  const loaded = useAppSelector((s) => s.customRecipe.loaded);
 
   const load = useCallback(() => dispatch(fetchCustomRecipes(false)), [dispatch]);
   const loadMore = useCallback(() => dispatch(fetchCustomRecipes(true)), [dispatch]);
-  const loadDetail = useCallback((id: string) => dispatch(fetchCustomRecipe(id)), [dispatch]);
+  const loadDetail = useCallback((id: string) => dispatch(fetchCustomRecipeDetail(id)), [dispatch]);
   const create = useCallback(
-    (body: RecipeCreateRequest) => dispatch(createCustomRecipe(body)),
+    (body: RecipeCreateRequest, image?: PickedImage | null) =>
+      dispatch(createCustomRecipe(body, image)),
     [dispatch],
   );
   const update = useCallback(
-    (id: string, body: RecipeUpdateRequest) => dispatch(updateCustomRecipe(id, body)),
+    (id: string, body: RecipeUpdateRequest, image?: PickedImage | null) =>
+      dispatch(updateCustomRecipe(id, body, image)),
     [dispatch],
   );
   const remove = useCallback((id: string) => dispatch(deleteCustomRecipe(id)), [dispatch]);
-  const uploadImage = useCallback(
-    (id: string, image: PickedImage) => dispatch(uploadCustomRecipeImage(id, image)),
-    [dispatch],
-  );
 
   return useMemo(
     () => ({
       items,
-      details,
+      detail,
       hasNext,
       isLoading: status === 'loading',
       isLoadingMore: status === 'loadingMore',
       isSaving: status === 'saving',
-      isDeleting: status === 'deleting',
-      isUploading: status === 'uploading',
-      isEmpty: loaded && items.length === 0 && status === 'idle',
+      isEmpty: items.length === 0 && status === 'idle',
       load,
       loadMore,
       loadDetail,
       create,
       update,
       remove,
-      uploadImage,
     }),
-    [items, details, hasNext, status, loaded, load, loadMore, loadDetail, create, update, remove, uploadImage],
+    [items, detail, hasNext, status, load, loadMore, loadDetail, create, update, remove],
   );
 }

@@ -1,19 +1,14 @@
-import React, {useEffect, useState} from "react";
-import {Image, Text, View} from "react-native";
-import {Ionicons} from "@expo/vector-icons";
-
-import {cn} from "@/components/ui/cn";
-import {useAppTheme} from "@/core/theme/useAppTheme";
-import type {StorageLocation} from "@/types";
+import React, { useEffect, useState } from "react";
+import { Image, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "@/theme";
+import type { StorageLocation } from "@/types";
 
 export interface PantryItemThumbnailProps {
   photoUri?: string | null;
   location?: StorageLocation | null;
-  /** Tên nguyên liệu, dùng để hiện chữ cái đầu khi không có ảnh (tùy chọn). */
   name?: string;
-  /** true: hiện chữ cái đầu của `name` khi không có ảnh. false: hiện icon. */
   showInitialWhenEmpty?: boolean;
-  /** true: không render gì cả khi không có ảnh. */
   hideWhenEmpty?: boolean;
   className?: string;
   iconSize?: number;
@@ -23,11 +18,86 @@ export interface PantryItemThumbnailProps {
 }
 
 /**
- * Hiển thị ảnh nguyên liệu nếu có (và tải thành công).
- * Nếu photoUri là null/rỗng hoặc ảnh bị lỗi, hiển thị fallback:
- *  - hideWhenEmpty        -> không hiển thị gì
- *  - showInitialWhenEmpty -> chữ cái đầu của tên
- *  - mặc định             -> icon theo vị trí bảo quản
+ * Xác định icon và màu sắc sống động tương ứng với nguyên liệu và vị trí bảo quản
+ */
+function getSmartVisual(name?: string, location?: StorageLocation | null) {
+  const lower = (name || "").toLowerCase();
+
+  if (lower.includes("thịt") || lower.includes("bò") || lower.includes("heo") || lower.includes("gà")) {
+    return {
+      icon: "restaurant" as const,
+      bgDark: "rgba(239, 68, 68, 0.18)",
+      bgLight: "#FEE2E2",
+      colorDark: "#F87171",
+      colorLight: "#DC2626",
+    };
+  }
+
+  if (lower.includes("trứng")) {
+    return {
+      icon: "ellipse" as const,
+      bgDark: "rgba(245, 158, 11, 0.18)",
+      bgLight: "#FEF3C7",
+      colorDark: "#FBBF24",
+      colorLight: "#D97706",
+    };
+  }
+
+  if (lower.includes("cá") || lower.includes("tôm") || lower.includes("hải sản")) {
+    return {
+      icon: "water" as const,
+      bgDark: "rgba(14, 165, 233, 0.18)",
+      bgLight: "#E0F2FE",
+      colorDark: "#38BDF8",
+      colorLight: "#0284C7",
+    };
+  }
+
+  if (lower.includes("rau") || lower.includes("cải") || lower.includes("hành") || lower.includes("tỏi") || lower.includes("ớt") || lower.includes("cà chua")) {
+    return {
+      icon: "leaf" as const,
+      bgDark: "rgba(16, 185, 129, 0.18)",
+      bgLight: "#DCFCE7",
+      colorDark: "#34D399",
+      colorLight: "#16A34A",
+    };
+  }
+
+  // Fallback theo Location
+  if (location === "FREEZER") {
+    return {
+      icon: "snow" as const,
+      bgDark: "rgba(56, 189, 248, 0.18)",
+      bgLight: "#E0F2FE",
+      colorDark: "#38BDF8",
+      colorLight: "#0284C7",
+    };
+  }
+
+  if (location === "PANTRY_SHELF") {
+    return {
+      icon: "cube" as const,
+      bgDark: "rgba(245, 158, 11, 0.18)",
+      bgLight: "#FEF3C7",
+      colorDark: "#FBBF24",
+      colorLight: "#D97706",
+    };
+  }
+
+  // Mặc định (Tủ mát / khác)
+  return {
+    icon: "fast-food" as const,
+    bgDark: "rgba(52, 211, 153, 0.18)",
+    bgLight: "#DCFCE7",
+    colorDark: "#34D399",
+    colorLight: "#059669",
+  };
+}
+
+/**
+ * Hiển thị ảnh nguyên liệu nếu có.
+ * Khi chưa có ảnh -> fallback về icon thông minh theo nhóm thực phẩm & vị trí bảo quản
+ * với phong cách Frosted Bento Badge hiện đại, sinh động, bắt mắt.
  */
 export function PantryItemThumbnail({
   photoUri,
@@ -35,72 +105,87 @@ export function PantryItemThumbnail({
   name,
   showInitialWhenEmpty = false,
   hideWhenEmpty = false,
-  className = "h-12 w-12",
   iconSize = 22,
   fallbackIcon,
   fallbackIconColor,
-  fallbackBgClassName,
 }: PantryItemThumbnailProps) {
-  const {brand, palette} = useAppTheme();
+  const { isDark, radius } = useTheme();
   const [failed, setFailed] = useState(false);
 
-  // Reset trạng thái lỗi khi đổi ảnh (ví dụ vừa chụp/upload ảnh mới)
   useEffect(() => {
     setFailed(false);
   }, [photoUri]);
 
-  // Coi chuỗi rỗng / toàn khoảng trắng như null
   const cleanUri = photoUri?.trim() ? photoUri.trim() : null;
   const hasImage = !!cleanUri && !failed;
 
-  // 1) Có ảnh -> hiển thị ảnh
+  // 1) Có ảnh -> hiển thị ảnh với bo góc mượt mà
   if (hasImage) {
     return (
       <View
-        className={cn(
-          "overflow-hidden rounded-2xl bg-soft shadow-inner dark:bg-soft-dark",
-          className,
-        )}
-      >
+        style={[
+          styles.container,
+          {
+            borderRadius: radius["2xl"],
+            backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "#F3F4F6",
+          },
+        ]}>
         <Image
-          source={{uri: cleanUri}}
-          className='h-full w-full'
-          resizeMode='cover'
+          source={{ uri: cleanUri }}
+          style={styles.image}
+          resizeMode="cover"
           onError={() => setFailed(true)}
         />
       </View>
     );
   }
 
-  // 2) Không có ảnh + muốn ẩn hẳn
   if (hideWhenEmpty) return null;
 
-  // 3) Không có ảnh -> fallback về icon ảnh placeholder (giống hình mẫu ảnh bạn gửi)
-  const iconName = fallbackIcon ?? "image-outline";
-  const iconColor = fallbackIconColor ?? palette.muted;
+  // 2) Không có ảnh -> Hiển thị Bento Avatar sống động theo danh mục thực phẩm
+  const visual = getSmartVisual(name, location);
+  const bgColor = isDark ? visual.bgDark : visual.bgLight;
+  const fgColor = fallbackIconColor || (isDark ? visual.colorDark : visual.colorLight);
+  const icon = fallbackIcon || visual.icon;
   const initial = name?.trim().charAt(0).toUpperCase();
 
   return (
     <View
-      className={cn(
-        "items-center justify-center rounded-2xl bg-soft shadow-inner dark:bg-soft-dark",
-        fallbackBgClassName,
-        className,
-      )}
-    >
+      style={[
+        styles.container,
+        {
+          borderRadius: radius["2xl"],
+          backgroundColor: bgColor,
+          borderColor: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.04)",
+          borderWidth: 1,
+        },
+      ]}>
       {showInitialWhenEmpty && initial ? (
         <Text
           style={{
-            color: iconColor,
+            color: fgColor,
             fontSize: iconSize,
-            fontWeight: "600",
-          }}
-        >
+            fontWeight: "800",
+          }}>
           {initial}
         </Text>
       ) : (
-        <Ionicons name={iconName} size={iconSize} color={iconColor} />
+        <Ionicons name={icon} size={iconSize} color={fgColor} />
       )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    width: 48,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
+  },
+});

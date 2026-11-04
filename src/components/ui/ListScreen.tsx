@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import React, { type ReactElement } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -8,15 +8,15 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText } from "@/components/ui/AppText";
-import { brand } from "@/core/theme/colors";
+import { useTheme } from "@/theme";
 
 interface ListScreenProps<T> {
   data: T[];
   keyExtractor: (item: T) => string;
   renderItem: ListRenderItem<T>;
-  /** Phần đầu danh sách (tiêu đề, ô tìm kiếm, bộ lọc...). Truyền ELEMENT, không truyền component. */
+  /** Phần đầu danh sách (tiêu đề, ô tìm kiếm, bộ lọc...). */
   header?: ReactElement;
-  /** Hiện khi danh sách rỗng (chỉ truyền khi đã tải xong, nếu không sẽ nháy lên lúc đang tải). */
+  /** Hiện khi danh sách rỗng (chỉ truyền khi đã tải xong). */
   empty?: ReactElement | null;
   /** Trạng thái đang tải dữ liệu lần đầu */
   isLoading?: boolean;
@@ -32,17 +32,14 @@ interface ListScreenProps<T> {
   gap?: number;
   onRefresh?: () => void;
   refreshing?: boolean;
-  /** Gọi khi người dùng bắt đầu kéo cuộn. */
   onScrollBeginDrag?: () => void;
-  /** Header dính ở trên khi cuộn. Nên dùng với header gọn (tiêu đề, tìm kiếm, tab). */
+  /** Header dính ở trên khi cuộn. */
   stickyHeader?: boolean;
 }
 
 /**
- * Màn hình dạng danh sách cuộn vô hạn. Dùng FlatList làm vùng cuộn chính
- * (không lồng trong ScrollView) nên onEndReached hoạt động đúng.
- *
- * Nếu màu nền / khoảng đệm không giống `Screen`, chỉ cần chỉnh ở file này.
+ * Màn hình dạng danh sách cuộn vô hạn với FlatList tối ưu hóa,
+ * tự động đồng bộ màu nền và hiệu ứng tải theo Theme Token.
  */
 export function ListScreen<T>({
   data,
@@ -63,15 +60,19 @@ export function ListScreen<T>({
   stickyHeader = true,
 }: ListScreenProps<T>) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const sticky = stickyHeader && !!header;
 
   const renderEmptyComponent = () => {
     if (isLoading && data.length === 0) {
       return (
         <View className="items-center justify-center py-16">
-          <ActivityIndicator size="large" color={brand.DEFAULT} />
+          <ActivityIndicator size="large" color={colors.primary} />
           {loadingMessage ? (
-            <AppText variant="caption" className="mt-3 font-medium text-muted">
+            <AppText
+              variant="caption"
+              style={{ color: colors.textSecondary }}
+              className="mt-3 font-medium">
               {loadingMessage}
             </AppText>
           ) : null}
@@ -85,8 +86,11 @@ export function ListScreen<T>({
     if (isLoadingMore) {
       return (
         <View className="items-center justify-center p-4 py-6">
-          <ActivityIndicator size="small" color={brand.DEFAULT} />
-          <AppText variant="caption" className="mt-2 text-xs font-medium text-muted">
+          <ActivityIndicator size="small" color={colors.primary} />
+          <AppText
+            variant="caption"
+            style={{ color: colors.textSecondary }}
+            className="mt-2 text-xs font-medium">
             Đang tải thêm...
           </AppText>
         </View>
@@ -95,7 +99,10 @@ export function ListScreen<T>({
     if (hasNext === false && data.length > 0) {
       return (
         <View className="items-center justify-center py-6">
-          <AppText variant="caption" className="text-xs text-muted/60">
+          <AppText
+            variant="caption"
+            style={{ color: colors.textDisabled }}
+            className="text-xs">
             Đã hiển thị tất cả ({data.length}) món
           </AppText>
         </View>
@@ -106,8 +113,11 @@ export function ListScreen<T>({
 
   return (
     <View
-      className="flex-1 bg-canvas dark:bg-canvas-dark"
-      style={{ paddingTop: insets.top }}>
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+        paddingTop: insets.top,
+      }}>
       <FlatList
         style={{ flex: 1 }}
         data={data}
@@ -118,22 +128,18 @@ export function ListScreen<T>({
         ListHeaderComponent={
           header ? (
             <View
-              className={
-                sticky ? "bg-canvas pb-3 dark:bg-canvas-dark" : undefined
+              style={
+                sticky
+                  ? { backgroundColor: colors.background, paddingBottom: 12 }
+                  : undefined
               }>
               {header}
             </View>
           ) : undefined
         }
         stickyHeaderIndices={sticky ? [0] : undefined}
-        ListEmptyComponent={empty ?? undefined}
-        ListFooterComponent={
-          isLoadingMore ? (
-            <View className="items-center p-4">
-              <ActivityIndicator color={brand.DEFAULT} />
-            </View>
-          ) : undefined
-        }
+        ListEmptyComponent={renderEmptyComponent()}
+        ListFooterComponent={renderFooterComponent()}
         onEndReached={onEndReached}
         onEndReachedThreshold={0.3}
         onRefresh={onRefresh}

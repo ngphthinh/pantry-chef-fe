@@ -17,7 +17,7 @@ import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { ListScreen } from "@/components/ui/ListScreen";
 import { PantryItemThumbnail } from "@/components/pantry/PantryItemThumbnail";
-import { useAppTheme } from "@/core/theme/useAppTheme";
+import { useTheme } from "@/theme";
 import {
   usePantry,
   type EnrichedPantryItem,
@@ -72,7 +72,13 @@ const LOCATIONS: {
 
 export default function PantryHubScreen() {
   const router = useRouter();
-  const { brand, palette } = useAppTheme();
+  const { colors, isDark } = useTheme();
+  const brand = colors.primary;
+  const palette = {
+    muted: colors.textSecondary,
+    ink: colors.textPrimary,
+    warnInk: colors.warning,
+  };
   const {
     items,
     expiringItems,
@@ -204,17 +210,23 @@ export default function PantryHubScreen() {
       </View>
 
       {/* Search Bar - Tìm kiếm nguyên liệu theo keyword */}
-      <View className="flex-row items-center gap-2.5 rounded-2xl border border-line bg-soft px-3.5 py-2.5 dark:border-line-dark dark:bg-soft-dark">
-        <Ionicons name="search-outline" size={18} color={palette.muted} />
+      <View
+        style={{
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          borderWidth: 1.2,
+        }}
+        className="flex-row items-center gap-2.5 rounded-2xl px-3.5 py-2.5 shadow-xs">
+        <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
         <TextInput
           placeholder="Tìm kiếm theo tên nguyên liệu..."
-          placeholderTextColor={palette.muted}
+          placeholderTextColor={colors.textSecondary}
           value={keyword}
           onChangeText={setKeyword}
           returnKeyType="search"
           style={{
             flex: 1,
-            color: palette.ink,
+            color: colors.textPrimary,
             fontSize: 14,
             paddingVertical: 0,
           }}
@@ -224,7 +236,7 @@ export default function PantryHubScreen() {
             onPress={() => setKeyword("")}
             hitSlop={8}
             className="p-0.5">
-            <Ionicons name="close-circle" size={18} color={palette.muted} />
+            <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
           </Pressable>
         ) : null}
       </View>
@@ -233,32 +245,53 @@ export default function PantryHubScreen() {
       {expiringItems.length > 0 && !debouncedKeyword && (
         <Pressable
           onPress={() => router.push("/pantry/expiring" as Href)}
-          className="overflow-hidden rounded-3xl border border-warnInk/25 bg-warnBg p-3.5 shadow-sm active:scale-[0.99] dark:bg-warnBg-dark">
+          style={{
+            backgroundColor: isDark ? "rgba(245, 158, 11, 0.14)" : "#FEF3C7",
+            borderColor: isDark ? "rgba(245, 158, 11, 0.35)" : "rgba(217, 119, 6, 0.25)",
+            borderWidth: 1.2,
+          }}
+          className="overflow-hidden rounded-3xl p-3.5 shadow-sm active:scale-[0.99]">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-3">
-              <View className="h-10 w-10 items-center justify-center rounded-2xl bg-warnInk/15 dark:bg-warnInk-dark/20">
+              <View
+                style={{
+                  backgroundColor: isDark ? "rgba(245, 158, 11, 0.25)" : "rgba(217, 119, 6, 0.15)",
+                }}
+                className="h-10 w-10 items-center justify-center rounded-2xl">
                 <Ionicons
-                  name="warning-outline"
-                  size={22}
-                  color={palette.warnInk}
+                  name="warning"
+                  size={20}
+                  color={isDark ? "#FBBF24" : "#D97706"}
                 />
               </View>
               <View>
-                <AppText className="font-bold text-warnInk dark:text-warnInk-dark">
+                <AppText
+                  style={{
+                    color: isDark ? "#FDE68A" : "#92400E",
+                    fontWeight: "800",
+                    fontSize: 14,
+                  }}>
                   {expiringItems.length} nguyên liệu sắp hết hạn!
                 </AppText>
                 <AppText
-                  variant="caption"
-                  className="text-warnInk/85 dark:text-warnInk-dark/80">
+                  style={{
+                    color: isDark ? "rgba(253, 230, 138, 0.8)" : "#B45309",
+                    fontSize: 12,
+                    marginTop: 1,
+                  }}>
                   Chạm để xem chi tiết & ưu tiên nấu
                 </AppText>
               </View>
             </View>
-            <View className="h-7 w-7 items-center justify-center rounded-full bg-warnInk/10 dark:bg-warnInk-dark/20">
+            <View
+              style={{
+                backgroundColor: isDark ? "rgba(245, 158, 11, 0.2)" : "rgba(217, 119, 6, 0.1)",
+              }}
+              className="h-7 w-7 items-center justify-center rounded-full">
               <Ionicons
                 name="chevron-forward"
                 size={16}
-                color={palette.warnInk}
+                color={isDark ? "#FBBF24" : "#D97706"}
               />
             </View>
           </View>
@@ -266,35 +299,27 @@ export default function PantryHubScreen() {
       )}
 
       {/* Storage Location Filter Chips */}
-      <View className="flex-row flex-wrap gap-2">
-        {LOCATIONS.map((loc) => {
-          const isSelected = selectedLocation === loc.value;
-          return (
-            <Pressable
-              key={loc.value}
-              onPress={() => setSelectedLocation(loc.value)}
-              className={`rounded-xl border px-3 py-1.5 active:scale-95 ${
-                isSelected
-                  ? "border-brand bg-brandSoft dark:bg-surface-dark"
-                  : "border-line bg-soft dark:border-line-dark dark:bg-soft-dark"
-              }`}>
-              <AppText
-                className={`text-xs font-bold ${
-                  isSelected ? "text-brand" : "text-muted"
-                }`}>
-                {loc.label}
-              </AppText>
-            </Pressable>
-          );
-        })}
-      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        className="-mx-4 px-4 py-0.5"
+        contentContainerStyle={{ gap: 8 }}>
+        {LOCATIONS.map((loc) => (
+          <Chip
+            key={loc.value}
+            label={loc.label}
+            selected={selectedLocation === loc.value}
+            onPress={() => setSelectedLocation(loc.value)}
+          />
+        ))}
+      </ScrollView>
 
       {/* Category Filters */}
       {categories.length > 2 && (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          className="-mx-4 px-4 py-1"
+          className="-mx-4 px-4 py-0.5"
           contentContainerStyle={{ gap: 8 }}>
           {categories.map((cat) => (
             <Chip
@@ -351,6 +376,7 @@ export default function PantryHubScreen() {
               <PantryItemThumbnail
                 photoUri={item.photoUri}
                 location={item.location}
+                name={item.ingredientName}
                 className="h-12 w-12"
               />
               <View className="flex-1">
@@ -452,11 +478,19 @@ export default function PantryHubScreen() {
 
         <Pressable
           onPress={() => setFabOpen(!fabOpen)}
-          className="h-14 w-14 items-center justify-center rounded-3xl bg-brand shadow-lg active:scale-90">
+          style={{
+            backgroundColor: colors.primary,
+            shadowColor: colors.shadowGlow,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.35,
+            shadowRadius: 8,
+            elevation: 6,
+          }}
+          className="h-14 w-14 items-center justify-center rounded-3xl active:scale-90">
           <Ionicons
             name={fabOpen ? "close" : "add"}
             size={28}
-            color="#FFFFFF"
+            color={colors.textOnPrimary}
           />
         </Pressable>
       </View>

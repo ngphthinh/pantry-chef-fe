@@ -54,6 +54,16 @@ export function useRecipeSearchHub() {
     );
   }, []);
 
+  const clearAll = useCallback(() => {
+    setTouched(true);
+    setSelected([]);
+  }, []);
+
+  const selectAll = useCallback(() => {
+    setTouched(true);
+    setSelected(pantryNames);
+  }, [pantryNames]);
+
   /** Ghi tiêu chí "theo nguyên liệu" vào store; trả false nếu chưa chọn nguyên liệu nào. */
   const prepareSearch = useCallback((): boolean => {
     if (selected.length === 0) return false;
@@ -94,6 +104,8 @@ export function useRecipeSearchHub() {
     selectedCount: selected.length,
     isPantryLoading: isLoading,
     toggle,
+    clearAll,
+    selectAll,
     prepareSearch,
     prepareNameSearch,
   };

@@ -18,6 +18,7 @@ import { DatePickerField } from "@/components/ui/DatePickerField";
 import { Screen } from "@/components/ui/Screen";
 import { TextField } from "@/components/ui/TextField";
 import { useAppTheme } from "@/core/theme/useAppTheme";
+import { palette } from "@/theme";
 import { RecipePickerModal } from "@/components/recipe/RecipePickerModal";
 import { useMealPlanEntryForm } from "@/features/mealplan/useMealPlanEntryForm";
 import type { MealType, RecipeSummaryResponse } from "@/types";
@@ -33,15 +34,15 @@ const MEAL_TYPES: {
     type: "BREAKFAST",
     label: "Bữa sáng",
     icon: "sunny-outline",
-    color: "#F59E0B",
+    color: palette.amber[500],
   },
   {
     type: "LUNCH",
     label: "Bữa trưa",
     icon: "partly-sunny-outline",
-    color: "#10B981",
+    color: palette.emerald[500],
   },
-  { type: "DINNER", label: "Bữa tối", icon: "moon-outline", color: "#6366F1" },
+  { type: "DINNER", label: "Bữa tối", icon: "moon-outline", color: palette.info[600] },
 ];
 
 export default function AddMealPlanEntryScreen() {

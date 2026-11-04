@@ -1,26 +1,27 @@
-import { useCallback, useMemo } from 'react';
-import { useColorScheme } from 'nativewind';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useMemo } from 'react';
+import { useTheme } from '@/theme';
 import colors from './colors';
-import { setThemeMode, type ThemeMode } from './themeSlice';
+import type { ThemeMode } from './themeSlice';
 
 export type { ThemeMode };
 
+/**
+ * useAppTheme Bridge
+ * Chuyển tiếp hoàn toàn sang useTheme() từ @/theme, bảo đảm tính nhất quán 100%
+ * giữa Redux, NativeWind và StyleSheet trên toàn ứng dụng.
+ */
 export function useAppTheme() {
-  const dispatch = useAppDispatch();
-  const mode = useAppSelector((s) => s.theme.mode);
-  const { colorScheme } = useColorScheme();
-
-  const setMode = useCallback((next: ThemeMode) => dispatch(setThemeMode(next)), [dispatch]);
+  const theme = useTheme();
 
   return useMemo(() => {
-    const isDark = colorScheme === 'dark';
     return {
-      mode,
-      isDark,
-      palette: isDark ? colors.dark : colors.light,
-      brand: colors.brand.DEFAULT,
-      setMode,
+      mode: theme.themeMode,
+      isDark: theme.isDark,
+      palette: theme.isDark ? colors.dark : colors.light,
+      brand: theme.colors.primary,
+      colors: theme.colors,
+      theme,
+      setMode: theme.setMode,
     };
-  }, [mode, colorScheme, setMode]);
+  }, [theme]);
 }

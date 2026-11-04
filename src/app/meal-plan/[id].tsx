@@ -18,6 +18,7 @@ import { ListScreen } from "@/components/ui/ListScreen";
 import { Screen } from "@/components/ui/Screen";
 import { toDisplayDate } from "@/core/format/datetime";
 import { useAppTheme } from "@/core/theme/useAppTheme";
+import { palette } from "@/theme";
 import { useMealPlan } from "@/features/mealplan/useMealPlan";
 import type { MealPlanEntryResponse, MealType } from "@/types";
 
@@ -25,9 +26,9 @@ const MEAL_ICONS: Record<
   MealType,
   { icon: keyof typeof Ionicons.glyphMap; label: string; color: string }
 > = {
-  BREAKFAST: { icon: "sunny-outline", label: "Bữa sáng", color: "#F59E0B" },
-  LUNCH: { icon: "partly-sunny-outline", label: "Bữa trưa", color: "#10B981" },
-  DINNER: { icon: "moon-outline", label: "Bữa tối", color: "#6366F1" },
+  BREAKFAST: { icon: "sunny-outline", label: "Bữa sáng", color: palette.amber[500] },
+  LUNCH: { icon: "partly-sunny-outline", label: "Bữa trưa", color: palette.emerald[500] },
+  DINNER: { icon: "moon-outline", label: "Bữa tối", color: palette.info[600] },
 };
 
 export default function MealPlanDetailScreen() {

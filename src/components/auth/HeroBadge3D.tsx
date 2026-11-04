@@ -1,16 +1,21 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useTheme } from "@/theme";
 
 interface HeroBadge3DProps {
   isDark?: boolean;
 }
 
-/** Huy hiệu tĩnh, không animation. */
-export function HeroBadge3D({ isDark = true }: HeroBadge3DProps) {
+/** Huy hiệu đầu bếp 3D biểu tượng, đồng bộ hoàn toàn với theme token. */
+export function HeroBadge3D({ isDark: propIsDark }: HeroBadge3DProps) {
+  const theme = useTheme();
+  const isDark = propIsDark !== undefined ? propIsDark : theme.isDark;
+  const { colors } = theme;
+
   return (
     <View style={styles.container}>
-      {/* Halo tĩnh */}
+      {/* Halo phát quang */}
       <View
         style={[
           styles.glowHalo,
@@ -18,11 +23,12 @@ export function HeroBadge3D({ isDark = true }: HeroBadge3DProps) {
             backgroundColor: isDark
               ? "rgba(46, 125, 79, 0.45)"
               : "rgba(74, 222, 128, 0.35)",
+            shadowColor: colors.shadowGlow,
           },
         ]}
       />
 
-      {/* Vòng quỹ đạo tĩnh */}
+      {/* Vòng quỹ đạo */}
       <View
         style={[
           styles.orbitRing,
@@ -51,10 +57,10 @@ export function HeroBadge3D({ isDark = true }: HeroBadge3DProps) {
           <MaterialCommunityIcons
             name="chef-hat"
             size={40}
-            color={isDark ? "#4ADE80" : "#2E7D4F"}
+            color={colors.primary}
           />
           <View style={styles.sparkleBadge}>
-            <Ionicons name="sparkles" size={16} color="#FBBF24" />
+            <Ionicons name="sparkles" size={16} color={colors.accent} />
           </View>
         </View>
       </View>
@@ -76,7 +82,6 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    shadowColor: "#34D399",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.7,
     shadowRadius: 16,

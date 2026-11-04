@@ -4,10 +4,10 @@ import { useRouter, type Href } from "expo-router";
 
 import { SavedRecipeTile } from "@/components/saved/SavedRecipeTile";
 import { AppText } from "@/components/ui/AppText";
+import { Chip } from "@/components/ui/Chip";
 import { ListScreen } from "@/components/ui/ListScreen";
 import { TextField } from "@/components/ui/TextField";
-import { cn } from "@/components/ui/cn";
-import {useDebouncedValue} from "@/core/hooks/useDebounceValue";
+import { useDebouncedValue } from "@/core/hooks/useDebounceValue";
 import { brand } from "@/core/theme/colors";
 import { confirmAction, notify } from "@/core/ui/dialogs";
 import { useSavedList } from "@/features/savedRecipes/useSavedList";
@@ -18,8 +18,8 @@ interface Props {
 }
 type Sort = "rating_desc" | undefined;
 const SORTS: { label: string; value: Sort }[] = [
-    { label: "Sao cao → thấp", value: "rating_desc" },
-    { label: "Thứ tự lưu", value: undefined },
+  { label: "Sao cao → thấp", value: "rating_desc" },
+  { label: "Thứ tự lưu", value: undefined },
 ];
 const RATING_FILTERS = [
   { label: "Mọi sao", value: undefined },
@@ -48,7 +48,8 @@ export function SavedRecipeList({ favoriteOnly = false, header }: Props) {
   } = useSavedList({
     favorite: favoriteOnly ? true : undefined,
     keyword,
-    minRating, sort
+    minRating,
+    sort,
   });
 
   const isFiltering = keyword !== "" || minRating !== undefined;
@@ -56,7 +57,7 @@ export function SavedRecipeList({ favoriteOnly = false, header }: Props) {
 
   const handleEndReached = () => {
     if (visible.length === 0 || isLoading || isLoadingMore) return;
-    void loadMore(); // hook đã tự chặn khi hết trang
+    void loadMore();
   };
 
   const handleToggle = async (item: (typeof items)[number]) => {
@@ -77,83 +78,71 @@ export function SavedRecipeList({ favoriteOnly = false, header }: Props) {
   };
 
   const empty = isLoading ? (
-      <View className="items-center py-10">
-        <ActivityIndicator color={brand.DEFAULT} />
-      </View>
+    <View className="items-center py-10">
+      <ActivityIndicator color={brand.DEFAULT} />
+    </View>
   ) : error ? (
-      <View className="items-center gap-3 py-10">
-        <AppText variant="caption">{error}</AppText>
-        <Pressable onPress={() => void refresh()}>
-          <AppText className="font-bold text-brand">Thử lại</AppText>
-        </Pressable>
-      </View>
+    <View className="items-center gap-3 py-10">
+      <AppText variant="caption">{error}</AppText>
+      <Pressable onPress={() => void refresh()}>
+        <AppText className="font-bold text-brand">Thử lại</AppText>
+      </Pressable>
+    </View>
   ) : (
-      <AppText variant="caption">
-        {isFiltering ? "Không có món nào khớp." : "Chưa có món nào."}
-      </AppText>
+    <AppText variant="caption">
+      {isFiltering ? "Không có món nào khớp." : "Chưa có món nào."}
+    </AppText>
   );
 
   const listHeader = (
-      <View className="gap-3">
-        {header}
-        <TextField
-            label="Tìm món"
-            value={text}
-            onChangeText={setText}
-            placeholder="Nhập tên món..."
-        />
-          <View className="flex-row flex-wrap gap-2">
-              {SORTS.map((s) => (
-                  <Pressable
-                      key={s.label}
-                      onPress={() => setSort(s.value)}
-                      className={cn(
-                          "rounded-full px-3 py-1.5",
-                          s.value === sort ? "bg-brand" : "bg-soft dark:bg-soft-dark",
-                      )}
-                  >
-                      <AppText className={cn("text-sm font-bold", s.value === sort && "text-white")}>
-                          {s.label}
-                      </AppText>
-                  </Pressable>
-              ))}
-          </View>
-        <View className="flex-row flex-wrap gap-2">
-          {RATING_FILTERS.map((f) => (
-              <Pressable
-                  key={f.label}
-                  onPress={() => setMinRating(f.value)}
-                  className={cn(
-                      "rounded-full px-3 py-1.5",
-                      f.value === minRating ? "bg-brand" : "bg-soft dark:bg-soft-dark",
-                  )}
-              >
-                <AppText className={cn("text-sm font-bold", f.value === minRating && "text-white")}>
-                  {f.label}
-                </AppText>
-              </Pressable>
-          ))}
-        </View>
+    <View className="gap-3">
+      {header}
+      <TextField
+        label="Tìm món"
+        value={text}
+        onChangeText={setText}
+        placeholder="Nhập tên món..."
+      />
+      <View className="flex-row flex-wrap gap-2">
+        {SORTS.map((s) => (
+          <Chip
+            key={s.label}
+            label={s.label}
+            selected={s.value === sort}
+            onPress={() => setSort(s.value)}
+          />
+        ))}
       </View>
+      <View className="flex-row flex-wrap gap-2">
+        {RATING_FILTERS.map((f) => (
+          <Chip
+            key={f.label}
+            label={f.label}
+            selected={f.value === minRating}
+            onPress={() => setMinRating(f.value)}
+          />
+        ))}
+      </View>
+    </View>
   );
 
   return (
-      <ListScreen
-          data={visible}
-          keyExtractor={(i) => String(i.id)}
-          header={listHeader}
-          empty={empty}
-          isLoadingMore={isLoadingMore}
-          onEndReached={handleEndReached}
-          numColumns={2}
-          renderItem={({ item }) => (
-              <SavedRecipeTile
-                  item={item}
-                  onPress={() => router.push(`/recipe/saved/${item.id}` as Href)}
-                  onToggleFavorite={() => void handleToggle(item)}
-                  onRemove={() => void handleRemove(item)}
-              />
-          )}
-      />
+    <ListScreen
+      data={visible}
+      keyExtractor={(i) => String(i.id)}
+      header={listHeader}
+      empty={empty}
+      isLoadingMore={isLoadingMore}
+      onEndReached={handleEndReached}
+      numColumns={2}
+      renderItem={({ item }) => (
+        <SavedRecipeTile
+          item={item}
+          onPress={() => router.push(`/recipe/saved/${item.id}` as Href)}
+          onToggleFavorite={() => void handleToggle(item)}
+          onRemove={() => void handleRemove(item)}
+        />
+      )}
+    />
   );
 }

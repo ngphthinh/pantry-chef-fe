@@ -1,5 +1,6 @@
 import React from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
+import { useTheme } from "@/theme";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -7,16 +8,22 @@ interface LivingBackground4DProps {
   isDark?: boolean;
 }
 
-/** Nền tĩnh, không animation. */
-export function LivingBackground4D({ isDark = true }: LivingBackground4DProps) {
+/** Nền chuyển màu sống động với các quầng sáng (orbs) hài hòa theo theme. */
+export function LivingBackground4D({ isDark: propIsDark }: LivingBackground4DProps) {
+  const theme = useTheme();
+  const isDark = propIsDark !== undefined ? propIsDark : theme.isDark;
+
   return (
     <View
       style={[
         StyleSheet.absoluteFill,
-        { backgroundColor: isDark ? "#0A120E" : "#F5F2EB", overflow: "hidden" },
+        {
+          backgroundColor: isDark ? "#0A120E" : "#F5F2EB",
+          overflow: "hidden",
+        },
       ]}
       pointerEvents="none">
-      {/* Orb xanh (trên trái) */}
+      {/* Orb xanh ngọc (trên trái) */}
       <View
         style={[
           styles.orb,
@@ -33,7 +40,7 @@ export function LivingBackground4D({ isDark = true }: LivingBackground4DProps) {
         ]}
       />
 
-      {/* Orb hổ phách (dưới phải) */}
+      {/* Orb hổ phách ấm (dưới phải) */}
       <View
         style={[
           styles.orb,
@@ -50,7 +57,7 @@ export function LivingBackground4D({ isDark = true }: LivingBackground4DProps) {
         ]}
       />
 
-      {/* Orb bạc hà (giữa) */}
+      {/* Orb bạc hà tươi mát (giữa) */}
       <View
         style={[
           styles.orb,

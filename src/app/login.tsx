@@ -3,7 +3,7 @@ import { Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import { AppText } from "@/components/ui/AppText";
 import { useForm } from "@/components/ui/useForm";
-import { useAppTheme } from "@/core/theme/useAppTheme";
+import { useTheme } from "@/theme";
 import { useAuth } from "@/features/auth/useAuth";
 import { validators } from "@/features/auth/validation";
 import {
@@ -16,7 +16,7 @@ import { TactileButton } from "@/components/ui/TactileButton";
 import { HOST_STORAGE_KEY, kvStorage } from "@/core/di/container";
 
 export default function LoginScreen() {
-  const { isDark } = useAppTheme();
+  const { isDark } = useTheme();
   const { signIn } = useAuth();
 
   const [host, setHost] = useState("");

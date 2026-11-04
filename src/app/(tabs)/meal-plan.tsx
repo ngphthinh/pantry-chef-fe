@@ -18,6 +18,7 @@ import { InlineCalendar } from "@/components/ui/InlineCalendar";
 import { Screen } from "@/components/ui/Screen";
 import { TextField } from "@/components/ui/TextField";
 import { useAppTheme } from "@/core/theme/useAppTheme";
+import { palette } from "@/theme";
 import {
   formatLocalDate,
   getMondayOfWeek,
@@ -30,14 +31,14 @@ const MEAL_ICONS: Record<
   MealType,
   { icon: keyof typeof Ionicons.glyphMap; label: string; color: string }
 > = {
-  BREAKFAST: { icon: "sunny-outline", label: "Bữa sáng", color: "#F59E0B" },
-  LUNCH: { icon: "partly-sunny-outline", label: "Bữa trưa", color: "#10B981" },
-  DINNER: { icon: "moon-outline", label: "Bữa tối", color: "#6366F1" },
+  BREAKFAST: { icon: "sunny-outline", label: "Bữa sáng", color: palette.amber[500] },
+  LUNCH: { icon: "partly-sunny-outline", label: "Bữa trưa", color: palette.emerald[500] },
+  DINNER: { icon: "moon-outline", label: "Bữa tối", color: palette.info[600] },
 };
 
 export default function MealPlanHubScreen() {
   const router = useRouter();
-  const { brand, palette } = useAppTheme();
+  const { brand, palette, colors, isDark } = useAppTheme();
   const {
     currentPlan,
     selectedWeekStart,
@@ -241,53 +242,20 @@ export default function MealPlanHubScreen() {
             {/* Copy Week Button */}
             <Pressable
               onPress={handleOpenCopyModal}
-              className="flex-row items-center gap-1.5 rounded-full border border-line bg-brandSoft px-3 py-1.5 shadow-xs active:scale-95 dark:bg-surface-dark">
-              <Ionicons name="copy-outline" size={15} color={brand} />
-              <AppText className="text-xs font-bold text-brand">
+              style={{
+                backgroundColor: isDark ? "rgba(16, 185, 129, 0.16)" : colors.primarySoft,
+                borderColor: isDark ? "rgba(16, 185, 129, 0.3)" : "rgba(46, 125, 79, 0.2)",
+                borderWidth: 1,
+              }}
+              className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5 shadow-xs active:scale-95">
+              <Ionicons name="copy-outline" size={15} color={colors.primary} />
+              <AppText
+                style={{ color: colors.primary }}
+                className="text-xs font-bold">
                 Sao chép tuần
               </AppText>
             </Pressable>
           </View>
-        </View>
-
-        {/* 3D Action Shortcuts Strip */}
-        <View className="flex-row gap-2 py-1">
-          <Pressable
-            onPress={() => router.push("/meal-plan/add-entry" as Href)}
-            className="flex-1 flex-row items-center justify-center gap-1 rounded-2xl bg-brandSoft p-2.5 shadow-xs active:scale-95 dark:bg-surface-dark">
-            <Ionicons name="add-circle" size={16} color={brand} />
-            <AppText className="text-xs font-bold text-brand">Thêm bữa</AppText>
-          </Pressable>
-
-          <Pressable
-            onPress={() => {
-              if (currentPlan?.id) {
-                router.push(`/meal-plan/${currentPlan.id}` as Href);
-              } else {
-                Alert.alert(
-                  "Chưa có thực đơn",
-                  "Tuần này chưa có kế hoạch bữa ăn nào. Hãy nhấn 'Thêm bữa' để tạo trước nhé!",
-                );
-              }
-            }}
-            className="flex-1 flex-row items-center justify-center gap-1 rounded-2xl bg-brandSoft p-2.5 shadow-xs active:scale-95 dark:bg-surface-dark">
-            <Ionicons name="document-text-outline" size={16} color={brand} />
-            <AppText className="text-xs font-bold text-brand">Chi tiết</AppText>
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push("/meal-plan/shopping-preview" as Href)}
-            className="flex-1 flex-row items-center justify-center gap-1 rounded-2xl bg-brandSoft p-2.5 shadow-xs active:scale-95 dark:bg-surface-dark">
-            <Ionicons name="cart-outline" size={16} color={brand} />
-            <AppText className="text-xs font-bold text-brand">Mua sắm</AppText>
-          </Pressable>
-
-          <Pressable
-            onPress={() => router.push("/ai/meal-plan" as Href)}
-            className="flex-1 flex-row items-center justify-center gap-1 rounded-2xl bg-brandSoft p-2.5 shadow-xs active:scale-95 dark:bg-surface-dark">
-            <Ionicons name="sparkles" size={16} color={brand} />
-            <AppText className="text-xs font-bold text-brand">AI gợi ý</AppText>
-          </Pressable>
         </View>
 
         {/* Week Navigator Card with Calendar Modal Picker */}
@@ -295,8 +263,13 @@ export default function MealPlanHubScreen() {
           <Pressable
             onPress={goToPrevWeek}
             hitSlop={8}
-            className="h-9 w-9 items-center justify-center rounded-xl bg-soft active:scale-90 dark:bg-soft-dark">
-            <Ionicons name="chevron-back" size={18} color={palette.ink} />
+            style={{
+              backgroundColor: colors.surfaceVariant,
+              borderColor: colors.border,
+              borderWidth: 1,
+            }}
+            className="h-9 w-9 items-center justify-center rounded-xl active:scale-90">
+            <Ionicons name="chevron-back" size={18} color={colors.textPrimary} />
           </Pressable>
 
           {/* Chạm vào giữa để mở Modal Lịch chọn tuần */}
@@ -318,7 +291,10 @@ export default function MealPlanHubScreen() {
           {selectedWeekStart !== currentMonday && (
             <Pressable
               onPress={goToCurrentWeek}
-              className="mr-1 rounded-lg bg-brandSoft px-2 py-1 active:scale-95 dark:bg-surface-dark">
+              style={{
+                backgroundColor: colors.primarySoft,
+              }}
+              className="mr-1 rounded-lg px-2 py-1 active:scale-95">
               <AppText className="text-[11px] font-bold text-brand">
                 Hôm nay
               </AppText>
@@ -328,8 +304,13 @@ export default function MealPlanHubScreen() {
           <Pressable
             onPress={goToNextWeek}
             hitSlop={8}
-            className="h-9 w-9 items-center justify-center rounded-xl bg-soft active:scale-90 dark:bg-soft-dark">
-            <Ionicons name="chevron-forward" size={18} color={palette.ink} />
+            style={{
+              backgroundColor: colors.surfaceVariant,
+              borderColor: colors.border,
+              borderWidth: 1,
+            }}
+            className="h-9 w-9 items-center justify-center rounded-xl active:scale-90">
+            <Ionicons name="chevron-forward" size={18} color={colors.textPrimary} />
           </Pressable>
         </Card>
 
@@ -345,31 +326,205 @@ export default function MealPlanHubScreen() {
               <Pressable
                 key={day.date}
                 onPress={() => setActiveDayIndex(idx)}
-                className={`w-16 items-center rounded-2xl py-3 shadow-xs active:scale-95 ${
-                  isSelected
-                    ? "border-2 border-brand bg-brandSoft dark:bg-surface-dark"
-                    : "bg-soft dark:bg-soft-dark"
-                }`}>
+                style={{
+                  width: 66,
+                  alignItems: 'center',
+                  borderRadius: 18,
+                  paddingVertical: 12,
+                  backgroundColor: isSelected
+                    ? isDark
+                      ? 'rgba(16, 185, 129, 0.25)'
+                      : '#E8F5EE'
+                    : isDark
+                      ? '#161D19'
+                      : '#FFFFFF',
+                  borderColor: isSelected
+                    ? colors.primary
+                    : isDark
+                      ? 'rgba(255, 255, 255, 0.1)'
+                      : '#E2E8E4',
+                  borderWidth: isSelected ? 2 : 1,
+                  shadowColor: isSelected ? colors.primary : '#000000',
+                  shadowOffset: { width: 0, height: isSelected ? 4 : 1 },
+                  shadowOpacity: isSelected ? 0.35 : 0.08,
+                  shadowRadius: isSelected ? 8 : 3,
+                  elevation: isSelected ? 6 : 2,
+                }}
+                className="active:scale-95">
                 <AppText
-                  className={`text-xs ${isSelected ? "font-bold text-brand" : "text-muted"}`}>
+                  style={{
+                    fontSize: 12,
+                    fontWeight: isSelected ? '800' : '600',
+                    color: isSelected
+                      ? colors.primary
+                      : isDark
+                        ? '#95A39B'
+                        : '#64748B',
+                  }}>
                   {day.dayName}
                 </AppText>
                 <AppText
-                  className={`mt-1 text-base font-extrabold ${
-                    isSelected ? "text-brand" : "text-ink dark:text-ink-dark"
-                  }`}>
+                  style={{
+                    fontSize: 17,
+                    fontWeight: '800',
+                    marginTop: 4,
+                    color: isSelected
+                      ? isDark
+                        ? '#FFFFFF'
+                        : colors.primary
+                      : isDark
+                        ? '#F3F4F6'
+                        : '#1E293B',
+                  }}>
                   {day.formattedDate}
                 </AppText>
                 {day.isToday && (
-                  <View className="mt-1 h-1.5 w-1.5 rounded-full bg-brand" />
+                  <View
+                    style={{
+                      backgroundColor: colors.primary,
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      marginTop: 4,
+                    }}
+                  />
                 )}
                 {day.entries.length > 0 && !day.isToday && (
-                  <View className="mt-1 h-1 w-1 rounded-full bg-muted" />
+                  <View
+                    style={{
+                      backgroundColor: isDark ? '#4B5550' : '#CBD5E1',
+                      width: 5,
+                      height: 5,
+                      borderRadius: 2.5,
+                      marginTop: 4,
+                    }}
+                  />
                 )}
               </Pressable>
             );
           })}
         </ScrollView>
+
+        {/* Action Shortcuts Strip */}
+        <View className="flex-row gap-2 py-1">
+          <Pressable
+            onPress={() => router.push("/meal-plan/add-entry" as Href)}
+            style={{
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderWidth: 1.2,
+              borderRadius: 18,
+            }}
+            className="flex-1 items-center justify-center py-2.5 px-1 shadow-xs active:scale-95">
+            <View
+              style={{
+                backgroundColor: isDark ? "rgba(16, 185, 129, 0.2)" : colors.primarySoft,
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 4,
+              }}>
+              <Ionicons name="add" size={18} color={colors.primary} />
+            </View>
+            <AppText
+              style={{ color: colors.textPrimary, fontSize: 11, fontWeight: "700" }}>
+              Thêm bữa
+            </AppText>
+          </Pressable>
+
+          <Pressable
+            onPress={() => {
+              if (currentPlan?.id) {
+                router.push(`/meal-plan/${currentPlan.id}` as Href);
+              } else {
+                Alert.alert(
+                  "Chưa có thực đơn",
+                  "Tuần này chưa có kế hoạch bữa ăn nào. Hãy nhấn 'Thêm bữa' để tạo trước nhé!",
+                );
+              }
+            }}
+            style={{
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderWidth: 1.2,
+              borderRadius: 18,
+            }}
+            className="flex-1 items-center justify-center py-2.5 px-1 shadow-xs active:scale-95">
+            <View
+              style={{
+                backgroundColor: isDark ? "rgba(14, 165, 233, 0.2)" : "#E0F2FE",
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 4,
+              }}>
+              <Ionicons name="document-text-outline" size={17} color={isDark ? "#38BDF8" : "#0284C7"} />
+            </View>
+            <AppText
+              style={{ color: colors.textPrimary, fontSize: 11, fontWeight: "700" }}>
+              Chi tiết
+            </AppText>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push("/meal-plan/shopping-preview" as Href)}
+            style={{
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderWidth: 1.2,
+              borderRadius: 18,
+            }}
+            className="flex-1 items-center justify-center py-2.5 px-1 shadow-xs active:scale-95">
+            <View
+              style={{
+                backgroundColor: isDark ? "rgba(245, 158, 11, 0.2)" : "#FEF3C7",
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 4,
+              }}>
+              <Ionicons name="cart-outline" size={17} color={isDark ? "#FBBF24" : "#D97706"} />
+            </View>
+            <AppText
+              style={{ color: colors.textPrimary, fontSize: 11, fontWeight: "700" }}>
+              Mua sắm
+            </AppText>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push("/ai/meal-plan" as Href)}
+            style={{
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderWidth: 1.2,
+              borderRadius: 18,
+            }}
+            className="flex-1 items-center justify-center py-2.5 px-1 shadow-xs active:scale-95">
+            <View
+              style={{
+                backgroundColor: isDark ? "rgba(168, 85, 247, 0.2)" : "#F3E8FF",
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 4,
+              }}>
+              <Ionicons name="sparkles" size={16} color={isDark ? "#C084FC" : "#9333EA"} />
+            </View>
+            <AppText
+              style={{ color: colors.textPrimary, fontSize: 11, fontWeight: "700" }}>
+              AI gợi ý
+            </AppText>
+          </Pressable>
+        </View>
+
 
         {/* Meals For Selected Day */}
         <View className="gap-3 pb-16">
@@ -413,11 +568,25 @@ export default function MealPlanHubScreen() {
                       {/* Toggle Cooked Button */}
                       <Pressable
                         onPress={() => handleToggleCooked(entry)}
-                        className={`flex-row items-center gap-1 rounded-full px-2.5 py-1 ${
-                          entry.cooked
-                            ? "bg-successBg dark:bg-successBg-dark"
-                            : "bg-soft dark:bg-soft-dark"
-                        }`}>
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          borderRadius: 9999,
+                          paddingHorizontal: 10,
+                          paddingVertical: 4,
+                          gap: 4,
+                          backgroundColor: entry.cooked
+                            ? colors.successSoft
+                            : isDark
+                              ? 'rgba(255, 255, 255, 0.08)'
+                              : colors.surfaceVariant,
+                          borderColor: entry.cooked
+                            ? isDark
+                              ? 'rgba(52, 211, 153, 0.3)'
+                              : 'rgba(46, 125, 79, 0.2)'
+                            : colors.border,
+                          borderWidth: 1,
+                        }}>
                         <Ionicons
                           name={
                             entry.cooked
@@ -426,16 +595,15 @@ export default function MealPlanHubScreen() {
                           }
                           size={16}
                           color={
-                            entry.cooked ? palette.successInk : palette.muted
+                            entry.cooked ? colors.success : colors.textSecondary
                           }
                         />
                         <AppText
                           variant="caption"
-                          className={
-                            entry.cooked
-                              ? "font-bold text-success"
-                              : "text-muted"
-                          }>
+                          style={{
+                            color: entry.cooked ? colors.success : colors.textSecondary,
+                            fontWeight: '700',
+                          }}>
                           {entry.cooked ? "Đã nấu" : "Chưa nấu"}
                         </AppText>
                       </Pressable>
@@ -443,11 +611,16 @@ export default function MealPlanHubScreen() {
                       {/* Delete Entry */}
                       <Pressable
                         onPress={() => handleDeleteEntry(entry)}
-                        className="h-7 w-7 items-center justify-center rounded-full bg-soft active:scale-90">
+                        style={{
+                          backgroundColor: colors.surfaceVariant,
+                          borderColor: colors.border,
+                          borderWidth: 1,
+                        }}
+                        className="h-7 w-7 items-center justify-center rounded-full active:scale-90">
                         <Ionicons
                           name="trash-outline"
                           size={14}
-                          color={palette.muted}
+                          color={colors.textSecondary}
                         />
                       </Pressable>
                     </View>

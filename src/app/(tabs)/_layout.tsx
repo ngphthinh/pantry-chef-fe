@@ -1,32 +1,44 @@
+import React from "react";
+import { Platform, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { useAppTheme } from "@/core/theme/useAppTheme";
+import { useTheme } from "@/theme";
 
-// OCP: thêm/sửa tab chỉ cần sửa danh sách này.
 const TAB_ITEMS: {
   name: string;
   title: string;
   icon: keyof typeof Ionicons.glyphMap;
+  activeIcon: keyof typeof Ionicons.glyphMap;
 }[] = [
-  { name: "pantry", title: "Tủ", icon: "briefcase-outline" },
-  { name: "search", title: "Tìm món", icon: "search-outline" },
-  { name: "saved", title: "Đã lưu", icon: "bookmark-outline" },
-  { name: "meal-plan", title: "Thực đơn", icon: "calendar-outline" },
-  { name: "more", title: "Thêm", icon: "ellipsis-horizontal" },
+  { name: "pantry", title: "Tủ", icon: "briefcase-outline", activeIcon: "briefcase" },
+  { name: "search", title: "Tìm món", icon: "search-outline", activeIcon: "search" },
+  { name: "saved", title: "Đã lưu", icon: "bookmark-outline", activeIcon: "bookmark" },
+  { name: "meal-plan", title: "Thực đơn", icon: "calendar-outline", activeIcon: "calendar" },
+  { name: "more", title: "Thêm", icon: "ellipsis-horizontal-outline", activeIcon: "ellipsis-horizontal" },
 ];
 
 export default function TabsLayout() {
-  const { palette, brand } = useAppTheme();
+  const { colors, shadows } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: brand,
-        tabBarInactiveTintColor: palette.muted,
-        tabBarLabelStyle: { fontWeight: "600", fontSize: 12 },
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarLabelStyle: {
+          fontWeight: "600",
+          fontSize: 11,
+          marginTop: -2,
+        },
         tabBarStyle: {
-          backgroundColor: palette.canvas,
-          borderTopColor: palette.line,
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+          height: Platform.OS === "ios" ? 88 : 62,
+          paddingTop: 6,
+          paddingBottom: Platform.OS === "ios" ? 28 : 8,
+          ...shadows.sm,
         },
       }}>
       {TAB_ITEMS.map((t) => (
@@ -35,8 +47,12 @@ export default function TabsLayout() {
           name={t.name}
           options={{
             title: t.title,
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name={t.icon} size={size} color={String(color)} />
+            tabBarIcon: ({ color, focused, size }) => (
+              <Ionicons
+                name={focused ? t.activeIcon : t.icon}
+                size={size}
+                color={String(color)}
+              />
             ),
           }}
         />

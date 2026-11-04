@@ -1,33 +1,34 @@
 import React from "react";
 import { StyleSheet, View, type ViewStyle } from "react-native";
+import { useTheme } from "@/theme";
 
 interface TiltCard3DProps {
   children: React.ReactNode;
   isDark?: boolean;
   style?: ViewStyle;
-  /** Giữ lại để không phải sửa nơi gọi; không còn tác dụng. */
   shakeTrigger?: boolean | string | null;
 }
 
-/** Thẻ tĩnh, không animation. */
+/** Thẻ hiệu ứng kính nổi 3D hiện đại, chuẩn hóa theo theme tokens. */
 export function TiltCard3D({
   children,
-  isDark = true,
+  isDark: propIsDark,
   style,
 }: TiltCard3DProps) {
+  const theme = useTheme();
+  const isDark = propIsDark !== undefined ? propIsDark : theme.isDark;
+  const { colors, radius } = theme;
+
   return (
     <View style={styles.container}>
       <View
         style={[
           styles.card,
           {
-            backgroundColor: isDark
-              ? "rgba(20, 32, 25, 0.82)"
-              : "rgba(255, 255, 255, 0.92)",
-            borderColor: isDark
-              ? "rgba(52, 211, 153, 0.28)"
-              : "rgba(46, 125, 79, 0.18)",
-            shadowColor: isDark ? "#000000" : "#1F2D26",
+            backgroundColor: colors.card,
+            borderColor: colors.cardBorder,
+            shadowColor: colors.shadow,
+            borderRadius: radius["3xl"] + 6,
           },
           style,
         ]}>
@@ -57,7 +58,6 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "100%",
-    borderRadius: 30,
     borderWidth: 1.5,
     paddingHorizontal: 22,
     paddingTop: 24,

@@ -8,54 +8,111 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AppText } from "@/components/ui/AppText";
+import { useTheme } from "@/theme";
 
-interface TactileButton3DProps {
+interface TactileButtonProps {
   title: string;
   onPress?: (event: GestureResponderEvent) => void;
   loading?: boolean;
   disabled?: boolean;
   iconName?: keyof typeof Ionicons.glyphMap | undefined;
+  variant?: "primary" | "secondary" | "danger";
 }
 
-/** Nút tĩnh, chỉ đổi style khi nhấn (không animation). */
+/**
+ * Nút xúc giác 3D hiện đại: có độ nổi khối, hiệu ứng lún (translateY),
+ * viền sáng phản quang (top rim) và bóng phát quang đồng bộ từ theme token.
+ */
 export function TactileButton({
   title,
   onPress,
   loading = false,
   disabled = false,
   iconName = undefined,
-}: TactileButton3DProps) {
+  variant = "primary",
+}: TactileButtonProps) {
+  const { colors, radius, shadows, isDark } = useTheme();
   const inactive = disabled || loading;
+
+  const bgSurface =
+    variant === "secondary"
+      ? colors.secondary
+      : variant === "danger"
+        ? colors.error
+        : colors.primary;
+
+  const bevelColor =
+    variant === "secondary"
+      ? isDark
+        ? "#064E3B"
+        : "#047857"
+      : variant === "danger"
+        ? colors.errorSoft
+        : colors.primaryBevel;
+
+  const glowColor =
+    variant === "danger"
+      ? colors.error
+      : variant === "secondary"
+        ? colors.secondary
+        : colors.shadowGlow;
 
   return (
     <Pressable onPress={onPress} disabled={inactive} style={styles.wrapper}>
       {({ pressed }) => (
         <>
-          <View style={styles.bevelBase} />
+          {/* Lớp đế nổi khối 3D */}
+          <View
+            style={[
+              styles.bevelBase,
+              {
+                backgroundColor: bevelColor,
+                borderRadius: radius["2xl"],
+              },
+            ]}
+          />
 
+          {/* Bề mặt nút bấm có tương tác lún vật lý */}
           <View
             style={[
               styles.buttonSurface,
               {
+                backgroundColor: bgSurface,
+                borderRadius: radius["2xl"],
+                shadowColor: glowColor,
                 transform: [{ translateY: pressed ? 3 : 0 }],
-                opacity: inactive ? 0.75 : 1,
+                opacity: inactive ? 0.7 : 1,
               },
             ]}>
-            <View style={styles.topRim} />
+            {/* Viền sáng phản xạ (Top rim) */}
+            <View
+              style={[
+                styles.topRim,
+                {
+                  backgroundColor: colors.topRim,
+                },
+              ]}
+            />
 
             {loading ? (
               <View style={styles.row}>
-                <ActivityIndicator size="small" color="#FFFFFF" />
-                <AppText style={styles.loadingText}>Đang xác thực...</AppText>
+                <ActivityIndicator size="small" color={colors.textOnPrimary} />
+                <AppText
+                  style={[styles.loadingText, { color: colors.textOnPrimary }]}>
+                  Đang xử lý...
+                </AppText>
               </View>
             ) : (
               <View style={styles.row}>
-                <AppText style={styles.buttonText}>{title}</AppText>
+                <AppText
+                  style={[styles.buttonText, { color: colors.textOnPrimary }]}>
+                  {title}
+                </AppText>
                 {iconName ? (
                   <Ionicons
                     name={iconName}
                     size={18}
-                    color="#FFFFFF"
+                    color={colors.textOnPrimary}
                     style={styles.icon}
                   />
                 ) : null}
@@ -81,16 +138,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 50,
-    backgroundColor: "#1B4D31",
-    borderRadius: 20,
   },
   buttonSurface: {
     height: 50,
-    borderRadius: 20,
-    backgroundColor: "#2E7D4F",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#10B981",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
@@ -103,7 +155,6 @@ const styles = StyleSheet.create({
     left: 12,
     right: 12,
     height: 1.5,
-    backgroundColor: "rgba(255, 255, 255, 0.45)",
     borderRadius: 1,
   },
   row: {
@@ -112,13 +163,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   buttonText: {
-    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
     letterSpacing: 0.4,
   },
   loadingText: {
-    color: "#FFFFFF",
     fontSize: 15,
     fontWeight: "600",
     marginLeft: 10,

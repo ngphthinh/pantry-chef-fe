@@ -10,6 +10,7 @@ import { AppBootstrap } from "@/store/AppBootstrap";
 import { useAuth } from "@/features/auth/useAuth";
 import { forbiddenEvent } from "@/core/events/emitter";
 import { useAppTheme } from "@/core/theme/useAppTheme";
+import { ThemeProvider } from "@/theme";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -97,7 +98,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <Provider store={store}>
         <AppBootstrap>
-          <RootNavigator />
+          <ThemeProvider>
+            <RootNavigator />
+          </ThemeProvider>
         </AppBootstrap>
       </Provider>
     </SafeAreaProvider>
