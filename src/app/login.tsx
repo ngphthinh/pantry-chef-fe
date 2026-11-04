@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Pressable, View } from "react-native";
 import { Link } from "expo-router";
 import { AppText } from "@/components/ui/AppText";
@@ -12,10 +13,40 @@ import {
 } from "@/components/auth/AuthShell";
 import { GlassInput3D } from "@/components/auth/GlassInput3D";
 import { TactileButton } from "@/components/ui/TactileButton";
+import { HOST_STORAGE_KEY, kvStorage } from "@/core/di/container";
 
 export default function LoginScreen() {
   const { isDark } = useAppTheme();
   const { signIn } = useAuth();
+
+  const [host, setHost] = useState("");
+  const [hostError, setHostError] = useState<string | undefined>();
+  const [hostSaved, setHostSaved] = useState(false);
+  const [hostSaving, setHostSaving] = useState(false);
+
+  useEffect(() => {
+    kvStorage.get(HOST_STORAGE_KEY).then((v) => v && setHost(v));
+  }, []);
+
+  const saveHost = async () => {
+    const value = host.trim().replace(/\/+$/, "");
+    if (!/^https?:\/\/.+/i.test(value)) {
+      setHostError("Host phải bắt đầu bằng http:// hoặc https://");
+      setHostSaved(false);
+      return;
+    }
+    setHostError(undefined);
+    setHostSaving(true);
+    try {
+      await kvStorage.set(HOST_STORAGE_KEY, value);
+      setHost(value);
+      setHostSaved(true);
+    } catch {
+      setHostError("Không thể lưu host");
+    } finally {
+      setHostSaving(false);
+    }
+  };
 
   const form = useForm(
     { email: "admin@gmail.com", password: "Admin@123" },
@@ -35,6 +66,30 @@ export default function LoginScreen() {
           href="/register"
         />
       }>
+      <GlassInput3D
+        label="Host API"
+        iconName="server-outline"
+        placeholder="http://192.168.1.10:8080"
+        keyboardType="url"
+        autoCapitalize="none"
+        autoCorrect={false}
+        value={host}
+        onChangeText={(t: string) => {
+          setHost(t);
+          setHostSaved(false);
+          setHostError(undefined);
+        }}
+        error={hostError}
+        isDark={isDark}
+      />
+      <View className="mb-3">
+        <TactileButton
+          title={hostSaved ? "Đã lưu ✓" : "Lưu Host"}
+          loading={hostSaving}
+          onPress={saveHost}
+        />
+      </View>
+
       <GlassInput3D
         label="Tài khoản Email"
         iconName="mail-outline"

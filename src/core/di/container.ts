@@ -51,9 +51,28 @@ import { ExpiryReminderService } from "@/features/expiryReminder/expiryReminderS
 export const kvStorage = new AsyncKeyValueStorage();
 export const tokenStorage = new SecureTokenStorage();
 
+export const HOST_STORAGE_KEY = "api_host";
+
+// Ưu tiên kv → env
+export async function resolveApiUrl(): Promise<string> {
+  try {
+    const host = (await kvStorage.get(HOST_STORAGE_KEY))
+      ?.trim()
+      .replace(/\/+$/, "");
+    if (host) return `${host}/api`;
+  } catch {}
+  return env.apiUrl;
+}
+
 export const publicHttp = createPublicClient(env.apiUrl);
 export const privateHttp = createPrivateClient(env.apiUrl, tokenStorage);
-
+// Đổi baseURL động mỗi request (đổi host không cần restart app)
+for (const client of [publicHttp, privateHttp]) {
+  client.interceptors.request.use(async (config) => {
+    config.baseURL = await resolveApiUrl();
+    return config;
+  });
+}
 const authRepository = new HttpAuthRepository(publicHttp, privateHttp);
 const userRepository = new HttpUserRepository(privateHttp);
 

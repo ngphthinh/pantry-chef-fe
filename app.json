@@ -6,11 +6,33 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/images/icon.png",
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#2E7D4F"
+      },
+      "permissions": ["android.permission.RECORD_AUDIO"],
+      "package": "com.ngphthinh0710.pantrychef"
+    },
+    "ios": {
+      "bundleIdentifier": "com.ngphthinh0710.pantrychef",
+      "supportsTablet": true,
+      "icon": {
+        "light": "./assets/images/icon.png",
+        "dark": "./assets/images/icon-ios-dark.png",
+        "tinted": "./assets/images/icon-ios-tinted.png"
+      },
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Cho phép Tủ công thức dùng micro để nhập bằng giọng nói."
+      }
+    },
+    "web": {
+      "favicon": "./assets/images/favicon.png"
+    },
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-splash-screen",
-      "expo-status-bar",
       "expo-font",
       [
         "expo-image-picker",
@@ -18,10 +40,28 @@
           "cameraPermission": "Cho phép Tủ công thức dùng camera để chụp nguyên liệu.",
           "photosPermission": "Cho phép Tủ công thức truy cập ảnh để nhận diện nguyên liệu."
         }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 160,
+          "backgroundColor": "#FFFFFF"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": false
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "e892198d-cfd2-4588-bff4-1b21d842b0ad"
+      }
     }
   }
 }
