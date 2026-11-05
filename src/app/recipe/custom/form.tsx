@@ -14,6 +14,7 @@ import { useAppTheme } from "@/core/theme/useAppTheme";
 import { DIFFICULTY_OPTIONS } from "@/features/customRecipe/recipeDifficulty";
 import { useCustomRecipeForm } from "@/features/customRecipe/useCustomRecipeForm";
 import { UNIT_OPTIONS } from "@/features/unit/unitOptions";
+import { IngredientNameField } from "@/components/recipe/IngredientNameField";
 
 /** Tạo mới; thêm `?id=<uuid>` để sửa công thức có sẵn. */
 export default function CustomRecipeFormScreen() {
@@ -139,25 +140,29 @@ export default function CustomRecipeFormScreen() {
         <AppText variant="label">Nguyên liệu</AppText>
         {form.values.ingredients.map((row) => (
           <Card key={row.key} className="gap-3 p-4">
-            <View className="flex-row items-end gap-3">
-              <View className="flex-1">
-                <TextField
-                  label="Tên nguyên liệu"
-                  autoCapitalize="sentences"
-                  value={row.name}
-                  onChangeText={(t) => form.updateIngredient(row.key, { name: t })}
-                />
-              </View>
-              <Pressable
-                onPress={() => form.removeIngredient(row.key)}
-                hitSlop={8}
-                className="h-12 justify-center"
-                accessibilityRole="button"
-                accessibilityLabel="Xoá nguyên liệu"
-              >
-                <Ionicons name="trash-outline" size={20} color={palette.dangerInk} />
-              </Pressable>
-            </View>
+            <IngredientNameField
+              label="Tên nguyên liệu"
+              value={row.name}
+              onChangeText={(t) => form.updateIngredient(row.key, { name: t })}
+              onSelect={(item) =>
+                form.updateIngredient(row.key, {
+                  name: item.name,
+                  // Dòng chưa chọn đơn vị thì lấy đơn vị mặc định của nguyên liệu.
+                  ...(row.unit === "" && item.defaultUnit ? { unit: item.defaultUnit } : {}),
+                })
+              }
+              right={
+                <Pressable
+                  onPress={() => form.removeIngredient(row.key)}
+                  hitSlop={8}
+                  className="h-12 justify-center"
+                  accessibilityRole="button"
+                  accessibilityLabel="Xoá nguyên liệu"
+                >
+                  <Ionicons name="trash-outline" size={20} color={palette.dangerInk} />
+                </Pressable>
+              }
+            />
             <TextField
               label="Số lượng (bỏ trống = vừa đủ)"
               keyboardType="decimal-pad"
