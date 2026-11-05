@@ -48,7 +48,8 @@
           "imageWidth": 160,
           "backgroundColor": "#FFFFFF"
         }
-      ]
+      ],
+      ["expo-build-properties", { "android": { "usesCleartextTraffic": true } }]
     ],
     "experiments": {
       "typedRoutes": false
