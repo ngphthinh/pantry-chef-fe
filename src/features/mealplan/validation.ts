@@ -24,6 +24,14 @@ export const mealPlanValidators = {
     ) {
       return 'Ngày tháng năm không tồn tại';
     }
+
+    // Không cho phép thêm bữa ăn cho ngày trong quá khứ (trước ngày hiện tại theo giờ địa phương)
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    if (trimmed < todayStr) {
+      return 'Không thể thêm bữa ăn cho ngày trong quá khứ';
+    }
+
     return null;
   },
 

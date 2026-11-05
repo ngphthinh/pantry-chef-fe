@@ -104,6 +104,8 @@ export default function MealPlanHubScreen() {
   }, [daysOfWeek]);
 
   const activeDay = daysOfWeek[activeDayIndex] || daysOfWeek[0];
+  const todayStr = useMemo(() => formatLocalDate(new Date()), []);
+  const isPastDay = Boolean(activeDay && activeDay.date < todayStr);
 
   const isTargetPast = Boolean(
     targetWeekStart && targetWeekStart < currentMonday,
@@ -408,7 +410,30 @@ export default function MealPlanHubScreen() {
         {/* Action Shortcuts Strip */}
         <View className="flex-row gap-2 py-1">
           <Pressable
-            onPress={() => router.push("/meal-plan/add-entry" as Href)}
+            onPress={() => {
+              if (isPastDay) {
+                Alert.alert(
+                  "Ngày trong quá khứ",
+                  "Không thể thêm bữa ăn cho ngày đã qua. Hãy chọn ngày hôm nay hoặc tương lai!",
+                  [
+                    { text: "Đóng", style: "cancel" },
+                    {
+                      text: "Thêm cho hôm nay",
+                      onPress: () =>
+                        router.push(
+                          `/meal-plan/add-entry?defaultDate=${todayStr}` as Href,
+                        ),
+                    },
+                  ],
+                );
+                return;
+              }
+              router.push(
+                (activeDay?.date
+                  ? `/meal-plan/add-entry?defaultDate=${activeDay.date}`
+                  : "/meal-plan/add-entry") as Href,
+              );
+            }}
             style={{
               backgroundColor: colors.surface,
               borderColor: colors.border,
@@ -534,123 +559,218 @@ export default function MealPlanHubScreen() {
               {activeDay ? toDisplayDate(activeDay.date) : ""})
             </AppText>
             <AppText variant="caption">
-              {activeDay?.entries.length || 0} bữa đã lên lịch
+              {activeDay?.entries.length || 0} món đã lên lịch
             </AppText>
           </View>
 
           {(["BREAKFAST", "LUNCH", "DINNER"] as MealType[]).map((type) => {
-            const entry = activeDay?.entries.find((e) => e.mealType === type);
+            const mealEntries =
+              activeDay?.entries.filter((e) => e.mealType === type) || [];
             const meta = MEAL_ICONS[type];
+            const count = mealEntries.length;
 
             return (
               <Card key={type} className="p-4 shadow-sm">
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center gap-3">
+                {/* Header: Icon, Label, Count Badge, and + Thêm món button if !isPastDay */}
+                <View className="flex-row items-center justify-between pb-2.5 border-b border-line/40 dark:border-line-dark/40">
+                  <View className="flex-row items-center gap-2.5">
                     <View
-                      className="h-10 w-10 items-center justify-center rounded-2xl"
+                      className="h-9 w-9 items-center justify-center rounded-2xl"
                       style={{ backgroundColor: `${meta.color}20` }}>
-                      <Ionicons name={meta.icon} size={20} color={meta.color} />
+                      <Ionicons name={meta.icon} size={18} color={meta.color} />
                     </View>
-                    <View>
+                    <View className="flex-row items-center gap-2">
                       <AppText
                         className="text-xs font-bold uppercase tracking-wider"
                         style={{ color: meta.color }}>
                         {meta.label}
                       </AppText>
-                      <AppText variant="heading" className="text-base">
-                        {entry?.recipeTitle || "Chưa lên thực đơn"}
-                      </AppText>
+                      {/* Số món ăn từng bữa */}
+                      <View
+                        style={{
+                          backgroundColor:
+                            count > 0
+                              ? `${meta.color}18`
+                              : isDark
+                                ? "rgba(255,255,255,0.08)"
+                                : "#F1F5F9",
+                          paddingHorizontal: 8,
+                          paddingVertical: 2,
+                          borderRadius: 9999,
+                        }}>
+                        <AppText
+                          style={{
+                            fontSize: 11,
+                            fontWeight: "700",
+                            color: count > 0 ? meta.color : colors.textSecondary,
+                          }}>
+                          {count} món
+                        </AppText>
+                      </View>
                     </View>
                   </View>
 
-                  {entry ? (
-                    <View className="flex-row items-center gap-2">
-                      {/* Toggle Cooked Button */}
-                      <Pressable
-                        onPress={() => handleToggleCooked(entry)}
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          borderRadius: 9999,
-                          paddingHorizontal: 10,
-                          paddingVertical: 4,
-                          gap: 4,
-                          backgroundColor: entry.cooked
-                            ? colors.successSoft
-                            : isDark
-                              ? 'rgba(255, 255, 255, 0.08)'
-                              : colors.surfaceVariant,
-                          borderColor: entry.cooked
-                            ? isDark
-                              ? 'rgba(52, 211, 153, 0.3)'
-                              : 'rgba(46, 125, 79, 0.2)'
-                            : colors.border,
-                          borderWidth: 1,
-                        }}>
-                        <Ionicons
-                          name={
-                            entry.cooked
-                              ? "checkmark-circle"
-                              : "ellipse-outline"
-                          }
-                          size={16}
-                          color={
-                            entry.cooked ? colors.success : colors.textSecondary
-                          }
-                        />
-                        <AppText
-                          variant="caption"
-                          style={{
-                            color: entry.cooked ? colors.success : colors.textSecondary,
-                            fontWeight: '700',
-                          }}>
-                          {entry.cooked ? "Đã nấu" : "Chưa nấu"}
-                        </AppText>
-                      </Pressable>
-
-                      {/* Delete Entry */}
-                      <Pressable
-                        onPress={() => handleDeleteEntry(entry)}
-                        style={{
-                          backgroundColor: colors.surfaceVariant,
-                          borderColor: colors.border,
-                          borderWidth: 1,
-                        }}
-                        className="h-7 w-7 items-center justify-center rounded-full active:scale-90">
-                        <Ionicons
-                          name="trash-outline"
-                          size={14}
-                          color={colors.textSecondary}
-                        />
-                      </Pressable>
-                    </View>
-                  ) : (
+                  {!isPastDay ? (
                     <Pressable
                       onPress={() =>
                         router.push(
                           `/meal-plan/add-entry?defaultDate=${activeDay.date}&defaultMealType=${type}` as Href,
                         )
                       }
-                      className="rounded-xl border border-brand/30 bg-brandSoft/50 px-3 py-1.5 active:bg-brandSoft">
+                      style={{
+                        backgroundColor: colors.primarySoft,
+                        borderColor: isDark
+                          ? "rgba(16, 185, 129, 0.3)"
+                          : "rgba(46, 125, 79, 0.2)",
+                        borderWidth: 1,
+                      }}
+                      className="flex-row items-center gap-1 rounded-xl px-2.5 py-1.5 active:scale-95">
+                      <Ionicons name="add" size={14} color={colors.primary} />
                       <AppText
-                        variant="caption"
-                        className="font-bold text-brand">
-                        + Thêm món
+                        style={{
+                          color: colors.primary,
+                          fontSize: 11,
+                          fontWeight: "700",
+                        }}>
+                        Thêm món
                       </AppText>
                     </Pressable>
+                  ) : (
+                    <View
+                      style={{
+                        backgroundColor: isDark
+                          ? "rgba(255,255,255,0.06)"
+                          : "#F1F5F9",
+                      }}
+                      className="rounded-lg px-2 py-1">
+                      <AppText
+                        variant="caption"
+                        style={{
+                          color: colors.textSecondary,
+                          fontSize: 10,
+                          fontWeight: "600",
+                        }}>
+                        Đã qua
+                      </AppText>
+                    </View>
                   )}
                 </View>
 
-                {entry && entry.servings && (
-                  <View className="mt-2.5 flex-row items-center gap-2 border-t border-line pt-2 dark:border-line-dark">
-                    <Ionicons
-                      name="people-outline"
-                      size={14}
-                      color={palette.muted}
-                    />
-                    <AppText variant="caption">
-                      {entry.servings} khẩu phần ăn
+                {/* List of Dishes or Empty state */}
+                {count === 0 ? (
+                  <View className="py-3 items-center justify-center">
+                    <AppText
+                      variant="caption"
+                      style={{
+                        color: colors.textSecondary,
+                        fontStyle: "italic",
+                      }}>
+                      {isPastDay
+                        ? "Đã qua ngày — Không có món ăn nào"
+                        : "Chưa lên thực đơn cho bữa này"}
                     </AppText>
+                  </View>
+                ) : (
+                  <View className="pt-1">
+                    {mealEntries.map((entry, idx) => (
+                      <View
+                        key={entry.id || idx}
+                        style={{
+                          borderTopWidth: idx > 0 ? 1 : 0,
+                          borderTopColor: isDark
+                            ? "rgba(255,255,255,0.08)"
+                            : "#E2E8F0",
+                          paddingTop: idx > 0 ? 10 : 8,
+                          paddingBottom: idx < mealEntries.length - 1 ? 8 : 2,
+                        }}>
+                        <View className="flex-row items-center justify-between">
+                          <AppText
+                            variant="heading"
+                            className="text-base flex-1 pr-2"
+                            numberOfLines={1}>
+                            {entry.recipeTitle || "Món ăn"}
+                          </AppText>
+
+                          <View className="flex-row items-center gap-2">
+                            {/* Toggle Cooked Button */}
+                            <Pressable
+                              onPress={() => handleToggleCooked(entry)}
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                borderRadius: 9999,
+                                paddingHorizontal: 10,
+                                paddingVertical: 4,
+                                gap: 4,
+                                backgroundColor: entry.cooked
+                                  ? colors.successSoft
+                                  : isDark
+                                    ? "rgba(255, 255, 255, 0.08)"
+                                    : colors.surfaceVariant,
+                                borderColor: entry.cooked
+                                  ? isDark
+                                    ? "rgba(52, 211, 153, 0.3)"
+                                    : "rgba(46, 125, 79, 0.2)"
+                                  : colors.border,
+                                borderWidth: 1,
+                              }}>
+                              <Ionicons
+                                name={
+                                  entry.cooked
+                                    ? "checkmark-circle"
+                                    : "ellipse-outline"
+                                }
+                                size={16}
+                                color={
+                                  entry.cooked
+                                    ? colors.success
+                                    : colors.textSecondary
+                                }
+                              />
+                              <AppText
+                                variant="caption"
+                                style={{
+                                  color: entry.cooked
+                                    ? colors.success
+                                    : colors.textSecondary,
+                                  fontWeight: "700",
+                                }}>
+                                {entry.cooked ? "Đã nấu" : "Chưa nấu"}
+                              </AppText>
+                            </Pressable>
+
+                            {/* Delete Entry */}
+                            <Pressable
+                              onPress={() => handleDeleteEntry(entry)}
+                              style={{
+                                backgroundColor: colors.surfaceVariant,
+                                borderColor: colors.border,
+                                borderWidth: 1,
+                              }}
+                              className="h-7 w-7 items-center justify-center rounded-full active:scale-90">
+                              <Ionicons
+                                name="trash-outline"
+                                size={14}
+                                color={colors.textSecondary}
+                              />
+                            </Pressable>
+                          </View>
+                        </View>
+
+                        {entry.servings ? (
+                          <View className="mt-1.5 flex-row items-center gap-1.5">
+                            <Ionicons
+                              name="people-outline"
+                              size={13}
+                              color={palette.muted}
+                            />
+                            <AppText variant="caption">
+                              {entry.servings} khẩu phần ăn
+                            </AppText>
+                          </View>
+                        ) : null}
+                      </View>
+                    ))}
                   </View>
                 )}
               </Card>
