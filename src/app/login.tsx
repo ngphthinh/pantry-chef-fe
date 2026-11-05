@@ -49,7 +49,7 @@ export default function LoginScreen() {
   };
 
   const form = useForm(
-    { email: "admin@gmail.com", password: "Admin@123" },
+    { email: "", password: "" },
     { email: validators.email, password: validators.password },
     signIn,
   );
