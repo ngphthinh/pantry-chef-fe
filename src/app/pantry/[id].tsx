@@ -18,7 +18,7 @@ import { Card } from "@/components/ui/Card";
 import { DatePickerModal } from "@/components/ui/DatePickerModal";
 import { Screen } from "@/components/ui/Screen";
 import { TextField } from "@/components/ui/TextField";
-import { useAppTheme } from "@/core/theme/useAppTheme";
+import { useTheme } from "@/theme";
 import { usePantry } from "@/features/pantry/usePantry";
 import { pantryValidators } from "@/features/pantry/validation";
 import type { StorageLocation, Unit } from "@/types";
@@ -33,7 +33,13 @@ const TONE_MAP = {
 export default function PantryItemDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { brand, palette } = useAppTheme();
+  const { colors, isDark } = useTheme();
+  const brand = colors.primary;
+  const palette = {
+    ink: colors.textPrimary,
+    muted: colors.textSecondary,
+    warnInk: colors.warning,
+  };
   const {
     selectedItem,
     isLoading,
@@ -268,17 +274,27 @@ export default function PantryItemDetailScreen() {
     <View className="flex-1 bg-canvas dark:bg-canvas-dark">
       <Screen>
         {/* Navigation Bar */}
-        <View className="flex-row items-center justify-between pb-2">
+        <View className="flex-row items-center justify-between pb-3">
           <Pressable
             onPress={() => router.back()}
-            className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark">
-            <Ionicons name="arrow-back" size={20} color={palette.ink} />
+            style={{
+              backgroundColor: colors.surfaceVariant,
+              borderColor: colors.border,
+              borderWidth: 1,
+            }}
+            className="h-10 w-10 items-center justify-center rounded-full active:scale-95">
+            <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
           </Pressable>
           <AppText variant="heading">Chi tiết nguyên liệu</AppText>
           <Pressable
             onPress={() => setEditModalVisible(true)}
-            className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark">
-            <Ionicons name="pencil-outline" size={20} color={brand} />
+            style={{
+              backgroundColor: colors.surfaceVariant,
+              borderColor: colors.border,
+              borderWidth: 1,
+            }}
+            className="h-10 w-10 items-center justify-center rounded-full active:scale-95">
+            <Ionicons name="pencil" size={18} color={colors.primary} />
           </Pressable>
         </View>
 
@@ -301,13 +317,41 @@ export default function PantryItemDetailScreen() {
           ) : (
             <Pressable
               onPress={handlePickPhoto}
-              className="mb-4 h-48 w-full items-center justify-center rounded-2xl bg-soft shadow-inner active:opacity-80 dark:bg-soft-dark">
-              <Ionicons name="image-outline" size={48} color={palette.muted} />
-              <AppText variant="caption" className="mt-2 font-medium text-muted">
+              style={{
+                backgroundColor: isDark ? "rgba(16, 185, 129, 0.08)" : "#F0FDF4",
+                borderColor: isDark ? "rgba(16, 185, 129, 0.25)" : "rgba(46, 125, 79, 0.2)",
+                borderWidth: 1.5,
+                borderStyle: "dashed",
+              }}
+              className="mb-4 h-48 w-full items-center justify-center rounded-2xl active:opacity-80">
+              <View
+                style={{
+                  backgroundColor: isDark ? "rgba(16, 185, 129, 0.2)" : "#DCFCE7",
+                  width: 56,
+                  height: 56,
+                  borderRadius: 28,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 8,
+                }}>
+                <Ionicons name="camera" size={26} color={colors.primary} />
+              </View>
+              <AppText
+                style={{
+                  color: colors.textPrimary,
+                  fontWeight: "700",
+                  fontSize: 14,
+                }}>
                 Chưa có ảnh nguyên liệu
               </AppText>
-              <AppText variant="caption" className="mt-0.5 text-xs text-brand">
-                Chạm để chọn ảnh
+              <AppText
+                style={{
+                  color: colors.primary,
+                  fontWeight: "600",
+                  fontSize: 12,
+                  marginTop: 2,
+                }}>
+                Chạm để chụp hoặc chọn ảnh
               </AppText>
             </Pressable>
           )}
@@ -324,8 +368,15 @@ export default function PantryItemDetailScreen() {
               label={selectedItem.freshness.label}
               tone={TONE_MAP[selectedItem.freshness.status]}
             />
-            <View className="rounded-full bg-soft px-3 py-1 dark:bg-soft-dark">
-              <AppText variant="caption" className="font-semibold">
+            <View
+              style={{
+                backgroundColor: colors.surfaceVariant,
+                borderColor: colors.border,
+                borderWidth: 1,
+              }}
+              className="rounded-full px-3.5 py-1">
+              <AppText
+                style={{ color: colors.textPrimary, fontWeight: "600", fontSize: 12 }}>
                 {selectedItem.location === "FREEZER"
                   ? "Tủ đông 🧊"
                   : selectedItem.location === "PANTRY_SHELF"
@@ -340,7 +391,10 @@ export default function PantryItemDetailScreen() {
         <View className="flex-row gap-3">
           <Card className="flex-1 p-4 shadow-sm">
             <AppText variant="caption">Số lượng hiện có</AppText>
-            <AppText variant="title" className="mt-1 text-brand">
+            <AppText
+              variant="title"
+              className="mt-1"
+              style={{ color: colors.primary }}>
               {Math.round(selectedItem.quantity)} {selectedItem.unit}
             </AppText>
           </Card>
@@ -355,33 +409,41 @@ export default function PantryItemDetailScreen() {
         </View>
 
         {/* Action Buttons */}
-        <View className="gap-3 pt-2">
+        <View className="gap-3 pt-3">
           <Button
             title="Dùng bớt nguyên liệu"
             onPress={() => setConsumeModalVisible(true)}
             variant="primary"
+            iconLeft={<Ionicons name="remove-circle-outline" size={18} color="#FFFFFF" />}
           />
 
           <View className="flex-row gap-3">
             <View className="flex-1">
               <Button
-                title={isUploading ? "Đang tải ảnh..." : "Chụp ảnh"}
+                title={isUploading ? "Đang tải..." : "Chụp ảnh"}
                 onPress={handleTakePhoto}
                 variant="outline"
                 disabled={isUploading}
+                iconLeft={<Ionicons name="camera-outline" size={17} color={colors.textPrimary} />}
               />
             </View>
 
             <View className="flex-1">
               <Button
-                title={isUploading ? "Đang tải ảnh..." : "Tải ảnh từ máy"}
+                title={isUploading ? "Đang tải..." : "Tải ảnh từ máy"}
                 onPress={handlePickPhoto}
                 variant="outline"
                 disabled={isUploading}
+                iconLeft={<Ionicons name="images-outline" size={17} color={colors.textPrimary} />}
               />
             </View>
           </View>
-          <Button title="Xoá khỏi tủ" onPress={handleDelete} variant="danger" />
+          <Button
+            title="Xoá khỏi tủ"
+            onPress={handleDelete}
+            variant="danger"
+            iconLeft={<Ionicons name="trash-outline" size={17} color="#FFFFFF" />}
+          />
         </View>
       </Screen>
 
@@ -504,8 +566,15 @@ export default function PantryItemDetailScreen() {
                       const day = String(d.getDate()).padStart(2, "0");
                       setEditExpiry(`${y}-${m}-${day}`);
                     }}
-                    className="rounded-xl border border-line bg-brandSoft px-3 py-1.5 dark:bg-surface-dark">
-                    <AppText className="text-xs font-bold text-brand">
+                    style={{
+                      backgroundColor: isDark ? "rgba(16, 185, 129, 0.15)" : "#E8F5EE",
+                      borderColor: isDark ? "rgba(16, 185, 129, 0.3)" : "rgba(46, 125, 79, 0.25)",
+                      borderWidth: 1,
+                    }}
+                    className="rounded-xl px-3 py-1.5 active:opacity-80">
+                    <AppText
+                      style={{ color: colors.primary }}
+                      className="text-xs font-bold">
                       {p.label}
                     </AppText>
                   </Pressable>

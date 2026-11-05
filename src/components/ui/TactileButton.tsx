@@ -16,7 +16,7 @@ interface TactileButtonProps {
   loading?: boolean;
   disabled?: boolean;
   iconName?: keyof typeof Ionicons.glyphMap | undefined;
-  variant?: "primary" | "secondary" | "danger";
+  variant?: "primary" | "secondary" | "accent" | "danger";
 }
 
 /**
@@ -37,25 +37,44 @@ export function TactileButton({
   const bgSurface =
     variant === "secondary"
       ? colors.secondary
-      : variant === "danger"
-        ? colors.error
-        : colors.primary;
+      : variant === "accent"
+        ? isDark
+          ? "#F59E0B"
+          : "#EA580C"
+        : variant === "danger"
+          ? colors.error
+          : colors.primary;
 
   const bevelColor =
     variant === "secondary"
       ? isDark
         ? "#064E3B"
         : "#047857"
-      : variant === "danger"
-        ? colors.errorSoft
-        : colors.primaryBevel;
+      : variant === "accent"
+        ? isDark
+          ? "#B45309"
+          : "#C2410C"
+        : variant === "danger"
+          ? colors.errorSoft
+          : colors.primaryBevel;
 
   const glowColor =
     variant === "danger"
       ? colors.error
       : variant === "secondary"
         ? colors.secondary
-        : colors.shadowGlow;
+        : variant === "accent"
+          ? "#FB923C"
+          : colors.shadowGlow;
+
+  const textClr =
+    variant === "accent"
+      ? "#FFFFFF"
+      : variant === "secondary"
+        ? isDark
+          ? "#0A0E0C"
+          : "#FFFFFF"
+        : colors.textOnPrimary;
 
   return (
     <Pressable onPress={onPress} disabled={inactive} style={styles.wrapper}>
@@ -96,23 +115,23 @@ export function TactileButton({
 
             {loading ? (
               <View style={styles.row}>
-                <ActivityIndicator size="small" color={colors.textOnPrimary} />
+                <ActivityIndicator size="small" color={textClr} />
                 <AppText
-                  style={[styles.loadingText, { color: colors.textOnPrimary }]}>
+                  style={[styles.loadingText, { color: textClr }]}>
                   Đang xử lý...
                 </AppText>
               </View>
             ) : (
               <View style={styles.row}>
                 <AppText
-                  style={[styles.buttonText, { color: colors.textOnPrimary }]}>
+                  style={[styles.buttonText, { color: textClr }]}>
                   {title}
                 </AppText>
                 {iconName ? (
                   <Ionicons
                     name={iconName}
                     size={18}
-                    color={colors.textOnPrimary}
+                    color={textClr}
                     style={styles.icon}
                   />
                 ) : null}

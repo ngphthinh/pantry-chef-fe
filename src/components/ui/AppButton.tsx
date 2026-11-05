@@ -30,6 +30,7 @@ export interface AppButtonProps extends Omit<PressableProps, 'children'> {
 /**
  * Nút bấm chuẩn AppButton:
  * Hỗ trợ các variant chuẩn mực, hiệu ứng active scale/opacity, shadow glow, và quản lý loading state.
+ * Áp dụng cấu trúc bọc View bên trong Pressable để tương thích 100% với React Native Web & NativeWind v4.
  */
 export function AppButton({
   title,
@@ -43,11 +44,11 @@ export function AppButton({
   style,
   ...props
 }: AppButtonProps) {
-  const { colors, radius, shadows, spacing } = useTheme();
+  const { colors, radius, shadows, spacing, isDark } = useTheme();
   const inactive = disabled || loading;
 
   const sizeHeights = {
-    sm: 36,
+    sm: 38,
     md: 48,
     lg: 54,
   };
@@ -57,30 +58,46 @@ export function AppButton({
       case 'primary':
         return {
           backgroundColor: pressed ? colors.primaryPressed : colors.primary,
-          borderColor: 'transparent',
-          borderWidth: 0,
-          textColor: colors.textOnPrimary,
+          borderColor: colors.primary,
+          borderWidth: 1.2,
+          textColor: '#FFFFFF',
           shadow: shadows.sm,
         };
       case 'secondary':
         return {
-          backgroundColor: pressed ? colors.surfaceVariant : colors.primarySoft,
-          borderColor: 'transparent',
-          borderWidth: 0,
+          backgroundColor: pressed
+            ? isDark
+              ? 'rgba(255, 255, 255, 0.12)'
+              : '#E2ECE5'
+            : isDark
+              ? 'rgba(16, 185, 129, 0.16)'
+              : '#E8F5EE',
+          borderColor: isDark ? 'rgba(16, 185, 129, 0.3)' : 'rgba(46, 125, 79, 0.25)',
+          borderWidth: 1.2,
           textColor: colors.primary,
           shadow: shadows.none,
         };
       case 'outline':
         return {
-          backgroundColor: pressed ? colors.surfaceVariant : 'transparent',
-          borderColor: colors.border,
+          backgroundColor: pressed
+            ? isDark
+              ? 'rgba(255, 255, 255, 0.08)'
+              : '#F0F5F2'
+            : isDark
+              ? 'rgba(255, 255, 255, 0.04)'
+              : '#FFFFFF',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.18)' : '#D1DCD4',
           borderWidth: 1.2,
           textColor: colors.textPrimary,
           shadow: shadows.none,
         };
       case 'ghost':
         return {
-          backgroundColor: pressed ? colors.surfaceVariant : 'transparent',
+          backgroundColor: pressed
+            ? isDark
+              ? 'rgba(255, 255, 255, 0.08)'
+              : '#F0F5F2'
+            : 'transparent',
           borderColor: 'transparent',
           borderWidth: 0,
           textColor: colors.textPrimary,
@@ -88,10 +105,10 @@ export function AppButton({
         };
       case 'danger':
         return {
-          backgroundColor: pressed ? '#B91C1C' : colors.error,
-          borderColor: 'transparent',
-          borderWidth: 0,
-          textColor: colors.textOnPrimary,
+          backgroundColor: pressed ? '#DC2626' : '#EF4444',
+          borderColor: '#EF4444',
+          borderWidth: 1.2,
+          textColor: '#FFFFFF',
           shadow: shadows.sm,
         };
     }
@@ -102,58 +119,55 @@ export function AppButton({
       accessibilityRole="button"
       onPress={onPress}
       disabled={inactive}
-      style={({ pressed }) => {
-        const v = getVariantStyles(pressed);
-        return [
-          styles.base,
-          {
-            height: sizeHeights[size],
-            backgroundColor: v.backgroundColor,
-            borderColor: v.borderColor,
-            borderWidth: v.borderWidth,
-            borderRadius: radius.full,
-            paddingHorizontal: size === 'sm' ? spacing.md : spacing.xl,
-            opacity: inactive ? 0.6 : 1,
-            transform: [{ scale: pressed && !inactive ? 0.98 : 1 }],
-          },
-          v.shadow,
-          style,
-        ];
-      }}
-      {...props}
-    >
+      style={style}
+      {...props}>
       {({ pressed }) => {
         const v = getVariantStyles(pressed);
         return (
-          <View style={styles.contentRow}>
-            {loading ? (
-              <ActivityIndicator
-                size="small"
-                color={v.textColor}
-                style={styles.spinner}
-              />
-            ) : null}
+          <View
+            style={[
+              styles.base,
+              {
+                height: sizeHeights[size],
+                backgroundColor: v.backgroundColor,
+                borderColor: v.borderColor,
+                borderWidth: v.borderWidth,
+                borderRadius: radius.full,
+                paddingHorizontal: size === 'sm' ? spacing.md : spacing.xl,
+                opacity: inactive ? 0.6 : 1,
+                transform: [{ scale: pressed && !inactive ? 0.98 : 1 }],
+              },
+              v.shadow,
+            ]}>
+            <View style={styles.contentRow}>
+              {loading ? (
+                <ActivityIndicator
+                  size="small"
+                  color={v.textColor}
+                  style={styles.spinner}
+                />
+              ) : null}
 
-            {!loading && iconLeft ? (
-              <View style={styles.iconLeft}>{iconLeft}</View>
-            ) : null}
+              {!loading && iconLeft ? (
+                <View style={styles.iconLeft}>{iconLeft}</View>
+              ) : null}
 
-            <AppText
-              style={[
-                styles.label,
-                {
-                  color: v.textColor,
-                  fontSize: size === 'sm' ? 13 : size === 'lg' ? 16 : 15,
-                  fontWeight: '700',
-                },
-              ]}
-            >
-              {title}
-            </AppText>
+              <AppText
+                style={[
+                  styles.label,
+                  {
+                    color: v.textColor,
+                    fontSize: size === 'sm' ? 13 : size === 'lg' ? 16 : 15,
+                    fontWeight: '700',
+                  },
+                ]}>
+                {title}
+              </AppText>
 
-            {!loading && iconRight ? (
-              <View style={styles.iconRight}>{iconRight}</View>
-            ) : null}
+              {!loading && iconRight ? (
+                <View style={styles.iconRight}>{iconRight}</View>
+              ) : null}
+            </View>
           </View>
         );
       }}
@@ -166,6 +180,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
+    width: '100%',
   },
   contentRow: {
     flexDirection: 'row',

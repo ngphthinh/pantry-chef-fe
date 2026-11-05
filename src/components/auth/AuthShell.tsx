@@ -1,6 +1,17 @@
 // components/auth/AuthShell.tsx
-import React, { type ComponentProps, type ReactNode } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentProps,
+  type ReactNode,
+} from "react";
 import {
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -16,6 +27,18 @@ import { useAppTheme } from "@/core/theme/useAppTheme";
 import { LivingBackground4D } from "@/components/auth/LivingBackground4D";
 import { HeroBadge3D } from "@/components/auth/HeroBadge3D";
 import { TiltCard3D } from "@/components/auth/TiltCard3D";
+
+
+interface AuthShellContextValue {
+  scrollToY: (y: number) => void;
+  resetScroll: () => void;
+}
+
+export const AuthShellContext = createContext<AuthShellContextValue | null>(null);
+
+export function useAuthShell() {
+  return useContext(AuthShellContext);
+}
 
 interface AuthShellProps {
   subtitle: string;
@@ -34,21 +57,83 @@ export function AuthShell({
 }: AuthShellProps) {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
+  const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const targetYRef = useRef<number>(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
+      () => {
+        setKeyboardVisible(true);
+        if (targetYRef.current > 0) {
+          scrollViewRef.current?.scrollTo({
+            y: Math.max(0, targetYRef.current - 40),
+            animated: true,
+          });
+        }
+      }
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
+      () => {
+        setKeyboardVisible(false);
+        setIsInputFocused(false);
+      }
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  const scrollToY = useCallback((y: number) => {
+    targetYRef.current = y;
+    setIsInputFocused(true);
+
+    const performScroll = () => {
+      scrollViewRef.current?.scrollTo({
+        y: Math.max(0, y),
+        animated: true,
+      });
+    };
+
+    // Gọi liên tục qua các khung hình để vượt qua độ trễ bật bàn phím
+    performScroll();
+    setTimeout(performScroll, 60);
+    setTimeout(performScroll, 160);
+    setTimeout(performScroll, 320);
+  }, []);
+
+  const resetScroll = useCallback(() => {
+    targetYRef.current = 0;
+    setIsInputFocused(false);
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    }, 80);
+  }, []);
+
+  const contextValue = useMemo(() => ({ scrollToY, resetScroll }), [scrollToY, resetScroll]);
+  const isExpanded = isKeyboardVisible || isInputFocused;
 
   return (
-    <View className="flex-1">
-      <LivingBackground4D isDark={isDark} />
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView
-          contentContainerClassName="flex-grow justify-center px-5"
-          contentContainerStyle={{
-            paddingTop: Math.max(insets.top + 10, 24),
-            paddingBottom: Math.max(insets.bottom + 20, 32),
-          }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled">
+    <AuthShellContext.Provider value={contextValue}>
+      <View className="flex-1">
+        <LivingBackground4D isDark={isDark} />
+        <KeyboardAvoidingView
+          className="flex-1"
+          behavior={Platform.OS === "ios" ? "padding" : undefined}>
+          <ScrollView
+            ref={scrollViewRef}
+            contentContainerClassName="flex-grow px-5"
+            contentContainerStyle={{
+              paddingTop: Math.max(insets.top + 10, 24),
+              paddingBottom: isExpanded ? 200 : Math.max(insets.bottom + 20, 32),
+              justifyContent: "center",
+            }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
           <View className="mb-4 items-center">
             <HeroBadge3D isDark={isDark} />
             <AppText
@@ -76,6 +161,7 @@ export function AuthShell({
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
+    </AuthShellContext.Provider>
   );
 }
 
