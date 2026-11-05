@@ -168,14 +168,11 @@ export default function SearchHub() {
           {hub.pantryNames.length > 0 && (
             <View style={styles.btnWrapper}>
               <TactileButton
-                title={
-                  hub.selectedCount > 0
-                    ? `Tìm công thức với ${hub.selectedCount} nguyên liệu đã chọn`
-                    : 'Hãy chọn ít nhất 1 nguyên liệu'
-                }
+                title="Tìm công thức"
                 disabled={hub.selectedCount === 0}
                 onPress={searchByIngredients}
-                variant="primary"
+                variant="accent"
+                iconName="restaurant"
               />
             </View>
           )}

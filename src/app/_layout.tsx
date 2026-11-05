@@ -95,7 +95,7 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={{ flex: 1 }}>
       <Provider store={store}>
         <AppBootstrap>
           <ThemeProvider>

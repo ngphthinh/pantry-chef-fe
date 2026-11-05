@@ -9,6 +9,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { AppText } from "@/components/ui/AppText";
 import { useTheme } from "@/theme";
+import { useAuthShell } from "@/components/auth/AuthShell";
 
 interface GlassInput3DProps extends TextInputProps {
   label: string;
@@ -35,6 +36,8 @@ export function GlassInput3D({
   const isDark = propIsDark !== undefined ? propIsDark : theme.isDark;
   const { colors, radius } = theme;
 
+  const authShell = useAuthShell();
+  const [layoutY, setLayoutY] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const [hidden, setHidden] = useState(!!secureTextEntry);
 
@@ -58,7 +61,11 @@ export function GlassInput3D({
       : "rgba(255, 255, 255, 0.75)";
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      onLayout={(e) => {
+        setLayoutY(e.nativeEvent.layout.y);
+      }}>
       <AppText
         variant="caption"
         style={[
@@ -91,9 +98,30 @@ export function GlassInput3D({
           secureTextEntry={hidden}
           value={value}
           onChangeText={onChangeText}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
           {...props}
+          onFocus={(e) => {
+            setIsFocused(true);
+            props.onFocus?.(e);
+            if (authShell) {
+              const name = label.toLowerCase();
+              // Độ nhích nhẹ vừa vặn, không đẩy quá cao làm mất tiêu đề
+              const targetY = name.includes("host")
+                ? 0
+                : name.includes("email")
+                  ? 80
+                  : name.includes("xác nhận")
+                    ? 180
+                    : secureTextEntry || name.includes("mật khẩu")
+                      ? 140
+                      : 50;
+
+              authShell.scrollToY(targetY);
+            }
+          }}
+          onBlur={(e) => {
+            setIsFocused(false);
+            props.onBlur?.(e);
+          }}
         />
 
         {secureTextEntry ? (
