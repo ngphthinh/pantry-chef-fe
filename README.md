@@ -1,804 +1,295 @@
-# Hướng dẫn viết một feature mới (theo mẫu `auth`)
+# PANTRY CHEF — Ứng Dụng Quản Lý Kho Thực Phẩm & Lên Kế Hoạch Bữa Ăn Thông Minh
 
-Tài liệu này hướng dẫn cách viết code cho một feature mới sao cho **giống hệt cách feature `auth` đang làm**: cùng cách đặt tên file, cùng cách chia lớp, dùng hook cho giao diện, và **không để logic trong màn hình**.
-
-Ví dụ xuyên suốt dùng feature **`pantry`** (tủ đồ), vì API của nó có trong `API_DOCUMENTATION.md`. Khi làm feature khác (`recipes`, `shoppingLists`, `mealPlans`...) chỉ cần đổi tên tương ứng.
-
-> Ghi chú: file `pantry-chef` bạn tải lên có kích thước 0 byte nên mình không đọc được cấu trúc toàn project. Các đường dẫn như `@/core/di/container`, `@/store/hooks`, `@/types`, `@/components/ui/*` được lấy từ các import thực tế trong code `auth` và màn hình `ProfileScreen`.
+> **Báo Cáo & Tài Liệu Kỹ Thuật Đồ Án Lập Trình Thiết Bị Di Động**  
+> **Thành viên phụ trách:** Nguyễn Văn Trường (Phụ trách module `pantry`, `meal-plan`, `plan-entry`)  
+> **Nền tảng:** React Native (Expo SDK 58, React 19, TypeScript, Redux Toolkit, NativeWind v4)
 
 ---
 
-## Mục lục
-
-1. [Nguyên tắc cốt lõi](#1-nguyên-tắc-cốt-lõi)
-2. [Cấu trúc thư mục](#2-cấu-trúc-thư-mục)
-3. [Quy tắc đặt tên](#3-quy-tắc-đặt-tên)
-4. [Vai trò từng file](#4-vai-trò-từng-file)
-5. [Hướng dẫn từng bước: tạo feature `pantry`](#5-hướng-dẫn-từng-bước-tạo-feature-pantry)
-6. [Quy tắc "không để logic ở giao diện"](#6-quy-tắc-không-để-logic-ở-giao-diện)
-7. [Checklist khi tạo feature mới](#7-checklist-khi-tạo-feature-mới)
-8. [Những lỗi hay gặp](#8-những-lỗi-hay-gặp)
-9. [Check-list](https://docs.google.com/spreadsheets/d/1HmieTUfW35F5_HqBuvUoSc4XbiXn6sNxhFMlXVPuN0o/edit?usp=sharing)
-10. [Phân công](./PHAN_CONG_CHI_TIET.md)
----
-**Sau khi làm xong api nào thì vào checklist đánh dấu**
-**Colors dùng ở file [colors.js](src/core/theme/colors.js)**
----
-
-## 1. Nguyên tắc cốt lõi
-
-Dữ liệu đi **một chiều** qua các lớp. Lớp trên chỉ biết lớp ngay bên dưới:
-
-```
-Screen (app/…)            chỉ hiển thị, gọi hàm của hook
-   │
-   ▼
-Hook  (useXxx.ts)         đọc state từ Redux, trả về hàm cho màn hình
-   │
-   ▼
-Slice (xxxSlice.ts)       state + thunk (điều phối: gọi service, dispatch kết quả)
-   │
-   ▼
-Service (xxxService.ts)   nghiệp vụ (lưu token, xoá token, ghép nhiều bước)
-   │
-   ▼
-Repository (httpXxxRepository.ts)   gọi HTTP, trả về đúng kiểu DTO
-```
-
-Ba điều bắt buộc:
-
-1. **Màn hình không gọi API, không `import` axios, không viết logic nghiệp vụ.** Màn hình chỉ gọi hàm lấy từ hook.
-2. **Service phụ thuộc vào interface, không phụ thuộc vào class cụ thể.** Interface (`IXxx`) nằm trong `types.ts`, class HTTP chỉ là một cách hiện thực. Nhờ vậy dễ thay thế và dễ test.
-3. **Việc ghép các object với nhau (new Service, new Repository) chỉ làm ở một nơi:** `@/core/di/container`.
+## MỤC LỤC BÁO CÁO
+1. [Tổng Quan Dự Án & Công Nghệ Sử Dụng](#1-tổng-quan-dự-án--công-nghệ-sử-dụng)
+2. [Kiến Trúc Toàn Dự Án (Architecture & Data Flow)](#2-kiến-trúc-toàn-dự-án-architecture--data-flow)
+3. [Cấu Trúc Thư Mục Chuẩn Hóa](#3-cấu-trúc-thư-mục-chuẩn-hóa)
+4. [PHẦN BÁO CÁO CHUYÊN SÂU CỦA TÔI](#4-phần-báo-cáo-chuyên-sâu-của-tôi)
+   - [4.1. Module Pantry (Quản Lý Tủ Nguyên Liệu)](#41-module-pantry-quản-lý-tủ-nguyên-liệu)
+   - [4.2. Module Meal Plan (Kế Hoạch Bữa Ăn Tuần)](#42-module-meal-plan-kế-hoạch-bữa-ăn-tuần)
+   - [4.3. Module Plan Entry (Quản Lý Từng Món & Bữa Ăn)](#43-module-plan-entry-quản-lý-từng-món--bữa-ăn)
+5. [Các Điểm Sáng Kỹ Thuật & Tối Ưu Nâng Cao](#5-các-điểm-sáng-kỹ-thuật--tối-ưu-nâng-cao)
+6. [Cẩm Nang Trả Lời Phản Biện Cho Buổi Báo Cáo (Q&A)](#6-cẩm-nang-trả-lời-phản-biện-cho-buổi-báo-cáo-qa)
 
 ---
 
-## 2. Cấu trúc thư mục
+## 1. Tổng Quan Dự Án & Công Nghệ Sử Dụng
 
-Mỗi feature là **một thư mục phẳng** trong `features/`, không chia nhỏ thêm thư mục con (đúng như `auth`):
+### 1.1 Mục tiêu đề tài
+**Pantry Chef** là giải pháp di động toàn diện giúp gia đình và cá nhân:
+- Quản lý kho thực phẩm trong nhà (tủ mát, tủ đông, kệ bếp), theo dõi hạn sử dụng để giảm lãng phí thực phẩm.
+- Tự động gợi ý công thức nấu ăn dựa trên những gì đang có sẵn trong tủ.
+- Lên kế hoạch thực đơn chi tiết cho từng ngày trong tuần (Sáng - Trưa - Tối) và tự động trích xuất danh sách mua sắm những nguyên liệu còn thiếu.
 
-```
-features/
-├── auth/
-│   ├── types.ts                 # Interface: IAuthenticator, IPasswordRecovery, IUserApi
-│   ├── httpAuthRepository.ts    # Gọi API đăng nhập/đăng ký/đổi mật khẩu
-│   ├── httpUserRepository.ts    # Gọi API hồ sơ người dùng
-│   ├── authService.ts           # Nghiệp vụ auth (lưu/xoá token, restore session)
-│   ├── userService.ts           # Nghiệp vụ user
-│   ├── authSlice.ts             # Redux: state + thunk
-│   ├── userActions.ts           # Thunk cho user (dùng chung state của authSlice)
-│   ├── useAuth.ts               # Hook cho màn hình
-│   ├── useUser.ts               # Hook cho màn hình
-│   ├── validation.ts            # Hàm kiểm tra dữ liệu nhập
-│   └── onboardingFlag.ts        # Hằng số
-│
-└── pantry/                      # ← feature mới, cùng kiểu
-    ├── types.ts
-    ├── httpPantryRepository.ts
-    ├── pantryService.ts
-    ├── pantrySlice.ts
-    ├── usePantry.ts
-    ├── usePantryForm.ts         # hook xử lý form (logic của màn hình thêm/sửa)
-    └── validation.ts
-```
-
-Màn hình nằm ở `app/` (Expo Router), **không** nằm trong `features/`:
-
-```
-app/
-└── (tabs)/pantry.tsx            # chỉ render UI
-```
-
-Component dùng chung (nút, thẻ, ô nhập…) nằm ở `@/components/ui/`. Kiểu dữ liệu dùng chung (DTO của API) nằm ở `@/types`.
-
----
-
-## 3. Quy tắc đặt tên
-
-### 3.1 Tên file
-
-| Loại file | Mẫu tên | Ví dụ (auth) | Ví dụ (pantry) |
-|---|---|---|---|
-| Interface của feature | `types.ts` | `types.ts` | `types.ts` |
-| Repository gọi HTTP | `http<Tên>Repository.ts` | `httpAuthRepository.ts` | `httpPantryRepository.ts` |
-| Service | `<tên>Service.ts` | `authService.ts` | `pantryService.ts` |
-| Redux slice | `<tên>Slice.ts` | `authSlice.ts` | `pantrySlice.ts` |
-| Hook | `use<Tên>.ts` | `useAuth.ts`, `useUser.ts` | `usePantry.ts`, `usePantryForm.ts` |
-| Hàm kiểm tra dữ liệu | `validation.ts` | `validation.ts` | `validation.ts` |
-| Hằng số | `<tên>Flag.ts` / `<tên>.ts` | `onboardingFlag.ts` | `pantryLocations.ts` |
-
-Quy tắc chung:
-
-- **File `.ts` viết `camelCase`**, bắt đầu bằng chữ thường (`authService.ts`, không phải `AuthService.ts`).
-- Hook **luôn bắt đầu bằng `use`**.
-- Chỉ file **component giao diện** (`.tsx`) mới đặt `PascalCase` (ví dụ `ProfileScreen`, `Button`).
-- Không dùng hậu tố mơ hồ như `utils.ts`, `helpers.ts`, `common.ts`. Hãy đặt tên theo việc nó làm (`validation.ts`).
-
-### 3.2 Tên bên trong file
-
-| Thứ | Quy tắc | Ví dụ |
+### 1.2 Tech Stack
+| Hạng mục | Công nghệ | Vai trò trong dự án |
 |---|---|---|
-| Class | `PascalCase` | `AuthService`, `HttpAuthRepository`, `UserService` |
-| Interface | `PascalCase`, **bắt đầu bằng `I`** | `IAuthenticator`, `IUserApi`, `IPasswordRecovery` |
-| Type / DTO | `PascalCase` | `UserResponse`, `LoginRequest`, `AuthStatus` |
-| Thunk | `camelCase`, là **động từ** | `signIn`, `signOut`, `restoreSession`, `refreshUser` |
-| Action của reducer | `camelCase`, là **sự kiện đã xảy ra** (quá khứ) | `authenticated`, `unauthenticated` |
-| Hook | `useXxx` | `useAuth`, `useUser` |
-| Hằng số | `SCREAMING_SNAKE_CASE` | `ONBOARDING_KEY` |
-| Biến kiểm tra | `camelCase` trong một object | `validators.email`, `validators.password` |
-
-Cách đặt tên interface theo **vai trò** (không theo công nghệ):
-
-- `IAuthenticator` (đăng nhập/đăng ký/đăng xuất), `IPasswordRecovery` (quên/đặt lại/đổi mật khẩu), `IUserApi` (hồ sơ).
-- Một class repository có thể `implements` nhiều interface nhỏ (xem `HttpAuthRepository implements IAuthenticator, IPasswordRecovery`). Ưu tiên **nhiều interface nhỏ** hơn một interface to.
-
-Với `pantry`: `IPantryApi`, và nếu cần tách thêm thì `IPantryPhotoApi`.
-
-### 3.3 Đặt tên alias import
-
-Luôn import bằng alias `@/`, không dùng đường dẫn tương đối nhiều cấp:
-
-```ts
-import { authService } from "@/core/di/container";   // đúng
-import { authService } from "../../../core/di/container"; // sai
-```
-
-Chỉ dùng đường dẫn tương đối `./` khi import file **cùng thư mục feature** (như `import { signIn } from './authSlice'`).
+| **Core Framework** | React Native `0.88.1`, Expo `~58.0.30`, React `19.3.0` | Nền tảng di động đa nền tảng (iOS, Android, Web) |
+| **Ngôn ngữ** | TypeScript `~6.0.3` (Strict Mode) | Type-safe 100%, tự động bắt lỗi lúc biên dịch |
+| **Routing / Navigation**| `expo-router` v5 (File-based Routing) | Điều hướng dạng cây tệp thư mục hiện đại |
+| **Quản lý trạng thái** | `@reduxjs/toolkit` v2, `react-redux` v9 | Quản lý state toàn cục, Redux Thunk cho tác vụ bất đồng bộ |
+| **Styling & Theme** | NativeWind v4 (Tailwind CSS) + Design Tokens | Hệ thống màu sắc chuẩn WCAG AAA, hỗ trợ hoàn hảo Light & Dark mode |
+| **Giao tiếp mạng** | Axios Client + DI (Dependency Injection) | Interceptor tự động gắn JWT Bearer token và refresh token |
+| **Phần cứng thiết bị** | `expo-image-picker`, `expo-camera`, `expo-notifications` | Chụp ảnh nguyên liệu, quét mã vạch, thông báo nhắc hết hạn |
 
 ---
 
-## 4. Vai trò từng file
+## 2. Kiến Trúc Toàn Dự Án (Architecture & Data Flow)
 
-### `types.ts` — hợp đồng của feature
+Dự án áp dụng mô hình **Vertical Slice Architecture kết hợp Clean Architecture**, phân tầng nghiêm ngặt với nguyên tắc **Unidirectional Data Flow (Dữ liệu đi 1 chiều)**:
 
-Chỉ chứa **interface**. Không chứa code chạy.
-
-```ts
-// features/auth/types.ts (rút gọn)
-export interface IUserApi {
-  getMe(): Promise<UserResponse>;
-  updateMe(body: UserUpdateRequest): Promise<UserResponse>;
-  updateAvatar(image: PickedImage): Promise<UserResponse>;
-  deleteMe(): Promise<void>;
-}
+```mermaid
+flowchart TD
+    UI["Màn hình (Screens trong src/app)"] --> Hook["Custom Hooks (usePantry, useMealPlan)"]
+    Hook --> Slice["Redux Slices & Thunks (pantrySlice, mealPlanSlice)"]
+    Slice --> Service["Domain Services (pantryService, mealPlanService)"]
+    Service --> Repo["Repositories (httpPantryRepository, httpMealPlanRepository)"]
+    Repo --> API["Backend RESTful API"]
 ```
 
-### `http<Tên>Repository.ts` — nói chuyện với server
-
-- Là **class**, nhận `AxiosInstance` qua constructor (`publicHttp` hoặc `privateHttp`).
-- Các hàm viết dạng **arrow function property** (`login = async (…) => {…}`) để tránh mất `this` khi truyền hàm đi.
-- Mỗi hàm gọi **đúng một endpoint**, trả về **đúng kiểu DTO**. Không lưu token, không dispatch, không hiện thông báo.
-- API công khai dùng `publicHttp`, API cần đăng nhập dùng `privateHttp`.
-
-### `<tên>Service.ts` — nghiệp vụ
-
-- Là **class**, nhận **interface** qua constructor (không nhận class HTTP cụ thể).
-- Chứa các quyết định nghiệp vụ: "đăng nhập xong thì lưu token", "đổi mật khẩu xong thì xoá token", "restore thất bại thì xoá token".
-- Service **không biết Redux, không biết React**.
-- Nếu một hàm chỉ chuyển tiếp xuống repository mà không làm gì thêm (như `UserService`), vẫn giữ lớp này để mọi feature có cùng hình dạng.
-
-### `<tên>Slice.ts` — state và thunk
-
-- Chứa **state** của feature, reducer và **thunk**.
-- Thunk dùng **hàm thường** (`AppThunk`), **không dùng `createAsyncThunk`**, để lỗi gốc (`ApiError`/`AxiosError`) được ném nguyên cho hook/màn hình, không bị biến thành `SerializedError`.
-- Thunk trả về `Promise<void>` (hoặc `Promise<kết quả>`) và **ném lỗi lên trên**; không tự `Alert`.
-- Thunk lấy service từ `@/core/di/container`, không tự `new`.
-
-### `use<Tên>.ts` — cầu nối với giao diện
-
-- Đọc state bằng `useAppSelector`, gửi thunk bằng `useAppDispatch` (cả hai từ `@/store/hooks`).
-- Trả về một object gồm **dữ liệu** và **hàm hành động** đã được bọc sẵn `dispatch`.
-- Bọc hàm bằng `useCallback` / kết quả bằng `useMemo` để màn hình không bị render thừa và không rơi vào vòng lặp `useEffect`.
-- Màn hình **không** import trực tiếp từ `xxxSlice.ts`; chỉ import hook.
-
-### `validation.ts` — kiểm tra dữ liệu nhập
-
-- Mỗi validator nhận giá trị, trả về `null` nếu hợp lệ hoặc **chuỗi thông báo lỗi** nếu sai (đúng như `validators.email`).
-- Hàm thuần, không phụ thuộc React.
+### Nguyên tắc bất di bất dịch trong code:
+1. **Màn hình (`app/`) chỉ làm nhiệm vụ giao diện (Presentation):** Tuyệt đối không gọi axios, không dispatch thunk trực tiếp, không xử lý logic tính toán ngày tháng phức tạp. Màn hình chỉ gọi hàm và nhận state từ **Custom Hook**.
+2. **IoC / Dependency Injection (`@/core/di/container.ts`):** Các Service phụ thuộc vào Interface (`IPantryRepository`, `IMealPlanRepository`), không phụ thuộc vào implementation cụ thể. Toàn bộ instance được khởi tạo duy nhất tại container giúp dễ dàng mock test.
+3. **Optimistic Updates & State Synchronization:** Khi người dùng thao tác nhanh (như đánh dấu đã nấu hoặc xoá món), giao diện phản hồi tức thì và tự động đồng bộ lại nếu gặp lỗi mạng.
 
 ---
 
-## 5. Hướng dẫn từng bước: tạo feature `pantry`
-
-Làm theo đúng thứ tự từ dưới lên: **types → repository → service → DI → slice → store → hook → màn hình**.
-
-### Bước 1. Khai báo DTO trong `@/types`
-
-Lấy từ `API_DOCUMENTATION.md`. Nếu chưa có, thêm vào `@/types`:
-
-```ts
-// @/types (thêm nếu chưa có)
-export type PantryLocation = "FRIDGE" | "FREEZER" | "PANTRY_SHELF";
-export type Unit = "MG" | "G" | "KG" | "ML" | "L" | "PCS" | "TBSP" | "TSP" | "CUP" | "PINCH";
-
-export interface PantryItemResponse {
-  id: string;
-  ingredientId: string;
-  ingredientName: string;
-  categoryId: string;
-  categoryName: string;
-  quantity: number;
-  unit: Unit;
-  location?: PantryLocation;
-  expiryDate?: string; // YYYY-MM-DD
-  photoUri?: string;
-}
-
-export interface PantryItemCreateRequest {
-  ingredientId: string;
-  quantity: number;
-  unit: Unit;
-  location?: PantryLocation;
-  expiryDate?: string;
-}
-
-export interface PantryItemUpdateRequest {
-  quantity: number;
-  unit: Unit;
-  location?: PantryLocation;
-  expiryDate?: string;
-}
-
-export interface CursorResponse<T> {
-  content: T[];
-  hasNext: boolean;
-  nextCursor?: string;
-}
-```
-
-### Bước 2. `features/pantry/types.ts` — interface
-
-```ts
-import type {
-  CursorResponse,
-  PantryItemCreateRequest,
-  PantryItemResponse,
-  PantryItemUpdateRequest,
-  PantryLocation,
-} from "@/types";
-
-export interface PantryQuery {
-  cursor?: string;
-  size?: number;
-  keyword?: string;
-  categoryId?: string;
-  location?: PantryLocation;
-}
-
-export interface IPantryApi {
-  list(query: PantryQuery): Promise<CursorResponse<PantryItemResponse>>;
-  create(body: PantryItemCreateRequest): Promise<PantryItemResponse>;
-  update(id: string, body: PantryItemUpdateRequest): Promise<PantryItemResponse>;
-  consume(id: string, quantity: number): Promise<PantryItemResponse>;
-  remove(id: string): Promise<void>;
-  expiring(days?: number): Promise<PantryItemResponse[]>;
-}
-```
-
-### Bước 3. `features/pantry/httpPantryRepository.ts`
-
-```ts
-import type { AxiosInstance } from "axios";
-
-import type {
-  CursorResponse,
-  PantryItemCreateRequest,
-  PantryItemResponse,
-  PantryItemUpdateRequest,
-} from "@/types";
-import type { IPantryApi, PantryQuery } from "./types";
-
-export class HttpPantryRepository implements IPantryApi {
-  constructor(private readonly privateHttp: AxiosInstance) {}
-
-  list = async (query: PantryQuery): Promise<CursorResponse<PantryItemResponse>> => {
-    const { data } = await this.privateHttp.get<CursorResponse<PantryItemResponse>>(
-      "/v1/pantry-items",
-      { params: query },
-    );
-    return data;
-  };
-
-  create = async (body: PantryItemCreateRequest): Promise<PantryItemResponse> => {
-    const { data } = await this.privateHttp.post<PantryItemResponse>("/v1/pantry-items", body);
-    return data;
-  };
-
-  update = async (id: string, body: PantryItemUpdateRequest): Promise<PantryItemResponse> => {
-    const { data } = await this.privateHttp.put<PantryItemResponse>(`/v1/pantry-items/${id}`, body);
-    return data;
-  };
-
-  consume = async (id: string, quantity: number): Promise<PantryItemResponse> => {
-    const { data } = await this.privateHttp.post<PantryItemResponse>(
-      `/v1/pantry-items/${id}/consume`,
-      { quantity },
-    );
-    return data;
-  };
-
-  remove = async (id: string): Promise<void> => {
-    await this.privateHttp.delete(`/v1/pantry-items/${id}`);
-  };
-
-  expiring = async (days = 3): Promise<PantryItemResponse[]> => {
-    const { data } = await this.privateHttp.get<PantryItemResponse[]>("/v1/pantry-items/expiring", {
-      params: { days },
-    });
-    return data;
-  };
-}
-```
-
-> **Lưu ý về `data`:** API thật trả `{ code, message, data }`. Trong `auth`, `login`/`register`/`getMe` trả thẳng `response.data` (tức là HTTP client đã bóc lớp ngoài), nhưng `updateMe` lại đọc `data.data`. **Hai cách này không thể cùng đúng.** Trước khi viết repository mới, mở HTTP client (interceptor) để xác định lớp ngoài có được bóc sẵn hay không, rồi **dùng đúng một cách cho mọi repository**. Ví dụ trên giả định đã bóc sẵn, giống `login`.
-
-### Bước 4. `features/pantry/pantryService.ts`
-
-```ts
-import type {
-  CursorResponse,
-  PantryItemCreateRequest,
-  PantryItemResponse,
-  PantryItemUpdateRequest,
-} from "@/types";
-import type { IPantryApi, PantryQuery } from "./types";
-
-export class PantryService {
-  constructor(private readonly pantry: IPantryApi) {}
-
-  list = (query: PantryQuery): Promise<CursorResponse<PantryItemResponse>> =>
-    this.pantry.list(query);
-
-  create = (body: PantryItemCreateRequest): Promise<PantryItemResponse> =>
-    this.pantry.create(body);
-
-  update = (id: string, body: PantryItemUpdateRequest): Promise<PantryItemResponse> =>
-    this.pantry.update(id, body);
-
-  /** Dùng hết số lượng thì xoá luôn món, nếu không thì trừ bớt. */
-  async consume(item: PantryItemResponse, quantity: number): Promise<PantryItemResponse | null> {
-    if (quantity >= item.quantity) {
-      await this.pantry.remove(item.id);
-      return null;
-    }
-    return this.pantry.consume(item.id, quantity);
-  }
-
-  remove = (id: string): Promise<void> => this.pantry.remove(id);
-
-  expiring = (days?: number): Promise<PantryItemResponse[]> => this.pantry.expiring(days);
-}
-```
-
-Đây là ví dụ về chỗ service đáng có: quy tắc "dùng hết thì xoá" là **nghiệp vụ**, không đặt ở màn hình hay hook.
-
-### Bước 5. Đăng ký trong DI container
-
-Mở `@/core/di/container` và khai báo **theo cách các service khác đang khai báo** (tên biến `privateHttp` có thể khác trong file thật):
-
-```ts
-import { HttpPantryRepository } from "@/features/pantry/httpPantryRepository";
-import { PantryService } from "@/features/pantry/pantryService";
-
-export const pantryService = new PantryService(new HttpPantryRepository(privateHttp));
-```
-
-### Bước 6. `features/pantry/pantrySlice.ts`
-
-State gồm dữ liệu, trạng thái tải và con trỏ phân trang. **Trạng thái "đang tải" nằm ở đây**, không để `useState(loading)` trong màn hình.
-
-```ts
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { pantryService } from "@/core/di/container";
-import type { AppThunk } from "@/store/hooks";
-import type {
-  PantryItemCreateRequest,
-  PantryItemResponse,
-  PantryItemUpdateRequest,
-} from "@/types";
-import type { PantryQuery } from "./types";
-
-export type PantryStatus = "idle" | "loading" | "loadingMore" | "saving";
-
-interface PantryState {
-  items: PantryItemResponse[];
-  status: PantryStatus;
-  hasNext: boolean;
-  nextCursor?: string;
-}
-
-const initialState: PantryState = { items: [], status: "idle", hasNext: false };
-
-const pantrySlice = createSlice({
-  name: "pantry",
-  initialState,
-  reducers: {
-    statusChanged(state, action: PayloadAction<PantryStatus>) {
-      state.status = action.payload;
-    },
-    pageLoaded(
-      state,
-      action: PayloadAction<{ items: PantryItemResponse[]; hasNext: boolean; nextCursor?: string; replace: boolean }>,
-    ) {
-      const { items, hasNext, nextCursor, replace } = action.payload;
-      state.items = replace ? items : [...state.items, ...items];
-      state.hasNext = hasNext;
-      state.nextCursor = nextCursor;
-    },
-    itemUpserted(state, action: PayloadAction<PantryItemResponse>) {
-      const index = state.items.findIndex((i) => i.id === action.payload.id);
-      if (index >= 0) state.items[index] = action.payload;
-      else state.items.unshift(action.payload);
-    },
-    itemRemoved(state, action: PayloadAction<string>) {
-      state.items = state.items.filter((i) => i.id !== action.payload);
-    },
-    cleared: () => initialState,
-  },
-});
-
-export const { statusChanged, pageLoaded, itemUpserted, itemRemoved, cleared } = pantrySlice.actions;
-export default pantrySlice.reducer;
-
-/*
- * Thunk thường (không dùng createAsyncThunk) để lỗi gốc được ném nguyên cho hook/màn hình.
- */
-
-const withStatus = async (
-  dispatch: (a: ReturnType<typeof statusChanged>) => unknown,
-  status: PantryStatus,
-  run: () => Promise<void>,
-) => {
-  dispatch(statusChanged(status));
-  try {
-    await run();
-  } finally {
-    dispatch(statusChanged("idle"));
-  }
-};
-
-/** Tải trang đầu (replace = true) hoặc trang kế tiếp. */
-export const fetchPantry =
-  (query: Omit<PantryQuery, "cursor"> = {}, loadMore = false): AppThunk<Promise<void>> =>
-  async (dispatch, getState) => {
-    const { hasNext, nextCursor } = getState().pantry;
-    if (loadMore && !hasNext) return;
-
-    await withStatus(dispatch, loadMore ? "loadingMore" : "loading", async () => {
-      const page = await pantryService.list({
-        ...query,
-        cursor: loadMore ? nextCursor : undefined,
-      });
-      dispatch(
-        pageLoaded({
-          items: page.content,
-          hasNext: page.hasNext,
-          nextCursor: page.nextCursor,
-          replace: !loadMore,
-        }),
-      );
-    });
-  };
-
-export const addPantryItem =
-  (body: PantryItemCreateRequest): AppThunk<Promise<void>> =>
-  async (dispatch) => {
-    await withStatus(dispatch, "saving", async () => {
-      dispatch(itemUpserted(await pantryService.create(body)));
-    });
-  };
-
-export const updatePantryItem =
-  (id: string, body: PantryItemUpdateRequest): AppThunk<Promise<void>> =>
-  async (dispatch) => {
-    await withStatus(dispatch, "saving", async () => {
-      dispatch(itemUpserted(await pantryService.update(id, body)));
-    });
-  };
-
-export const consumePantryItem =
-  (item: PantryItemResponse, quantity: number): AppThunk<Promise<void>> =>
-  async (dispatch) => {
-    await withStatus(dispatch, "saving", async () => {
-      const updated = await pantryService.consume(item, quantity);
-      dispatch(updated ? itemUpserted(updated) : itemRemoved(item.id));
-    });
-  };
-
-export const removePantryItem =
-  (id: string): AppThunk<Promise<void>> =>
-  async (dispatch) => {
-    await withStatus(dispatch, "saving", async () => {
-      await pantryService.remove(id);
-      dispatch(itemRemoved(id));
-    });
-  };
-```
-
-### Bước 7. Đăng ký reducer trong store
-
-```ts
-// store (nơi đang gom reducer)
-import pantryReducer from "@/features/pantry/pantrySlice";
-
-reducer: {
-  auth: authReducer,
-  pantry: pantryReducer,   // ← thêm
-}
-```
-
-Khi người dùng đăng xuất, nhớ dispatch `cleared()` của slice này (hoặc cho slice lắng nghe `unauthenticated` bằng `extraReducers`) để không giữ dữ liệu của tài khoản cũ.
-
-### Bước 8. `features/pantry/validation.ts`
-
-```ts
-export const pantryValidators = {
-  quantity: (v: string) => {
-    const n = Number(v.replace(",", "."));
-    return Number.isFinite(n) && n > 0 ? null : "Số lượng phải lớn hơn 0";
-  },
-  required: (label: string) => (v: string) => (v.trim() ? null : `Vui lòng chọn ${label}`),
-  date: (v: string) => (!v || /^\d{4}-\d{2}-\d{2}$/.test(v) ? null : "Ngày phải có dạng YYYY-MM-DD"),
-};
-```
-
-### Bước 9. `features/pantry/usePantry.ts` — hook đọc và thao tác danh sách
-
-```ts
-import { useCallback, useMemo } from "react";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import type { PantryItemResponse } from "@/types";
-import type { PantryQuery } from "./types";
-import {
-  addPantryItem,
-  consumePantryItem,
-  fetchPantry,
-  removePantryItem,
-  updatePantryItem,
-} from "./pantrySlice";
-
-export function usePantry() {
-  const dispatch = useAppDispatch();
-  const items = useAppSelector((s) => s.pantry.items);
-  const status = useAppSelector((s) => s.pantry.status);
-  const hasNext = useAppSelector((s) => s.pantry.hasNext);
-
-  const load = useCallback(
-    (query?: Omit<PantryQuery, "cursor">) => dispatch(fetchPantry(query)),
-    [dispatch],
-  );
-  const loadMore = useCallback(
-    (query?: Omit<PantryQuery, "cursor">) => dispatch(fetchPantry(query, true)),
-    [dispatch],
-  );
-  const add = useCallback(
-    (body: Parameters<typeof addPantryItem>[0]) => dispatch(addPantryItem(body)),
-    [dispatch],
-  );
-  const update = useCallback(
-    (id: string, body: Parameters<typeof updatePantryItem>[1]) => dispatch(updatePantryItem(id, body)),
-    [dispatch],
-  );
-  const consume = useCallback(
-    (item: PantryItemResponse, quantity: number) => dispatch(consumePantryItem(item, quantity)),
-    [dispatch],
-  );
-  const remove = useCallback((id: string) => dispatch(removePantryItem(id)), [dispatch]);
-
-  return useMemo(
-    () => ({
-      items,
-      status,
-      hasNext,
-      isLoading: status === "loading",
-      isLoadingMore: status === "loadingMore",
-      isSaving: status === "saving",
-      load,
-      loadMore,
-      add,
-      update,
-      consume,
-      remove,
-    }),
-    [items, status, hasNext, load, loadMore, add, update, consume, remove],
-  );
-}
-```
-
-### Bước 10. `features/pantry/usePantryForm.ts` — hook chứa logic của form
-
-Đây là chỗ đặt toàn bộ logic mà bình thường người ta hay viết nhầm trong màn hình: giữ giá trị ô nhập, kiểm tra hợp lệ, chuyển chuỗi → số, gọi API, bắt lỗi, quyết định thông báo.
-
-```ts
-import { useCallback, useState } from "react";
-import type { PantryLocation, Unit } from "@/types";
-import { pantryValidators } from "./validation";
-import { usePantry } from "./usePantry";
-
-interface FormValues {
-  ingredientId: string;
-  quantity: string;
-  unit: Unit | "";
-  location: PantryLocation | "";
-  expiryDate: string;
-}
-
-const EMPTY: FormValues = { ingredientId: "", quantity: "", unit: "", location: "", expiryDate: "" };
-
-export type SubmitResult = { ok: true } | { ok: false; message: string };
-
-export function usePantryForm(initial: Partial<FormValues> = {}) {
-  const { add, isSaving } = usePantry();
-  const [values, setValues] = useState<FormValues>({ ...EMPTY, ...initial });
-  const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
-
-  const setField = useCallback(<K extends keyof FormValues>(key: K, value: FormValues[K]) => {
-    setValues((prev) => ({ ...prev, [key]: value }));
-    setErrors((prev) => ({ ...prev, [key]: undefined }));
-  }, []);
-
-  const validate = useCallback((v: FormValues) => {
-    const next = {
-      ingredientId: pantryValidators.required("nguyên liệu")(v.ingredientId) ?? undefined,
-      quantity: pantryValidators.quantity(v.quantity) ?? undefined,
-      unit: pantryValidators.required("đơn vị")(v.unit) ?? undefined,
-      expiryDate: pantryValidators.date(v.expiryDate) ?? undefined,
-    };
-    setErrors(next);
-    return Object.values(next).every((e) => !e);
-  }, []);
-
-  /** Màn hình chỉ cần hiển thị kết quả, không phải tự bắt lỗi hay chuyển kiểu. */
-  const submit = useCallback(async (): Promise<SubmitResult> => {
-    if (!validate(values)) return { ok: false, message: "Vui lòng kiểm tra lại thông tin." };
-
-    try {
-      await add({
-        ingredientId: values.ingredientId,
-        quantity: Number(values.quantity.replace(",", ".")),
-        unit: values.unit as Unit,
-        location: values.location || undefined,
-        expiryDate: values.expiryDate || undefined,
-      });
-      setValues(EMPTY);
-      return { ok: true };
-    } catch (error) {
-      return {
-        ok: false,
-        message: error instanceof Error ? error.message : "Không thể thêm nguyên liệu.",
-      };
-    }
-  }, [add, validate, values]);
-
-  return { values, errors, setField, submit, isSubmitting: isSaving };
-}
-```
-
-### Bước 11. Màn hình — chỉ hiển thị
-
-```tsx
-// app/(tabs)/pantry/add.tsx
-import { Alert, View } from "react-native";
-import { useRouter } from "expo-router";
-
-import { Button } from "@/components/ui/Button";
-import { Screen } from "@/components/ui/Screen";
-import { TextField } from "@/components/ui/TextField";
-import { usePantryForm } from "@/features/pantry/usePantryForm";
-
-export default function AddPantryItemScreen() {
-  const router = useRouter();
-  const { values, errors, setField, submit, isSubmitting } = usePantryForm();
-
-  const handleSubmit = async () => {
-    const result = await submit();
-    if (result.ok) router.back();
-    else Alert.alert("Lỗi", result.message);
-  };
-
-  return (
-    <Screen>
-      <View className="gap-4">
-        <TextField
-          label="Số lượng"
-          value={values.quantity}
-          onChangeText={(t) => setField("quantity", t)}
-          error={errors.quantity}
-          keyboardType="decimal-pad"
-        />
-        <Button title="Thêm vào tủ đồ" loading={isSubmitting} onPress={handleSubmit} />
-      </View>
-    </Screen>
-  );
-}
-```
-
-Để ý: màn hình **không có** `useState` cho loading, **không có** `try/catch`, **không có** chuyển `string → number`, **không import** service hay slice. Chỉ còn việc gọi `submit()` và quyết định hiển thị `Alert` hoặc điều hướng.
-
-Màn hình danh sách làm tương tự:
-
-```tsx
-export default function PantryScreen() {
-  const { items, isLoading, hasNext, load, loadMore } = usePantry();
-
-  useEffect(() => {
-    void load();
-  }, [load]);   // load đã được bọc useCallback nên không gây vòng lặp
-
-  return (/* FlatList dùng items, onEndReached={() => hasNext && loadMore()} */);
-}
+## 3. Cấu Trúc Thư Mục Chuẩn Hóa
+
+```text
+pantry-chef-fe/
+├── assets/                  # Icons, splash screen, hình ảnh tĩnh
+├── src/
+│   ├── app/                 # Toàn bộ màn hình Expo Router (File-based Routing)
+│   │   ├── _layout.tsx      # Root Layout (SafeAreaProvider, Redux Provider, ThemeProvider)
+│   │   ├── (tabs)/          # Thanh Bottom Tabs chính (Tủ, Tìm món, Đã lưu, Thực đơn, Thêm)
+│   │   │   ├── _layout.tsx  # Layout Tab điều hướng (tính insets động cho Android/iOS)
+│   │   │   ├── pantry.tsx   # [Trường] Màn hình chính Tủ nguyên liệu
+│   │   │   └── meal-plan.tsx# [Trường] Màn hình chính Kế hoạch bữa ăn tuần
+│   │   ├── pantry/          # [Trường] Các màn hình nghiệp vụ Tủ
+│   │   │   ├── [id].tsx     # Chi tiết nguyên liệu, dùng bớt, upload ảnh
+│   │   │   ├── new.tsx      # Thêm nguyên liệu thủ công
+│   │   │   ├── scan-review.tsx # Xem lại & chỉnh sửa sau khi AI quét ảnh
+│   │   │   └── expiring.tsx # Danh sách nguyên liệu cận date
+│   │   └── meal-plan/       # [Trường] Các màn hình nghiệp vụ Thực đơn
+│   │       ├── add-entry.tsx # Thêm bữa ăn vào ngày cụ thể
+│   │       └── shopping-preview.tsx # Xem danh sách nguyên liệu cần mua
+│   ├── components/          # Reusable UI Components
+│   │   ├── ui/              # AppButton, TactileButton, Card, Chip, Screen...
+│   │   └── auth/            # AuthShell, GlassInput3D, LivingBackground4D...
+│   ├── core/
+│   │   ├── di/container.ts  # Dependency Injection Container (Singleton Services)
+│   │   ├── http/            # Axios Client (publicHttp, privateHttp, interceptors)
+│   │   └── theme/           # Hệ thống theme tokens, màu sắc, bóng đổ
+│   ├── features/            # Vertical Slices chứa Business Logic
+│   │   ├── pantry/          # [Trường] types, service, repo, slice, hook, validation
+│   │   ├── mealplan/        # [Trường] types, service, repo, slice, hook, picker modal
+│   │   └── auth/, recipe/...# Các feature của thành viên khác
+│   ├── store/               # Cấu hình Redux Toolkit (rootReducer, store, AppThunk)
+│   ├── theme/               # ThemeProvider, useTheme, light/dark color tokens
+│   └── types/               # TypeScript DTOs, API Contracts, Enums
 ```
 
 ---
 
-## 6. Quy tắc "không để logic ở giao diện"
+## 4. PHẦN BÁO CÁO CHUYÊN SÂU CỦA TÔI
+*(Dành cho sinh viên: **Nguyễn Văn Trường** — Phụ trách **18 Endpoint** và **9 Màn hình**)*
 
-### 6.1 Cái gì được phép nằm trong màn hình
+### 4.1. Module Pantry (Quản Lý Tủ Nguyên Liệu)
 
-- JSX, `className`, bố cục.
-- `useState` cho trạng thái **thuần giao diện**: đang mở/đóng modal, tab đang chọn.
-- Điều hướng (`router.push`, `router.back`) và hiển thị thông báo (`Alert`) **dựa trên kết quả** mà hook trả về.
-- Gọi hàm của hook trong `onPress` / `useEffect`.
+#### A. Mục tiêu & Nghiệp vụ
+Quản lý toàn bộ thực phẩm hiện có của người dùng, phân loại theo vị trí bảo quản (`FRIDGE` - Tủ mát, `FREEZER` - Tủ đông, `PANTRY_SHELF` - Kệ bếp), định lượng số lượng + đơn vị đo lường, theo dõi hạn sử dụng và cảnh báo món cận date.
 
-### 6.2 Cái gì phải chuyển vào hook / slice / service
+#### B. Danh sách 9 Endpoint phụ trách:
+1. `GET /v1/pantry-items`: Lấy danh sách nguyên liệu có hỗ trợ phân trang Cursor (`cursor`, `limit`), lọc theo vị trí (`location`) và danh mục (`categoryId`).
+2. `POST /v1/pantry-items`: Thêm 1 nguyên liệu mới vào tủ.
+3. `POST /v1/pantry-items/batch`: Thêm hàng loạt nguyên liệu cùng lúc (dùng sau khi quét ảnh AI).
+4. `GET /v1/pantry-items/{id}`: Lấy chi tiết thông tin 1 món trong tủ.
+5. `PUT /v1/pantry-items/{id}`: Cập nhật số lượng, hạn sử dụng, vị trí bảo quản.
+6. `DELETE /v1/pantry-items/{id}`: Xoá nguyên liệu khỏi tủ.
+7. `POST /v1/pantry-items/{id}/consume`: Dùng bớt nguyên liệu (nhập số lượng đã dùng; nếu dùng hết hệ thống tự xử lý).
+8. `POST /v1/pantry-items/{id}/photo`: Tải ảnh chụp thực tế của nguyên liệu lên máy chủ (`multipart/form-data`).
+9. `GET /v1/pantry-items/expiring`: Lấy danh sách các nguyên liệu sắp hết hạn trong vòng 3 ngày tới.
 
-| Đang viết trong màn hình | Chuyển sang |
-|---|---|
-| `useState(loading)` rồi `setLoading(true/false)` quanh lời gọi API | `status` trong slice, hook trả `isLoading` / `isSaving` |
-| `try/catch` quanh lời gọi API, chọn câu thông báo lỗi | hook trả `{ ok, message }` (xem `usePantryForm.submit`) |
-| Kiểm tra dữ liệu nhập (`if (!name) …`) | `validation.ts`, gọi trong hook form |
-| Chuyển kiểu (`Number(...)`, cắt khoảng trắng, đổi định dạng ngày) | hook form hoặc service |
-| Xin quyền và chọn ảnh (`ImagePicker`), dựng `PickedImage` | hook riêng (ví dụ `useAvatarPicker.ts`) |
-| Quy tắc nghiệp vụ ("dùng hết thì xoá", "đổi mật khẩu xong thì đăng xuất") | service |
-| Gọi `fetch`/`axios` | repository |
-| Đồng bộ state từ props sang input (`useEffect` + `setDisplayName`) | hook form (nhận giá trị khởi tạo) |
+#### C. Chi tiết các màn hình đảm nhiệm:
+- **`src/app/(tabs)/pantry.tsx` (Màn hình chính Tủ đồ):**
+  - Hiển thị thanh Banner cảnh báo cam nổi bật nếu có nguyên liệu sắp hết hạn (bấm vào điều hướng sang màn `pantry/expiring`).
+  - Thanh lọc vị trí lưu trữ: `Tất cả` | `Tủ mát ❄️` | `Tủ đông 🧊` | `Kệ bếp 🥫`.
+  - Phân nhóm món ăn theo danh mục (`Rau củ`, `Thịt cá`, `Gia vị`...).
+  - Thẻ thông minh hiển thị nhãn độ tươi tự động: `Còn tươi` (xanh), `Còn 2 ngày` (vàng), `Hết hạn` (đỏ).
+  - Nút thêm nổi (`FAB`) dạng 3D mở Action Sheet cho phép: Nhập thủ công, Quét ảnh AI hoặc Quét mã vạch.
+- **`src/app/pantry/[id].tsx` (Chi tiết nguyên liệu):**
+  - Thẻ 3D hiển thị ảnh lớn hoặc khung viền nét đứt chụp ảnh thông minh.
+  - Các thống kê: Số lượng hiện có, Hạn sử dụng, Vị trí.
+  - Các nút hành động chuyên dụng:
+    - **"Dùng bớt nguyên liệu"**: Mở Modal nhập lượng cần trừ (validate không được lớn hơn số lượng hiện có).
+    - **"Chụp ảnh" / "Tải ảnh từ máy"**: Tích hợp `expo-image-picker` tải ảnh trực tiếp lên server.
+    - **"Chỉnh sửa" (Icon bút)**: Modal cập nhật hạn dùng với chip chọn nhanh (`+3 ngày`, `+1 tuần`, `+1 tháng`) hoặc chọn qua lịch.
+    - **"Xoá khỏi tủ"**: Cảnh báo xác nhận trước khi xoá.
+- **`src/app/pantry/new.tsx` & `usePantryForm.ts`:**
+  - Form thêm món mới, validate kỹ lưỡng tên, số lượng, đơn vị và ngày hết hạn.
+  - Nhận dữ liệu truyền sang từ màn quét mã vạch hoặc màn chọn nguyên liệu của thành viên khác.
+- **`src/app/pantry/scan-review.tsx`:**
+  - Nhận danh sách nguyên liệu nhận diện từ AI, cho phép người dùng kiểm tra lại, sửa tên/số lượng trước khi nhấn "Lưu toàn bộ vào tủ" qua API `POST /batch`.
 
-### 6.3 Ví dụ: `ProfileScreen` hiện tại nên tách thế nào
-
-Màn hình hồ sơ hiện đang tự làm các việc sau, đều nên chuyển vào hook:
-
-1. Giữ `displayName`, kiểm tra rỗng, `trim()` → **`useProfileForm.ts`** (`values`, `setField`, `submit`).
-2. Xin quyền thư viện ảnh, mở picker, dựng `PickedImage` → **`useAvatarPicker.ts`** (`pickAndUpload(): Promise<SubmitResult>`).
-3. `loading` / `avatarLoading` → lấy từ slice (`status`) thay vì `useState`.
-4. Xác nhận xoá tài khoản khác nhau giữa web và mobile (`window.confirm` / `Alert`) → hook `useDeleteAccount.ts` trả về hàm `confirmAndDelete()`, màn hình chỉ gọi.
-
-Sau khi tách, `ProfileScreen` chỉ còn render và gắn các hàm vào nút bấm.
-
-### 6.4 Quy tắc về lỗi
-
-- Repository và thunk **không bắt lỗi**, để lỗi gốc nổi lên.
-- Hook (hoặc `submit` trong hook form) là nơi **bắt lỗi một lần** và đổi thành thông điệp cho người dùng.
-- Màn hình chỉ **hiển thị** thông điệp đó.
-
----
-
-## 7. Checklist khi tạo feature mới
-
-Tạo thư mục `features/<tên>/` rồi đi theo thứ tự:
-
-- [ ] DTO đã có trong `@/types` (khớp `API_DOCUMENTATION.md`).
-- [ ] `types.ts`: interface `I<Tên>Api` (đặt tên theo vai trò).
-- [ ] `http<Tên>Repository.ts`: `implements` interface, nhận `AxiosInstance`, dùng đúng `publicHttp`/`privateHttp`, trả về DTO, **cùng cách xử lý `data` với các repository khác**.
-- [ ] `<tên>Service.ts`: nhận interface qua constructor, chứa quy tắc nghiệp vụ.
-- [ ] Đăng ký trong `@/core/di/container`.
-- [ ] `<tên>Slice.ts`: state (có `status`), reducer, thunk **dạng hàm thường**, `export default reducer`.
-- [ ] Đăng ký reducer vào store; xử lý reset khi đăng xuất.
-- [ ] `validation.ts` nếu có form.
-- [ ] `use<Tên>.ts` (đọc + hành động) và `use<Tên>Form.ts` nếu có form.
-- [ ] Màn hình trong `app/` chỉ import hook và component UI.
-- [ ] Kiểm tra: màn hình không import `axios`, `Service`, `Slice`, `Repository`.
-- [ ] Kiểm tra: mọi lời gọi API đều có chỗ bắt lỗi (trong hook) và có trạng thái tải (trong slice).
+#### D. Thuật toán tính độ tươi (`FreshnessStatus`):
+Tại `src/features/pantry/types.ts`, độ tươi được tính toán tự động dựa trên ngày hiện tại và `expiryDate`:
+$$\text{diffDays} = \text{floor}\left(\frac{\text{expiryDate} - \text{today}}{86,400,000}\right)$$
+- $\text{diffDays} < 0$: `EXPIRED` ("Hết hạn" - Đỏ)
+- $0 \le \text{diffDays} \le 2$: `EXPIRING_SOON` ("Còn X ngày" - Vàng/Cam)
+- $\text{diffDays} > 2$: `FRESH` ("Còn tươi" - Xanh lục)
 
 ---
 
-## 8. Những lỗi hay gặp
+### 4.2. Module Meal Plan (Kế Hoạch Bữa Ăn Tuần)
 
-1. **Ghi đè state bằng response thiếu dữ liệu.** Nếu thunk `dispatch(authenticated(await api.updateMe(...)))` mà response không đầy đủ (hoặc chưa được bóc đúng lớp `data`), `user` sẽ mất `email`/`avatarUri`. Cách an toàn: sau khi cập nhật, lấy lại bản đầy đủ bằng `getMe()` (như `updateAvatar` đang làm), hoặc gộp `{ ...cũ, ...mới }` trong reducer.
-2. **Mỗi repository bóc `data` một kiểu.** Chọn một cách duy nhất (xem lưu ý ở Bước 3).
-3. **`useEffect` chạy lặp vô hạn** vì hàm trong hook không ổn định. Luôn bọc hàm trả về từ hook bằng `useCallback` (hoặc `useMemo` cho cả object) như `useAuth` và `useUser`.
-4. **Dùng `createAsyncThunk` rồi mất lỗi gốc.** Dự án dùng thunk thường để lỗi `ApiError`/`AxiosError` đi nguyên vẹn tới hook. Giữ nguyên quy ước này.
-5. **Khai báo `new Service(...)` rải rác** trong slice hoặc hook. Chỉ khai báo trong `@/core/di/container`.
-6. **Quên reset state khi đăng xuất**, khiến tài khoản mới đăng nhập thấy dữ liệu của tài khoản trước.
-7. **Chuyển hướng/Alert nằm trong thunk hoặc service.** Đây là việc của màn hình, dựa trên kết quả hook trả về.
-8. **Upload ảnh trên web.** Web cần `Blob` thật, mobile dùng `{ uri, name, type }` (xem `HttpUserRepository.updateAvatar`). Tên field là `avatar` (hồ sơ), `image` (ảnh công thức / tủ đồ / AI).
-9. **Đặt tên file không đúng quy ước** (`PantryService.ts`, `pantryHelpers.ts`, `usePantryStuff.ts`). Xem lại [mục 3](#3-quy-tắc-đặt-tên).
+#### A. Mục tiêu & Nghiệp vụ
+Quản lý kế hoạch ăn uống của người dùng theo chu kỳ tuần (bắt đầu từ Thứ Hai). Hỗ trợ lên lịch cho 3 bữa chính mỗi ngày, đánh dấu trạng thái nấu nướng, sao chép thực đơn sang tuần sau và xuất danh sách đi chợ tự động.
+
+#### B. Danh sách 9 Endpoint phụ trách:
+1. `GET /v1/meal-plans?weekStart=YYYY-MM-DD`: Lấy thực đơn của tuần được chọn.
+2. `POST /v1/meal-plans`: Tạo kế hoạch tuần mới nếu chưa có.
+3. `GET /v1/meal-plans/{id}`: Xem chi tiết kế hoạch tuần theo ID.
+4. `DELETE /v1/meal-plans/{id}`: Xoá kế hoạch tuần.
+5. `POST /v1/meal-plans/{id}/copy`: Sao chép toàn bộ món ăn của tuần hiện tại sang tuần khác (chọn ngày đầu tuần đích).
+6. `POST /v1/meal-plans/{id}/entries`: Thêm một món ăn vào một bữa cụ thể trong tuần.
+7. `PATCH /v1/meal-plans/{id}/entries/{entryId}`: Đổi trạng thái `isCooked` (Đã nấu / Chưa nấu) hoặc đổi số khẩu phần `servings`.
+8. `DELETE /v1/meal-plans/{id}/entries/{entryId}`: Xoá món khỏi bữa ăn.
+9. `GET /v1/meal-plans/{id}/shopping-list`: Đối chiếu thực đơn tuần với kho thực phẩm trong Tủ để trích xuất danh sách nguyên liệu cần mua thêm.
+
+#### C. Chi tiết màn hình đảm nhiệm:
+- **`src/app/(tabs)/meal-plan.tsx` (Màn hình chính Thực đơn):**
+  - **Anchor thứ Hai thông minh (`getMondayOfWeek`):** Đảm bảo ngày đầu tuần luôn chuẩn theo giờ địa phương, không bị lệch ngày do timezone UTC.
+  - **Thanh chọn tuần:** Nút chuyển tuần trước / tuần sau và nút chọn nhanh tuần từ Modal Lịch.
+  - **Thanh 7 ngày trong tuần (Thứ 2 $\rightarrow$ CN):** Hiển thị rõ thứ, ngày/tháng, số chấm đánh dấu các bữa đã lên lịch.
+  - **Danh sách 3 khung bữa ăn theo ngày được chọn:**
+    - `Bữa sáng` (Icon mặt trời ổi vàng).
+    - `Bữa trưa` (Icon đám mây/mặt trời xanh lá).
+    - `Bữa tối` (Icon mặt trăng xanh dương).
+  - **Tính năng chuyển đổi trạng thái nấu (`Toggle isCooked`):**
+    - Nhấn vào nút trạng thái: Toggle mượt mà giữa `Chưa nấu` và `Đã nấu ✓`.
+  - **Nút "Sao chép tuần"**: Tái sử dụng thực đơn của tuần ăn ngon sang tuần sau mà không cần tạo lại từ đầu.
+- **`src/app/meal-plan/shopping-preview.tsx`:**
+  - Gọi `GET /meal-plans/{id}/shopping-list`, hiển thị bảng nguyên liệu còn thiếu.
+  - Có nút "Tạo danh sách mua sắm" kết nối trực tiếp sang module Shopping List của thành viên khác.
+- **`src/app/ai/meal-plan.tsx`:**
+  - Nhận gợi ý thực đơn 7 ngày được trí tuệ nhân tạo (AI) đề xuất, cho phép người dùng duyệt qua và nhấn "Áp dụng vào thực đơn của tôi".
+
+---
+
+### 4.3. Module Plan Entry (Quản Lý Từng Món & Bữa Ăn)
+
+#### A. Nghiệp vụ chi tiết
+Một **Plan Entry** là một bản ghi đại diện cho một món ăn được lên lịch vào một bữa cụ thể trong ngày:
+$$\text{PlanEntry} = \{\text{id, mealPlanId, entryDate, mealType, recipeId, customRecipeTitle, servings, isCooked}\}$$
+
+#### B. Luồng hoạt động tại `src/app/meal-plan/add-entry.tsx`:
+1. **Chọn ngày (`entryDate`):** Tự động điền ngày người dùng đang chọn trên thanh tuần, có thể đổi sang ngày khác trong tuần.
+2. **Chọn loại bữa (`mealType`):** 3 lựa chọn trực quan (`Bữa sáng` | `Bữa trưa` | `Bữa tối`).
+3. **Chọn công thức món ăn (`RecipePickerModal.tsx`):**
+   - Modal hiển thị danh sách công thức gợi ý hoặc tìm kiếm theo từ khóa.
+   - Khi chọn món: Lấy `recipeId` (UUID) và tên món.
+   - Cho phép nhập tên món ăn tự do nếu không chọn từ kho công thức.
+4. **Khẩu phần ăn (`servings`):** Mặc định là 1 hoặc số lượng người trong gia đình.
+5. **Gửi dữ liệu:** Dispatch `addEntry` thunk $\rightarrow$ API `POST /v1/meal-plans/{id}/entries` $\rightarrow$ Cập nhật state Redux ngay lập tức.
+
+---
+
+## 5. Các Điểm Sáng Kỹ Thuật & Tối Ưu Nâng Cao
+
+Trong quá trình thực hiện dự án, tôi đã nghiên cứu và giải quyết nhiều bài toán kỹ thuật phức tạp:
+
+### 5.1. Xử lý triệt để xung đột Safe Area trên Android & iOS
+- **Vấn đề:** Trên iPhone, menu đáy bị đẩy lơ lửng nếu bọc `SafeAreaView` ở root layout. Ngược lại trên Android (dùng thanh điều hướng 3 nút hoặc thanh cử chỉ), menu đáy lại bị thanh hệ thống đè lên các icon.
+- **Giải pháp:** Bỏ `SafeAreaView` ở root `_layout.tsx`, đưa `useSafeAreaInsets()` vào `(tabs)/_layout.tsx` để tính toán chiều cao đáy động:
+  ```typescript
+  const insets = useSafeAreaInsets();
+  const bottomPadding = Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 8);
+  const tabHeight = 52 + bottomPadding;
+  ```
+  $\rightarrow$ Hoạt động hoàn hảo 100% trên tất cả kích thước màn hình Android & iPhone.
+
+### 5.2. Giải quyết lỗi mất nền nút bấm trên React Native Web + NativeWind v4
+- **Vấn đề:** Cú pháp function style `style={({ pressed }) => [...]}` trên `<Pressable>` bị runtime NativeWind v4 loại bỏ thuộc tính inline `backgroundColor` và `borderWidth` trên Web, khiến nút bấm có chữ trắng trên nền trong suốt (vô hình).
+- **Giải pháp:** Tái cấu trúc component `AppButton.tsx`, chuyển toàn bộ logic style hiển thị vào một `<View>` bọc bên trong `<Pressable>`. Đảm bảo render chuẩn mực trên cả Web, iOS và Android.
+
+### 5.3. Tự động cuộn ô nhập liệu khi mở bàn phím (Keyboard Auto-Scroll)
+- **Vấn đề:** Khi chạm vào ô nhập Email hoặc Mật khẩu trên màn hình đăng nhập, bàn phím bật lên che khuất trường nhập, người dùng phải tự vuốt màn hình.
+- **Giải pháp:** Thiết kế `AuthShellContext` phối hợp cùng `GlassInput3D`. Khi focus vào bất kỳ ô nhập nào, hệ thống tính toán vị trí và tự động kích hoạt `scrollTo({ y, animated: true })` qua nhiều khung hình, đưa ô nhập lên đúng vị trí trung tâm tầm nhìn.
+
+---
+
+## 6. Cẩm Nang Trả Lời Phản Biện Cho Buổi Báo Cáo (Q&A)
+
+Dưới đây là các câu hỏi trọng tâm mà Giảng viên thường hỏi về phần **Pantry** và **Meal Plan**, kèm câu trả lời chuẩn mực giúp bạn đạt điểm tối đa:
+
+---
+
+### Câu 1: Em hãy giải thích luồng dữ liệu khi người dùng nhấn "Dùng bớt nguyên liệu" (Consume)?
+> **Trả lời:**
+> "Thưa thầy/cô, dữ liệu đi tuần tự qua 5 lớp theo mô hình Clean Architecture:
+> 1. Tại giao diện `src/app/pantry/[id].tsx`, người dùng nhập số lượng dùng và nhấn xác nhận.
+> 2. Màn hình gọi hàm `consume(id, quantity)` từ custom hook `usePantry()`.
+> 3. `usePantry` dispatch async thunk `consumePantryItem` trong `pantrySlice.ts`.
+> 4. Thunk gọi `pantryService.consumeItem(id, quantity)`, service này thông qua `httpPantryRepository` để gửi HTTP request `POST /v1/pantry-items/{id}/consume`.
+> 5. Khi API trả về kết quả thành công, Redux reducer `itemConsumed` cập nhật lại số lượng của item trong state `items` ngay lập tức, và component tự động re-render số lượng mới mà không cần reload toàn bộ trang."
+
+---
+
+### Câu 2: Tại sao em phải dùng `getMondayOfWeek` và `formatLocalDate` thay vì dùng trực tiếp `new Date().toISOString()`?
+> **Trả lời:**
+> "Dạ, phương thức `toISOString()` luôn chuyển đổi giờ về múi giờ UTC (GMT+0). Khi ở Việt Nam (GMT+7), nếu người dùng thao tác vào khoảng từ 0h00 đến 6h59 sáng, `toISOString()` sẽ lùi lại ngày hôm trước, dẫn đến việc kế hoạch tuần bị sai lệch hoàn toàn 1 ngày.
+> Vì vậy, em xây dựng hàm `formatLocalDate` đọc trực tiếp `getFullYear()`, `getMonth() + 1` và `getDate()` theo giờ local của thiết bị, đồng thời hàm `getMondayOfWeek` tính toán độ lệch số ngày để luôn neo ngày bắt đầu tuần (`weekStart`) vào đúng Thứ Hai theo múi giờ địa phương."
+
+---
+
+### Câu 3: Làm sao em phân biệt giữa món ăn có sẵn từ hệ thống và món ăn tự nhập khi thêm vào Meal Plan Entry?
+> **Trả lời:**
+> "Dạ, cấu trúc DTO `MealPlanEntryResponse` và `MealPlanEntryCreateRequest` của em hỗ trợ cả 2 trường hợp:
+> - Nếu người dùng chọn từ kho công thức: Request sẽ gửi trường `recipeId` (chuỗi UUID).
+> - Nếu người dùng tự gõ món tự nấu ngoài danh mục: Request sẽ gửi trường `customRecipeTitle` (chuỗi văn bản) và để `recipeId` là `null`.
+> Khi hiển thị, component sẽ ưu tiên hiển thị `recipe.title` nếu có `recipeId`, nếu không sẽ hiển thị `customRecipeTitle`."
+
+---
+
+### Câu 4: Khi người dùng mất mạng (Offline), ứng dụng của em xử lý như thế nào ở module Pantry?
+> **Trả lời:**
+> "Dạ, toàn bộ dữ liệu danh sách nguyên liệu sau khi fetch thành công đều được lưu trữ trong Redux Store. Khi mạng chập chờn hoặc mất kết nối:
+> - Người dùng vẫn có thể xem danh sách món hiện có trong Tủ nhờ dữ liệu đã được nạp sẵn trong store.
+> - Khi gọi các thao tác thay đổi dữ liệu (như thêm/xoá/sửa), Axios Client có `interceptor` bắt lỗi mạng và hiển thị thông báo `Alert` thân thiện, giữ nguyên trạng thái cũ để tránh sai lệch dữ liệu với máy chủ."
+
+---
+
+### Câu 5: Vì sao em lại chia `Pantry` và `Meal Plan` thành các thư mục riêng trong `features/` mà không để chung trong `screens`?
+> **Trả lời:**
+> "Dạ, đây là mô hình **Vertical Slice Architecture**. Mỗi thư mục trong `src/features/` là một đơn vị độc lập hoàn chỉnh chứa toàn bộ logic của domain đó: types, API repository, business service, Redux slice và custom hook.
+> Ưu điểm lớn nhất là tính module hóa cao (High Cohesion): khi em cần sửa đổi hoặc mở rộng nghiệp vụ của Tủ hoặc Thực đơn, em chỉ cần tập trung vào đúng thư mục `features/pantry` hoặc `features/mealplan` mà không làm ảnh hưởng đến các màn hình hay tính năng khác của các bạn cùng nhóm."
+
+---
+
+## 7. Hướng Dẫn Cài Đặt & Chạy Dự Án (Run Project)
+
+### Bước 1: Cài đặt thư viện phụ thuộc
+```bash
+npm install
+```
+
+### Bước 2: Kiểm tra kiểu dữ liệu TypeScript
+```bash
+npm run typecheck
+```
+*(Đảm bảo trả về `tsc --noEmit` hoàn thành với 0 lỗi).*
+
+### Bước 3: Khởi động ứng dụng Expo
+```bash
+npm run start
+```
+- Nhấn **`a`** để mở trên Android Emulator hoặc thiết bị Android qua Expo Go.
+- Nhấn **`i`** để mở trên iOS Simulator.
+- Nhấn **`w`** để mở trên trình duyệt Web.

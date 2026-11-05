@@ -3,7 +3,7 @@ import { AppButton, type AppButtonProps } from './AppButton';
 
 export interface ButtonProps extends Omit<AppButtonProps, 'variant'> {
   title: string;
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger';
+  variant?: 'primary' | 'secondary' | 'accent' | 'soft-pink' | 'outline' | 'ghost' | 'danger';
   className?: string;
 }
 
