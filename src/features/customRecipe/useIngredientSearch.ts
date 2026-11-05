@@ -20,10 +20,9 @@ export function useIngredientSearch(query: string, enabled: boolean, size = 8) {
 
     const timer = setTimeout(async () => {
       try {
-        const { data } = await privateHttp.get<CursorResponse<IngredientResponse>>(
-          "/v1/ingredients/search",
-          { params: { q, size } },
-        );
+        const { data } = await privateHttp.get<
+          CursorResponse<IngredientResponse>
+        >("/v1/ingredients/search", { params: { q, size } });
         if (active) setItems(data?.content ?? []);
       } catch {
         if (active) setItems([]);

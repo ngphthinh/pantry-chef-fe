@@ -16,7 +16,13 @@ interface Props {
   right?: ReactNode;
 }
 
-export function IngredientNameField({ label, value, onChangeText, onSelect, right }: Props) {
+export function IngredientNameField({
+  label,
+  value,
+  onChangeText,
+  onSelect,
+  right,
+}: Props) {
   const { brand } = useAppTheme();
   const [open, setOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -77,8 +83,7 @@ export function IngredientNameField({ label, value, onChangeText, onSelect, righ
               <Pressable
                 key={item.id}
                 onPress={() => handleSelect(item)}
-                className="border-b border-line px-4 py-3 active:opacity-70 dark:border-line-dark"
-              >
+                className="border-b border-line px-4 py-3 active:opacity-70 dark:border-line-dark">
                 <AppText className="font-semibold">{item.name}</AppText>
                 <AppText variant="caption">
                   {item.category?.name ?? "Nguyên liệu"}

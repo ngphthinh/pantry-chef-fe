@@ -35,7 +35,10 @@ export default function CustomRecipeFormScreen() {
       return;
     }
     if (result.data.imageFailed) {
-      showAlert("Đã lưu công thức", "Nhưng chưa tải được ảnh. Hãy mở lại phần sửa để chọn ảnh một lần nữa.");
+      showAlert(
+        "Đã lưu công thức",
+        "Nhưng chưa tải được ảnh. Hãy mở lại phần sửa để chọn ảnh một lần nữa.",
+      );
     }
     // Thay màn form bằng chi tiết để nút quay lại không trở về form cũ.
     router.replace(`/recipe/custom/${result.data.id}`);
@@ -56,7 +59,12 @@ export default function CustomRecipeFormScreen() {
           <AppText variant="error" className="text-center">
             {form.loadError}
           </AppText>
-          <Button title="Thử lại" variant="outline" onPress={() => void form.reload()} className="self-stretch" />
+          <Button
+            title="Thử lại"
+            variant="outline"
+            onPress={() => void form.reload()}
+            className="self-stretch"
+          />
         </Card>
       </PageScreen>
     );
@@ -64,9 +72,16 @@ export default function CustomRecipeFormScreen() {
 
   return (
     <PageScreen title={form.isEdit ? "Sửa công thức" : "Tạo công thức"}>
-      <Pressable onPress={() => void handlePickImage()} accessibilityRole="button" accessibilityLabel="Chọn ảnh món">
+      <Pressable
+        onPress={() => void handlePickImage()}
+        accessibilityRole="button"
+        accessibilityLabel="Chọn ảnh món">
         {form.imageUri ? (
-          <Image source={{ uri: form.imageUri }} className="h-48 w-full rounded-3xl" resizeMode="cover" />
+          <Image
+            source={{ uri: form.imageUri }}
+            className="h-48 w-full rounded-3xl"
+            resizeMode="cover"
+          />
         ) : (
           <View className="h-36 items-center justify-center gap-2 rounded-3xl border border-dashed border-line bg-soft dark:border-line-dark dark:bg-soft-dark">
             <Ionicons name="image-outline" size={30} color={brand} />
@@ -75,7 +90,10 @@ export default function CustomRecipeFormScreen() {
         )}
       </Pressable>
       {form.imageUri ? (
-        <AppText variant="link" className="self-center text-sm" onPress={() => void handlePickImage()}>
+        <AppText
+          variant="link"
+          className="self-center text-sm"
+          onPress={() => void handlePickImage()}>
           Đổi ảnh
         </AppText>
       ) : null}
@@ -148,7 +166,9 @@ export default function CustomRecipeFormScreen() {
                 form.updateIngredient(row.key, {
                   name: item.name,
                   // Dòng chưa chọn đơn vị thì lấy đơn vị mặc định của nguyên liệu.
-                  ...(row.unit === "" && item.defaultUnit ? { unit: item.defaultUnit } : {}),
+                  ...(row.unit === "" && item.defaultUnit
+                    ? { unit: item.defaultUnit }
+                    : {}),
                 })
               }
               right={
@@ -157,17 +177,23 @@ export default function CustomRecipeFormScreen() {
                   hitSlop={8}
                   className="h-12 justify-center"
                   accessibilityRole="button"
-                  accessibilityLabel="Xoá nguyên liệu"
-                >
-                  <Ionicons name="trash-outline" size={20} color={palette.dangerInk} />
+                  accessibilityLabel="Xoá nguyên liệu">
+                  <Ionicons
+                    name="trash-outline"
+                    size={20}
+                    color={palette.dangerInk}
+                  />
                 </Pressable>
               }
             />
+
             <TextField
               label="Số lượng (bỏ trống = vừa đủ)"
               keyboardType="decimal-pad"
               value={row.amount}
-              onChangeText={(t) => form.updateIngredient(row.key, { amount: t })}
+              onChangeText={(t) =>
+                form.updateIngredient(row.key, { amount: t })
+              }
             />
             <ChipGroup
               horizontal
@@ -178,8 +204,14 @@ export default function CustomRecipeFormScreen() {
             />
           </Card>
         ))}
-        {form.errors.ingredients ? <AppText variant="error">{form.errors.ingredients}</AppText> : null}
-        <Button title="Thêm nguyên liệu" variant="outline" onPress={form.addIngredient} />
+        {form.errors.ingredients ? (
+          <AppText variant="error">{form.errors.ingredients}</AppText>
+        ) : null}
+        <Button
+          title="Thêm nguyên liệu"
+          variant="outline"
+          onPress={form.addIngredient}
+        />
       </View>
 
       <View className="gap-3">
@@ -192,9 +224,12 @@ export default function CustomRecipeFormScreen() {
                 onPress={() => form.removeStep(row.key)}
                 hitSlop={8}
                 accessibilityRole="button"
-                accessibilityLabel={`Xoá bước ${index + 1}`}
-              >
-                <Ionicons name="trash-outline" size={20} color={palette.dangerInk} />
+                accessibilityLabel={`Xoá bước ${index + 1}`}>
+                <Ionicons
+                  name="trash-outline"
+                  size={20}
+                  color={palette.dangerInk}
+                />
               </Pressable>
             </View>
             <TextArea
@@ -207,11 +242,15 @@ export default function CustomRecipeFormScreen() {
               label="Hẹn giờ (phút, tuỳ chọn)"
               keyboardType="decimal-pad"
               value={row.timerMinutes}
-              onChangeText={(t) => form.updateStep(row.key, { timerMinutes: t })}
+              onChangeText={(t) =>
+                form.updateStep(row.key, { timerMinutes: t })
+              }
             />
           </Card>
         ))}
-        {form.errors.steps ? <AppText variant="error">{form.errors.steps}</AppText> : null}
+        {form.errors.steps ? (
+          <AppText variant="error">{form.errors.steps}</AppText>
+        ) : null}
         <Button title="Thêm bước" variant="outline" onPress={form.addStep} />
       </View>
 
