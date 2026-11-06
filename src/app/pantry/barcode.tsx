@@ -8,6 +8,8 @@ import {
   type Href,
 } from "expo-router";
 
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "@/theme";
 import { AppText } from "@/components/ui/AppText";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -31,6 +33,7 @@ export default function BarcodeScreen() {
   const { pick } = useLocalSearchParams<{ pick?: string }>();
   const pickMode = pick === "1";
 
+  const { colors, isDark } = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const scanner = useBarcodeLookup();
   const [focused, setFocused] = useState(true);
@@ -108,7 +111,7 @@ export default function BarcodeScreen() {
 
       {/* Camera */}
       {!permission ? null : cameraGranted ? (
-        <View className="h-72 overflow-hidden rounded-3xl border border-line bg-black dark:border-line-dark">
+        <View className="relative h-72 overflow-hidden rounded-3xl border border-line bg-black dark:border-line-dark">
           <CameraView
             style={{ flex: 1 }}
             facing="back"
@@ -121,27 +124,87 @@ export default function BarcodeScreen() {
                 : undefined
             }
           />
+          {/* Viewfinder overlay */}
+          <View
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              alignItems: "center",
+              justifyContent: "center",
+            }}>
+            <View
+              style={{
+                width: 240,
+                height: 140,
+                borderWidth: 2,
+                borderColor: colors.primary,
+                borderRadius: 16,
+                backgroundColor: "rgba(0, 0, 0, 0.08)",
+              }}
+            />
+            <AppText
+              style={{
+                color: "#FFFFFF",
+                fontSize: 12,
+                fontWeight: "600",
+                marginTop: 10,
+                textShadowColor: "rgba(0, 0, 0, 0.8)",
+                textShadowOffset: { width: 0, height: 1 },
+                textShadowRadius: 3,
+              }}>
+              Căn mã vạch vào giữa khung
+            </AppText>
+          </View>
         </View>
       ) : (
-        <Card className="items-center gap-3 p-5">
-          <AppText className="text-center font-bold">
-            Cần quyền dùng camera để quét mã vạch
+        <Card className="items-center p-6 gap-3.5 shadow-sm">
+          <View
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              backgroundColor: isDark ? "rgba(244, 114, 182, 0.15)" : "#FDF2F8",
+              alignItems: "center",
+              justifyContent: "center",
+              marginBottom: 4,
+              borderWidth: 1,
+              borderColor: isDark ? "rgba(244, 114, 182, 0.3)" : "#FBCFE8",
+            }}>
+            <Ionicons name="camera" size={30} color={isDark ? "#F472B6" : "#DB2777"} />
+          </View>
+          <AppText variant="heading" className="text-center text-lg">
+            Cần quyền dùng camera
           </AppText>
-          <AppText variant="caption" className="text-center">
-            Bạn vẫn có thể nhập mã vạch bằng tay ở bên dưới.
+          <AppText variant="caption" className="text-center px-2">
+            Cho phép ứng dụng sử dụng camera để tự động quét mã vạch, hoặc bạn có thể nhập mã bằng tay ở bên dưới.
           </AppText>
-          {permission.canAskAgain ? (
-            <Button
-              title="Cho phép dùng camera"
-              onPress={() => void requestPermission()}
-            />
-          ) : (
-            <Button
-              title="Mở cài đặt thiết bị"
-              variant="outline"
-              onPress={() => void Linking.openSettings()}
-            />
-          )}
+          <View className="w-full pt-1">
+            {permission.canAskAgain ? (
+              <Button
+                title="Cho phép dùng camera"
+                variant="soft-pink"
+                iconLeft={
+                  <Ionicons
+                    name="camera-outline"
+                    size={19}
+                    color={isDark ? "#F472B6" : "#BE185D"}
+                  />
+                }
+                onPress={() => void requestPermission()}
+              />
+            ) : (
+              <Button
+                title="Mở cài đặt thiết bị"
+                variant="outline"
+                iconLeft={<Ionicons name="settings-outline" size={19} color={colors.textPrimary} />}
+                onPress={() => void Linking.openSettings()}
+              />
+            )}
+          </View>
         </Card>
       )}
       {showResult && (
@@ -165,9 +228,15 @@ export default function BarcodeScreen() {
           </View>
         </Card>
       )}
-      <View className="gap-3">
+      <Card className="gap-3.5 p-5 shadow-sm">
+        <View className="flex-row items-center gap-2">
+          <Ionicons name="barcode-outline" size={20} color={colors.primary} />
+          <AppText variant="heading" className="text-base">
+            Nhập mã vạch thủ công
+          </AppText>
+        </View>
+
         <TextField
-          label="Hoặc nhập mã vạch"
           placeholder="8–14 chữ số, ví dụ 8934000000011"
           keyboardType="number-pad"
           maxLength={14}
@@ -181,12 +250,21 @@ export default function BarcodeScreen() {
           onSubmitEditing={() => void handleManual()}
           returnKeyType={pickMode ? "done" : "search"}
         />
+
         <Button
           title={pickMode ? "Dùng mã này" : "Tra mã vạch"}
+          iconLeft={
+            <Ionicons
+              name={pickMode ? "checkmark-circle-outline" : "search-outline"}
+              size={18}
+              color="#FFFFFF"
+            />
+          }
           loading={!pickMode && scanner.isLooking}
+          disabled={!scanner.manualCode || scanner.manualCode.length < 8}
           onPress={() => void handleManual()}
         />
-      </View>
+      </Card>
     </PageScreen>
   );
 }

@@ -122,6 +122,21 @@ export function DatePickerModal({
       });
     }
 
+    // Ô trống cuối tháng để lấp đầy hàng cuối cùng (đủ 7 cột), tránh dãn hàng cuối
+    const remainder = cells.length % 7;
+    if (remainder !== 0) {
+      const trailingCount = 7 - remainder;
+      for (let i = 0; i < trailingCount; i++) {
+        cells.push({
+          key: `trailing-empty-${i}`,
+          dayNumber: 0,
+          dateStr: '',
+          isDisabled: true,
+          isToday: false,
+        });
+      }
+    }
+
     return cells;
   }, [viewYear, viewMonth, normalizedMinDate]);
 
@@ -227,46 +242,51 @@ export function DatePickerModal({
           <View style={styles.daysGrid}>
             {calendarCells.map((cell) => {
               if (cell.dayNumber === 0) {
-                return <View key={cell.key} style={styles.dayCellPlaceholder} />;
+                return (
+                  <View key={cell.key} style={styles.dayCellWrapper}>
+                    <View style={styles.dayCellPlaceholder} />
+                  </View>
+                );
               }
 
               const isSelected = selectedDateStr === cell.dateStr;
 
               return (
-                <Pressable
-                  key={cell.key}
-                  disabled={cell.isDisabled}
-                  onPress={() => setSelectedDateStr(cell.dateStr)}
-                  style={[
-                    styles.dayCell,
-                    cell.isDisabled && styles.dayCellDisabled,
-                    cell.isToday && !isSelected && {
-                      borderColor: brand,
-                      borderWidth: 1.5,
-                      backgroundColor: brandSoft,
-                    },
-                    isSelected && {
-                      backgroundColor: brand,
-                      shadowColor: brand,
-                      shadowOffset: { width: 0, height: 3 },
-                      shadowOpacity: 0.35,
-                      shadowRadius: 5,
-                      elevation: 4,
-                    },
-                  ]}
-                >
-                  <Text
+                <View key={cell.key} style={styles.dayCellWrapper}>
+                  <Pressable
+                    disabled={cell.isDisabled}
+                    onPress={() => setSelectedDateStr(cell.dateStr)}
                     style={[
-                      styles.dayText,
-                      { color: palette.ink },
-                      cell.isDisabled && { color: palette.muted, opacity: 0.4 },
-                      cell.isToday && !isSelected && { color: brand, fontWeight: '700' },
-                      isSelected && { color: '#FFFFFF', fontWeight: '800' },
+                      styles.dayCell,
+                      cell.isDisabled && styles.dayCellDisabled,
+                      cell.isToday && !isSelected && {
+                        borderColor: brand,
+                        borderWidth: 1.5,
+                        backgroundColor: brandSoft,
+                      },
+                      isSelected && {
+                        backgroundColor: brand,
+                        shadowColor: brand,
+                        shadowOffset: { width: 0, height: 3 },
+                        shadowOpacity: 0.35,
+                        shadowRadius: 5,
+                        elevation: 4,
+                      },
                     ]}
                   >
-                    {cell.dayNumber}
-                  </Text>
-                </Pressable>
+                    <Text
+                      style={[
+                        styles.dayText,
+                        { color: palette.ink },
+                        cell.isDisabled && { color: palette.muted, opacity: 0.4 },
+                        cell.isToday && !isSelected && { color: brand, fontWeight: '700' },
+                        isSelected && { color: '#FFFFFF', fontWeight: '800' },
+                      ]}
+                    >
+                      {cell.dayNumber}
+                    </Text>
+                  </Pressable>
+                </View>
               );
             })}
           </View>
@@ -389,13 +409,12 @@ const styles = StyleSheet.create({
   },
   weekdaysRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     marginTop: 12,
     paddingBottom: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   weekdayLabel: {
-    width: 38,
+    width: `${100 / 7}%`,
     textAlign: 'center',
     fontSize: 12,
     fontWeight: '600',
@@ -403,21 +422,24 @@ const styles = StyleSheet.create({
   daysGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
     marginTop: 8,
   },
-  dayCellPlaceholder: {
-    width: 38,
-    height: 38,
-    marginVertical: 2,
-  },
-  dayCell: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  dayCellWrapper: {
+    width: `${100 / 7}%`,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 2,
+  },
+  dayCellPlaceholder: {
+    width: 36,
+    height: 36,
+  },
+  dayCell: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dayCellDisabled: {
     opacity: 0.35,

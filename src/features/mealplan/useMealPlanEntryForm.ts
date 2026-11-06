@@ -9,6 +9,7 @@ import type {
   RecipeSummaryResponse,
 } from "@/types";
 import { useMealPlan } from "./useMealPlan";
+import { formatLocalDate } from "./mealPlanSlice";
 import { mealPlanValidators } from "./validation";
 
 export interface MealPlanEntryFormValues {
@@ -30,11 +31,15 @@ export function useMealPlanEntryForm(
 ) {
   const { addEntry, updateEntry, isSaving: isMealPlanSaving } = useMealPlan();
 
+  const todayStr = formatLocalDate(new Date());
+  const initialDate = (() => {
+    if (initialEntry?.date) return initialEntry.date;
+    if (defaultDate && defaultDate >= todayStr) return defaultDate;
+    return todayStr;
+  })();
+
   const [values, setValues] = useState<MealPlanEntryFormValues>({
-    date:
-      initialEntry?.date ??
-      defaultDate ??
-      new Date().toISOString().split("T")[0],
+    date: initialDate,
     mealType: initialEntry?.mealType ?? defaultMealType ?? "DINNER",
     recipeId: initialEntry?.recipeId ?? defaultRecipeId ?? undefined,
     externalId: undefined,

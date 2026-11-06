@@ -12,7 +12,7 @@ import {
 import { useTheme } from '@/theme';
 import { AppText } from './AppText';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'soft-pink' | 'outline' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface AppButtonProps extends Omit<PressableProps, 'children'> {
@@ -77,6 +77,34 @@ export function AppButton({
           textColor: colors.primary,
           shadow: shadows.none,
         };
+      case 'accent':
+        return {
+          backgroundColor: pressed
+            ? isDark
+              ? '#D97706'
+              : '#C2410C'
+            : isDark
+              ? '#F59E0B'
+              : '#EA580C',
+          borderColor: isDark ? '#F59E0B' : '#EA580C',
+          borderWidth: 1.2,
+          textColor: '#FFFFFF',
+          shadow: shadows.sm,
+        };
+      case 'soft-pink':
+        return {
+          backgroundColor: pressed
+            ? isDark
+              ? 'rgba(244, 114, 182, 0.28)'
+              : '#FBCFE8'
+            : isDark
+              ? 'rgba(244, 114, 182, 0.18)'
+              : '#FCE7F3',
+          borderColor: isDark ? 'rgba(244, 114, 182, 0.45)' : '#F472B6',
+          borderWidth: 1.2,
+          textColor: isDark ? '#F472B6' : '#BE185D',
+          shadow: shadows.none,
+        };
       case 'outline':
         return {
           backgroundColor: pressed
@@ -119,7 +147,7 @@ export function AppButton({
       accessibilityRole="button"
       onPress={onPress}
       disabled={inactive}
-      style={style}
+      style={[styles.pressable, style]}
       {...props}>
       {({ pressed }) => {
         const v = getVariantStyles(pressed);
@@ -176,6 +204,9 @@ export function AppButton({
 }
 
 const styles = StyleSheet.create({
+  pressable: {
+    width: '100%',
+  },
   base: {
     alignItems: 'center',
     justifyContent: 'center',

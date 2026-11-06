@@ -101,6 +101,20 @@ export function InlineCalendar({
       });
     }
 
+    const remainder = cells.length % 7;
+    if (remainder !== 0) {
+      const trailingCount = 7 - remainder;
+      for (let i = 0; i < trailingCount; i++) {
+        cells.push({
+          key: `trailing-empty-${i}`,
+          dayNumber: 0,
+          dateStr: '',
+          isDisabled: true,
+          isToday: false,
+        });
+      }
+    }
+
     return cells;
   }, [viewYear, viewMonth, normalizedMinDate]);
 
@@ -217,12 +231,11 @@ const styles = StyleSheet.create({
   },
   weekdaysRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     paddingBottom: 6,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   weekdayText: {
-    width: 34,
+    width: `${100 / 7}%`,
     textAlign: 'center',
     fontSize: 11,
     fontWeight: '600',
@@ -230,21 +243,24 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
     marginTop: 6,
   },
-  cellPlaceholder: {
-    width: 34,
-    height: 34,
-    marginVertical: 1,
-  },
-  dayCell: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+  dayCellWrapper: {
+    width: `${100 / 7}%`,
     alignItems: 'center',
     justifyContent: 'center',
     marginVertical: 1,
+  },
+  cellPlaceholder: {
+    width: 32,
+    height: 32,
+  },
+  dayCell: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cellDisabled: {
     opacity: 0.3,

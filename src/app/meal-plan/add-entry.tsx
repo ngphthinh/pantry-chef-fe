@@ -20,6 +20,7 @@ import { TextField } from "@/components/ui/TextField";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { palette } from "@/theme";
 import { RecipePickerModal } from "@/components/recipe/RecipePickerModal";
+import { formatLocalDate } from "@/features/mealplan/mealPlanSlice";
 import { useMealPlanEntryForm } from "@/features/mealplan/useMealPlanEntryForm";
 import type { MealType, RecipeSummaryResponse } from "@/types";
 import { TactileButton } from "@/components/ui/TactileButton";
@@ -197,6 +198,7 @@ export default function AddMealPlanEntryScreen() {
 
             <DatePickerField
               value={values.date}
+              minDate={formatLocalDate(new Date())}
               onChange={(d) => setField("date", d)}
             />
           </Card>
