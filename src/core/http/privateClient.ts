@@ -21,13 +21,13 @@ export function createPrivateClient(
   // Nhiều request cùng 401 thì chỉ refresh một lần, các request còn lại chờ chung
   let refreshing: Promise<string> | null = null;
 
-  async function refreshAccessToken(): Promise<string> {
+  async function refreshAccessToken(apiBase: string): Promise<string> {
     const refreshToken = await tokens.getRefreshToken();
     if (!refreshToken) throw new Error("NO_REFRESH_TOKEN");
 
     // Dùng axios thuần (không qua interceptor) để tránh vòng lặp 401
     const res = await axios.post(
-      `${baseURL}${REFRESH_PATH}`,
+      `${apiBase}${REFRESH_PATH}`,
       { refreshToken },
       { timeout: 15000 },
     );
@@ -88,7 +88,9 @@ export function createPrivateClient(
       if (canRefresh) {
         original._retry = true;
         try {
-          refreshing ??= refreshAccessToken().finally(() => {
+          // host đã được resolve bởi request interceptor (kv → env)
+          const apiBase = original.baseURL ?? baseURL;
+          refreshing ??= refreshAccessToken(apiBase).finally(() => {
             refreshing = null;
           });
           const newToken = await refreshing;
