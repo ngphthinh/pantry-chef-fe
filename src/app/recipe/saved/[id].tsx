@@ -14,9 +14,10 @@ import { Card } from "@/components/ui/Card";
 import { Screen } from "@/components/ui/Screen";
 import { TextField } from "@/components/ui/TextField";
 import { cn } from "@/components/ui/cn";
-import {confirmAction, notify } from "@/core/ui/dialogs";
+import { confirmAction, notify } from "@/core/ui/dialogs";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { useSavedRecipeForm } from "@/features/savedRecipes/useSavedRecipeForm";
+import { useResolvedSavedRecipeId } from "@/features/savedRecipes/useResolvedSavedRecipeId";
 
 function SectionTitle({
   icon,
@@ -42,18 +43,19 @@ export default function SavedRecipeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { brand } = useAppTheme();
+  const { resolvedId, isResolving, resolveError } = useResolvedSavedRecipeId();
   const {
     recipe,
     values,
     errors,
     setField,
     submit,
-      remove,
+    remove,
     isDirty,
     isLoading,
     isSubmitting,
     loadError,
-  } = useSavedRecipeForm(id);
+  } = useSavedRecipeForm(resolvedId as string);
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const handleSave = async () => {
@@ -75,7 +77,7 @@ export default function SavedRecipeScreen() {
     else notify("Lỗi", result.message);
   };
 
-  if (isLoading) {
+  if (isResolving || isLoading) {
     return (
       <Screen>
         <BackHeader title="Món đã lưu" fallbackHref={"/saved" as Href} />
@@ -100,7 +102,9 @@ export default function SavedRecipeScreen() {
     );
   }
 
-  const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
+  const ingredients = Array.isArray(recipe.ingredients)
+    ? recipe.ingredients
+    : [];
   const steps = Array.isArray(recipe.steps) ? recipe.steps : [];
 
   return (
@@ -251,14 +255,16 @@ export default function SavedRecipeScreen() {
           disabled={!isDirty}
           onPress={handleSave}
         />
-        <Pressable className="items-center py-3" onPress={() => void handleRemove()}>
+        <Pressable
+          className="items-center py-3"
+          onPress={() => void handleRemove()}>
           <AppText className="font-bold text-danger">Bỏ lưu món này</AppText>
         </Pressable>
       </View>
 
       <AddToCollectionModal
         visible={pickerOpen}
-        savedRecipeId={id}
+        savedRecipeId={resolvedId as string}
         onClose={() => setPickerOpen(false)}
       />
     </Screen>

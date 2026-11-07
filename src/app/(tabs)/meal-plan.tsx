@@ -31,8 +31,16 @@ const MEAL_ICONS: Record<
   MealType,
   { icon: keyof typeof Ionicons.glyphMap; label: string; color: string }
 > = {
-  BREAKFAST: { icon: "sunny-outline", label: "Bữa sáng", color: palette.amber[500] },
-  LUNCH: { icon: "partly-sunny-outline", label: "Bữa trưa", color: palette.emerald[500] },
+  BREAKFAST: {
+    icon: "sunny-outline",
+    label: "Bữa sáng",
+    color: palette.amber[500],
+  },
+  LUNCH: {
+    icon: "partly-sunny-outline",
+    label: "Bữa trưa",
+    color: palette.emerald[500],
+  },
   DINNER: { icon: "moon-outline", label: "Bữa tối", color: palette.info[600] },
 };
 
@@ -67,7 +75,9 @@ export default function MealPlanHubScreen() {
   const [manualText, setManualText] = useState<string | null>(null);
 
   // Trạng thái thu gọn/mở rộng từng bữa ăn
-  const [collapsedMeals, setCollapsedMeals] = useState<Record<MealType, boolean>>({
+  const [collapsedMeals, setCollapsedMeals] = useState<
+    Record<MealType, boolean>
+  >({
     BREAKFAST: false,
     LUNCH: false,
     DINNER: false,
@@ -267,7 +277,10 @@ export default function MealPlanHubScreen() {
         `/recipe/external/${encodeURIComponent(entry.recipeId)}` as Href,
       );
     } else {
-      router.push(`/recipe/saved/${entry.recipeId}` as Href);
+      router.push({
+        pathname: "/recipe/saved/[id]",
+        params: { id: "lookup", recipeId: String(entry.recipeId) },
+      });
     }
   };
 
@@ -288,8 +301,12 @@ export default function MealPlanHubScreen() {
             <Pressable
               onPress={handleOpenCopyModal}
               style={{
-                backgroundColor: isDark ? "rgba(16, 185, 129, 0.16)" : colors.primarySoft,
-                borderColor: isDark ? "rgba(16, 185, 129, 0.3)" : "rgba(46, 125, 79, 0.2)",
+                backgroundColor: isDark
+                  ? "rgba(16, 185, 129, 0.16)"
+                  : colors.primarySoft,
+                borderColor: isDark
+                  ? "rgba(16, 185, 129, 0.3)"
+                  : "rgba(46, 125, 79, 0.2)",
                 borderWidth: 1,
               }}
               className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5 shadow-xs active:scale-95">
@@ -314,7 +331,11 @@ export default function MealPlanHubScreen() {
               borderWidth: 1,
             }}
             className="h-9 w-9 items-center justify-center rounded-xl active:scale-90">
-            <Ionicons name="chevron-back" size={18} color={colors.textPrimary} />
+            <Ionicons
+              name="chevron-back"
+              size={18}
+              color={colors.textPrimary}
+            />
           </Pressable>
 
           {/* Chạm vào giữa để mở Modal Lịch chọn tuần */}
@@ -355,7 +376,11 @@ export default function MealPlanHubScreen() {
               borderWidth: 1,
             }}
             className="h-9 w-9 items-center justify-center rounded-xl active:scale-90">
-            <Ionicons name="chevron-forward" size={18} color={colors.textPrimary} />
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={colors.textPrimary}
+            />
           </Pressable>
         </Card>
 
@@ -373,23 +398,23 @@ export default function MealPlanHubScreen() {
                 onPress={() => setActiveDayIndex(idx)}
                 style={{
                   width: 66,
-                  alignItems: 'center',
+                  alignItems: "center",
                   borderRadius: 18,
                   paddingVertical: 12,
                   backgroundColor: isSelected
                     ? isDark
-                      ? 'rgba(16, 185, 129, 0.25)'
-                      : '#E8F5EE'
+                      ? "rgba(16, 185, 129, 0.25)"
+                      : "#E8F5EE"
                     : isDark
-                      ? '#161D19'
-                      : '#FFFFFF',
+                      ? "#161D19"
+                      : "#FFFFFF",
                   borderColor: isSelected
                     ? colors.primary
                     : isDark
-                      ? 'rgba(255, 255, 255, 0.1)'
-                      : '#E2E8E4',
+                      ? "rgba(255, 255, 255, 0.1)"
+                      : "#E2E8E4",
                   borderWidth: isSelected ? 2 : 1,
-                  shadowColor: isSelected ? colors.primary : '#000000',
+                  shadowColor: isSelected ? colors.primary : "#000000",
                   shadowOffset: { width: 0, height: isSelected ? 4 : 1 },
                   shadowOpacity: isSelected ? 0.35 : 0.08,
                   shadowRadius: isSelected ? 8 : 3,
@@ -399,27 +424,27 @@ export default function MealPlanHubScreen() {
                 <AppText
                   style={{
                     fontSize: 12,
-                    fontWeight: isSelected ? '800' : '600',
+                    fontWeight: isSelected ? "800" : "600",
                     color: isSelected
                       ? colors.primary
                       : isDark
-                        ? '#95A39B'
-                        : '#64748B',
+                        ? "#95A39B"
+                        : "#64748B",
                   }}>
                   {day.dayName}
                 </AppText>
                 <AppText
                   style={{
                     fontSize: 17,
-                    fontWeight: '800',
+                    fontWeight: "800",
                     marginTop: 4,
                     color: isSelected
                       ? isDark
-                        ? '#FFFFFF'
+                        ? "#FFFFFF"
                         : colors.primary
                       : isDark
-                        ? '#F3F4F6'
-                        : '#1E293B',
+                        ? "#F3F4F6"
+                        : "#1E293B",
                   }}>
                   {day.formattedDate}
                 </AppText>
@@ -437,7 +462,7 @@ export default function MealPlanHubScreen() {
                 {day.entries.length > 0 && !day.isToday && (
                   <View
                     style={{
-                      backgroundColor: isDark ? '#4B5550' : '#CBD5E1',
+                      backgroundColor: isDark ? "#4B5550" : "#CBD5E1",
                       width: 5,
                       height: 5,
                       borderRadius: 2.5,
@@ -486,7 +511,9 @@ export default function MealPlanHubScreen() {
             className="flex-1 items-center justify-center py-2.5 px-1 shadow-xs active:scale-95">
             <View
               style={{
-                backgroundColor: isDark ? "rgba(16, 185, 129, 0.2)" : colors.primarySoft,
+                backgroundColor: isDark
+                  ? "rgba(16, 185, 129, 0.2)"
+                  : colors.primarySoft,
                 width: 32,
                 height: 32,
                 borderRadius: 16,
@@ -497,7 +524,11 @@ export default function MealPlanHubScreen() {
               <Ionicons name="add" size={18} color={colors.primary} />
             </View>
             <AppText
-              style={{ color: colors.textPrimary, fontSize: 11, fontWeight: "700" }}>
+              style={{
+                color: colors.textPrimary,
+                fontSize: 11,
+                fontWeight: "700",
+              }}>
               Thêm bữa
             </AppText>
           </Pressable>
@@ -530,10 +561,18 @@ export default function MealPlanHubScreen() {
                 justifyContent: "center",
                 marginBottom: 4,
               }}>
-              <Ionicons name="document-text-outline" size={17} color={isDark ? "#38BDF8" : "#0284C7"} />
+              <Ionicons
+                name="document-text-outline"
+                size={17}
+                color={isDark ? "#38BDF8" : "#0284C7"}
+              />
             </View>
             <AppText
-              style={{ color: colors.textPrimary, fontSize: 11, fontWeight: "700" }}>
+              style={{
+                color: colors.textPrimary,
+                fontSize: 11,
+                fontWeight: "700",
+              }}>
               Chi tiết
             </AppText>
           </Pressable>
@@ -557,10 +596,18 @@ export default function MealPlanHubScreen() {
                 justifyContent: "center",
                 marginBottom: 4,
               }}>
-              <Ionicons name="cart-outline" size={17} color={isDark ? "#FBBF24" : "#D97706"} />
+              <Ionicons
+                name="cart-outline"
+                size={17}
+                color={isDark ? "#FBBF24" : "#D97706"}
+              />
             </View>
             <AppText
-              style={{ color: colors.textPrimary, fontSize: 11, fontWeight: "700" }}>
+              style={{
+                color: colors.textPrimary,
+                fontSize: 11,
+                fontWeight: "700",
+              }}>
               Mua sắm
             </AppText>
           </Pressable>
@@ -584,15 +631,22 @@ export default function MealPlanHubScreen() {
                 justifyContent: "center",
                 marginBottom: 4,
               }}>
-              <Ionicons name="sparkles" size={16} color={isDark ? "#C084FC" : "#9333EA"} />
+              <Ionicons
+                name="sparkles"
+                size={16}
+                color={isDark ? "#C084FC" : "#9333EA"}
+              />
             </View>
             <AppText
-              style={{ color: colors.textPrimary, fontSize: 11, fontWeight: "700" }}>
+              style={{
+                color: colors.textPrimary,
+                fontSize: 11,
+                fontWeight: "700",
+              }}>
               AI gợi ý
             </AppText>
           </Pressable>
         </View>
-
 
         {/* Meals For Selected Day */}
         <View className="gap-3 pb-16">
@@ -682,7 +736,8 @@ export default function MealPlanHubScreen() {
                           style={{
                             fontSize: 11,
                             fontWeight: "700",
-                            color: count > 0 ? meta.color : colors.textSecondary,
+                            color:
+                              count > 0 ? meta.color : colors.textSecondary,
                           }}>
                           {count} món
                         </AppText>
@@ -1159,4 +1214,3 @@ export default function MealPlanHubScreen() {
     </View>
   );
 }
-   
