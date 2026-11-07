@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -18,7 +18,7 @@ import { TactileButton } from "@/components/ui/TactileButton";
 import { RecipePickerModal } from "@/components/recipe/RecipePickerModal";
 import { recipeService } from "@/core/di/container";
 import { useAppTheme } from "@/core/theme/useAppTheme";
-import { formatLocalDate } from "@/features/mealplan/mealPlanSlice";
+import { formatLocalDate, getMondayOfWeek } from "@/features/mealplan/mealPlanSlice";
 import { useMealPlan } from "@/features/mealplan/useMealPlan";
 import { palette } from "@/theme";
 import type {
@@ -71,7 +71,7 @@ export default function AddMealPlanEntryScreen() {
     recipeTitle?: string;
   }>();
 
-  const { addEntries } = useMealPlan();
+  const { addEntries, loadWeek } = useMealPlan();
 
   const todayStr = useMemo(() => formatLocalDate(new Date()), []);
 
@@ -88,6 +88,14 @@ export default function AddMealPlanEntryScreen() {
     params.defaultMealType ?? "DINNER",
   );
   const [servings, setServings] = useState<number>(2);
+
+  useEffect(() => {
+    if (date) {
+      const [y, m, d] = date.split("-").map(Number);
+      const targetWeekStart = getMondayOfWeek(new Date(y, m - 1, d, 12, 0, 0));
+      void loadWeek(targetWeekStart);
+    }
+  }, [date, loadWeek]);
 
   // Danh sách các món ăn trong bữa ăn (Hỗ trợ chọn nhiều món)
   const [selectedDishes, setSelectedDishes] = useState<SelectedDish[]>(() => {

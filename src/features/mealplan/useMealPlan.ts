@@ -132,20 +132,35 @@ export function useMealPlan() {
         throw new Error("Không thể thêm bữa ăn cho ngày trong quá khứ");
       }
 
-      let planId = currentPlan?.id;
-      if (!planId) {
-        // Tự động tạo plan nếu chưa có
+      const [y, m, d] = body.date.split("-").map(Number);
+      const targetWeekStart = getMondayOfWeek(new Date(y, m - 1, d, 12, 0, 0));
+
+      let plan = currentPlan?.weekStart === targetWeekStart ? currentPlan : null;
+      if (!plan) {
+        plan = await dispatch(fetchMealPlanByWeek(targetWeekStart));
+      }
+
+      if (plan?.id) {
+        return dispatch(addMealPlanEntry(plan.id, body));
+      }
+
+      try {
         const newPlan = await dispatch(
           createMealPlan({
-            weekStart: selectedWeekStart,
+            weekStart: targetWeekStart,
             entries: [body],
           }),
         );
         return newPlan.entries[0];
+      } catch (err: unknown) {
+        const existing = await dispatch(fetchMealPlanByWeek(targetWeekStart));
+        if (existing?.id) {
+          return dispatch(addMealPlanEntry(existing.id, body));
+        }
+        throw err;
       }
-      return dispatch(addMealPlanEntry(planId, body));
     },
-    [dispatch, currentPlan, selectedWeekStart],
+    [dispatch, currentPlan],
   );
 
   const addEntries = useCallback(
@@ -158,22 +173,36 @@ export function useMealPlan() {
         }
       }
 
-      let planId = currentPlan?.id;
-      if (!planId) {
-        const [y, m, d] = entries[0].date.split("-").map(Number);
-        const targetWeekStart = getMondayOfWeek(new Date(y, m - 1, d, 12, 0, 0));
-        const newPlan = await dispatch(
-          createMealPlan({
-            weekStart: targetWeekStart,
-            entries,
-          }),
-        );
-        return newPlan.entries;
+      const [y, m, d] = entries[0].date.split("-").map(Number);
+      const targetWeekStart = getMondayOfWeek(new Date(y, m - 1, d, 12, 0, 0));
+
+      let plan = currentPlan?.weekStart === targetWeekStart ? currentPlan : null;
+      if (!plan) {
+        plan = await dispatch(fetchMealPlanByWeek(targetWeekStart));
+      }
+
+      if (!plan?.id) {
+        try {
+          const newPlan = await dispatch(
+            createMealPlan({
+              weekStart: targetWeekStart,
+              entries,
+            }),
+          );
+          return newPlan.entries;
+        } catch (err: unknown) {
+          const existing = await dispatch(fetchMealPlanByWeek(targetWeekStart));
+          if (existing?.id) {
+            plan = existing;
+          } else {
+            throw err;
+          }
+        }
       }
 
       const results: MealPlanEntryResponse[] = [];
       for (const entry of entries) {
-        const res = await dispatch(addMealPlanEntry(planId, entry));
+        const res = await dispatch(addMealPlanEntry(plan.id, entry));
         results.push(res);
       }
       return results;

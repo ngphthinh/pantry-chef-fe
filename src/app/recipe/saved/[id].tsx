@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 
 import { SavedRecipeImage } from "@/components/saved/SavedRecipeImage";
+import { AppliedSubstituteInfo, SubstituteButton } from "@/components/recipe/SubstituteButton";
 import { AddToCollectionModal } from "@/components/ui/AddToCollectionModal";
 import { AppText } from "@/components/ui/AppText";
 import { BackHeader } from "@/components/ui/BackHeader";
@@ -17,6 +18,12 @@ import { cn } from "@/components/ui/cn";
 import {confirmAction, notify } from "@/core/ui/dialogs";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { useSavedRecipeForm } from "@/features/savedRecipes/useSavedRecipeForm";
+<<<<<<< HEAD
+=======
+import { useResolvedSavedRecipeId } from "@/features/savedRecipes/useResolvedSavedRecipeId";
+import { useOpenAdaptedRecipe } from "@/features/ai/useOpenAdaptedRecipe";
+import { useAppliedSubstitutions } from "@/features/ai/useAppliedSubstitutions";
+>>>>>>> ace6f51 (feat(ai): implement recipe substitution, adapt recipe, and fix meal plan creation)
 
 function SectionTitle({
   icon,
@@ -42,6 +49,11 @@ export default function SavedRecipeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { brand } = useAppTheme();
+<<<<<<< HEAD
+=======
+  const openAdapted = useOpenAdaptedRecipe();
+  const { resolvedId, isResolving, resolveError } = useResolvedSavedRecipeId();
+>>>>>>> ace6f51 (feat(ai): implement recipe substitution, adapt recipe, and fix meal plan creation)
   const {
     recipe,
     values,
@@ -53,7 +65,12 @@ export default function SavedRecipeScreen() {
     isLoading,
     isSubmitting,
     loadError,
+<<<<<<< HEAD
   } = useSavedRecipeForm(id);
+=======
+  } = useSavedRecipeForm(resolvedId as string);
+  const { adaptStepText } = useAppliedSubstitutions(recipe?.id, recipe?.title);
+>>>>>>> ace6f51 (feat(ai): implement recipe substitution, adapt recipe, and fix meal plan creation)
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const handleSave = async () => {
@@ -203,16 +220,28 @@ export default function SavedRecipeScreen() {
                       "flex-row items-center justify-between gap-3 px-4 py-3",
                       index > 0 && "border-t border-line dark:border-line-dark",
                     )}>
-                    <AppText className="flex-1 font-semibold">
-                      {ing.name}
-                    </AppText>
-                    {amount ? (
-                      <View className="rounded-full bg-brandSoft px-2.5 py-1 dark:bg-surface-dark">
-                        <AppText className="text-xs font-bold text-brand">
-                          {amount}
-                        </AppText>
-                      </View>
-                    ) : null}
+                    <View className="flex-1">
+                      <AppText className="font-semibold">{ing.name}</AppText>
+                      <AppliedSubstituteInfo
+                        recipeTitle={recipe.title}
+                        recipeId={recipe.id}
+                        ingredientName={ing.name}
+                      />
+                    </View>
+                    <View className="flex-row items-center gap-2">
+                      {amount ? (
+                        <View className="rounded-full bg-brandSoft px-2.5 py-1 dark:bg-surface-dark">
+                          <AppText className="text-xs font-bold text-brand">
+                            {amount}
+                          </AppText>
+                        </View>
+                      ) : null}
+                      <SubstituteButton
+                        recipeTitle={recipe.title}
+                        recipeId={recipe.id}
+                        ingredientName={ing.name}
+                      />
+                    </View>
                   </View>
                 );
               })
@@ -236,7 +265,7 @@ export default function SavedRecipeScreen() {
                   </AppText>
                 </View>
                 <View className="flex-1">
-                  <AppText>{s.text}</AppText>
+                  <AppText>{adaptStepText(s.text)}</AppText>
                 </View>
               </Card>
             ))
@@ -244,6 +273,12 @@ export default function SavedRecipeScreen() {
         </View>
 
         {/* Actions */}
+        <Button
+          title="Điều chỉnh theo nguyên liệu loại trừ"
+          variant="outline"
+          disabled={!recipe?.id}
+          onPress={() => recipe?.id && openAdapted(recipe.id)}
+        />
         <Button
           title="Lưu thay đổi"
           variant="primary"
