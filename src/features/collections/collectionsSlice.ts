@@ -26,7 +26,7 @@ const collectionsSlice = createSlice({
       state.status = action.payload;
     },
     listLoaded(state, action: PayloadAction<CollectionResponse[]>) {
-      state.items = action.payload;
+      state.items = Array.isArray(action.payload) ? action.payload : [];
     },
     collectionUpserted(state, action: PayloadAction<CollectionResponse>) {
       const index = state.items.findIndex((c) => c.id === action.payload.id);

@@ -26,6 +26,7 @@ export default function ShoppingDetailScreen() {
   const itemForm = useShoppingItemForm(shopping);
   const renameForm = useShoppingListForm(shopping.rename);
   const [renaming, setRenaming] = useState(false);
+  const [isAddFormExpanded, setIsAddFormExpanded] = useState(false);
 
   const { load } = shopping;
   useEffect(() => {
@@ -143,42 +144,80 @@ export default function ShoppingDetailScreen() {
 
       {shopping.detail ? (
         <>
-          <Card className="gap-3 p-4">
-            <AppText variant="label">{itemForm.editing ? "Sửa mục" : "Thêm mục"}</AppText>
-            <TextField
-              label="Tên"
-              placeholder="Ví dụ: Trứng gà"
-              autoCapitalize="sentences"
-              value={itemForm.values.name}
-              onChangeText={(t) => itemForm.setField("name", t)}
-              error={itemForm.errors.name}
-            />
-            <TextField
-              label="Số lượng (tuỳ chọn)"
-              keyboardType="decimal-pad"
-              value={itemForm.values.quantity}
-              onChangeText={(t) => itemForm.setField("quantity", t)}
-              error={itemForm.errors.quantity}
-            />
-            <ChipGroup
-              horizontal
-              options={UNIT_OPTIONS}
-              value={itemForm.values.unit}
-              onChange={(unit) => itemForm.setField("unit", unit)}
-            />
-            {itemForm.errors.submit ? <AppText variant="error">{itemForm.errors.submit}</AppText> : null}
-            <View className="flex-row gap-3">
-              {itemForm.editing ? (
-                <Button title="Huỷ" variant="outline" className="flex-1" onPress={itemForm.cancelEdit} />
-              ) : null}
-              <Button
-                title={itemForm.editing ? "Lưu thay đổi" : "Thêm"}
-                className="flex-1"
-                loading={itemForm.isSubmitting}
-                onPress={() => void itemForm.submit()}
+          {itemForm.editing || isAddFormExpanded ? (
+            <Card className="gap-3 p-4">
+              <View className="flex-row items-center justify-between">
+                <AppText variant="label">{itemForm.editing ? "Sửa món" : "Thêm món phát sinh"}</AppText>
+                {!itemForm.editing ? (
+                  <Pressable
+                    onPress={() => setIsAddFormExpanded(false)}
+                    hitSlop={8}
+                    className="flex-row items-center gap-1 active:opacity-70"
+                  >
+                    <AppText variant="caption" className="font-medium text-brand">Thu gọn</AppText>
+                    <Ionicons name="chevron-up" size={16} color={brand} />
+                  </Pressable>
+                ) : null}
+              </View>
+              <TextField
+                label="Tên món cần mua"
+                placeholder="Ví dụ: Trứng gà, Gia vị, Giấy ăn..."
+                autoCapitalize="sentences"
+                value={itemForm.values.name}
+                onChangeText={(t) => itemForm.setField("name", t)}
+                error={itemForm.errors.name}
               />
-            </View>
-          </Card>
+              <TextField
+                label="Số lượng (tuỳ chọn)"
+                placeholder="Nhập số lượng..."
+                keyboardType="decimal-pad"
+                value={itemForm.values.quantity}
+                onChangeText={(t) => itemForm.setField("quantity", t)}
+                error={itemForm.errors.quantity}
+              />
+              <ChipGroup
+                horizontal
+                options={UNIT_OPTIONS}
+                value={itemForm.values.unit}
+                onChange={(unit) => itemForm.setField("unit", unit)}
+              />
+              {itemForm.errors.submit ? <AppText variant="error">{itemForm.errors.submit}</AppText> : null}
+              <View className="flex-row gap-3">
+                {itemForm.editing ? (
+                  <Button title="Huỷ" variant="outline" className="flex-1" onPress={itemForm.cancelEdit} />
+                ) : (
+                  <Button title="Đóng" variant="outline" className="flex-1" onPress={() => setIsAddFormExpanded(false)} />
+                )}
+                <Button
+                  title={itemForm.editing ? "Lưu thay đổi" : "Thêm vào danh sách"}
+                  className="flex-1"
+                  loading={itemForm.isSubmitting}
+                  onPress={async () => {
+                    const result = await itemForm.submit();
+                    if (result.ok && !itemForm.editing) {
+                      setIsAddFormExpanded(false);
+                    }
+                  }}
+                />
+              </View>
+            </Card>
+          ) : (
+            <Pressable
+              onPress={() => setIsAddFormExpanded(true)}
+              className="flex-row items-center justify-between rounded-2xl border border-dashed border-brand/50 bg-brand/5 p-3.5 active:opacity-70 dark:bg-brand/10"
+            >
+              <View className="flex-row items-center gap-2.5">
+                <View className="h-8 w-8 items-center justify-center rounded-full bg-brand/15">
+                  <Ionicons name="add" size={20} color={brand} />
+                </View>
+                <View>
+                  <AppText className="text-sm font-semibold text-brand">Thêm món phát sinh ngoài thực đơn</AppText>
+                  <AppText variant="caption" className="text-xs opacity-75">Bổ sung nhanh đồ gia dụng, gia vị, đồ tươi...</AppText>
+                </View>
+              </View>
+              <Ionicons name="chevron-down" size={18} color={brand} />
+            </Pressable>
+          )}
 
           {shopping.totalCount === 0 ? (
             <EmptyState icon="basket-outline" title="Danh sách đang trống" message="Thêm mục đầu tiên ở phía trên." />

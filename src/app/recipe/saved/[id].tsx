@@ -100,8 +100,8 @@ export default function SavedRecipeScreen() {
     );
   }
 
-  const ingredients = recipe.ingredients;
-  const steps = recipe.steps;
+  const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
+  const steps = Array.isArray(recipe.steps) ? recipe.steps : [];
 
   return (
     <Screen>

@@ -68,8 +68,9 @@ const savedRecipesSlice = createSlice({
             }>,
         ) {
             const { items, hasNext, nextCursor, replace, queryKey } = action.payload;
-            state.items = replace ? items : [...state.items, ...items];
-            state.hasNext = hasNext;
+            const safeItems = Array.isArray(items) ? items : [];
+            state.items = replace ? safeItems : [...(state.items || []), ...safeItems];
+            state.hasNext = Boolean(hasNext);
             state.nextCursor = nextCursor;
             if(replace) state.queryKey = queryKey;
         },

@@ -95,17 +95,17 @@ export interface EnrichedPantryItem extends PantryItemResponse {
 
 export function usePantry() {
   const dispatch = useAppDispatch();
-  const rawItems = useAppSelector((s) => s.pantry.items);
-  const rawExpiringItems = useAppSelector((s) => s.pantry.expiringItems);
-  const rawSelectedItem = useAppSelector((s) => s.pantry.selectedItem);
-  const status = useAppSelector((s) => s.pantry.status);
-  const hasNext = useAppSelector((s) => s.pantry.hasNext);
-  const nextCursor = useAppSelector((s) => s.pantry.nextCursor);
+  const rawItems = useAppSelector((s) => s.pantry?.items);
+  const rawExpiringItems = useAppSelector((s) => s.pantry?.expiringItems);
+  const rawSelectedItem = useAppSelector((s) => s.pantry?.selectedItem);
+  const status = useAppSelector((s) => s.pantry?.status);
+  const hasNext = useAppSelector((s) => s.pantry?.hasNext);
+  const nextCursor = useAppSelector((s) => s.pantry?.nextCursor);
 
-  // Tính nhãn độ tươi ngay trong hook
+  // Tính nhãn độ tươi ngay trong hook (chống undefined khi nạp dữ liệu)
   const items: EnrichedPantryItem[] = useMemo(
     () =>
-      rawItems.map((item) => ({
+      (Array.isArray(rawItems) ? rawItems : []).map((item) => ({
         ...item,
         freshness: calculateFreshness(item.expiryDate),
       })),
@@ -114,7 +114,7 @@ export function usePantry() {
 
   const expiringItems: EnrichedPantryItem[] = useMemo(
     () =>
-      rawExpiringItems.map((item) => ({
+      (Array.isArray(rawExpiringItems) ? rawExpiringItems : []).map((item) => ({
         ...item,
         freshness: calculateFreshness(item.expiryDate),
       })),

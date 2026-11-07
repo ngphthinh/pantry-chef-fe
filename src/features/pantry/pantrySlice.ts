@@ -51,19 +51,20 @@ const pantrySlice = createSlice({
       action: PayloadAction<{ response: CursorResponse<PantryItemResponse>; append: boolean }>,
     ) {
       const { response, append } = action.payload;
+      const content = Array.isArray(response?.content) ? response.content : [];
       if (append) {
-        const existingIds = new Set(state.items.map((i) => i.id));
-        const newItems = response.content.filter((i) => !existingIds.has(i.id));
-        state.items = [...state.items, ...newItems];
+        const existingIds = new Set((state.items || []).map((i) => i.id));
+        const newItems = content.filter((i) => !existingIds.has(i.id));
+        state.items = [...(state.items || []), ...newItems];
       } else {
-        state.items = response.content;
+        state.items = content;
       }
-      state.hasNext = response.hasNext;
-      state.nextCursor = response.nextCursor;
+      state.hasNext = response?.hasNext ?? false;
+      state.nextCursor = response?.nextCursor ?? null;
       state.error = null;
     },
     expiringItemsReceived(state, action: PayloadAction<PantryItemResponse[]>) {
-      state.expiringItems = action.payload;
+      state.expiringItems = Array.isArray(action.payload) ? action.payload : [];
     },
     selectedItemReceived(state, action: PayloadAction<PantryItemResponse | null>) {
       state.selectedItem = action.payload;

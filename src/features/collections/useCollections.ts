@@ -14,8 +14,12 @@ import {
 
 export function useCollections() {
   const dispatch = useAppDispatch();
-  const items = useAppSelector((s) => s.collections.items);
-  const status = useAppSelector((s) => s.collections.status);
+  const rawItems = useAppSelector((s) => s.collections?.items);
+  const items = useMemo(
+    () => (Array.isArray(rawItems) ? rawItems : []),
+    [rawItems],
+  );
+  const status = useAppSelector((s) => s.collections?.status);
 
   const load = useCallback(
     () =>

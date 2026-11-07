@@ -60,7 +60,8 @@ export function CustomRecipeList({ header }: { header: ReactElement }) {
 
   const handleEndReached = () => {
     if (!userScrolled.current) return;
-    if (!hasNext || isLoading || isLoadingMore || recipes.length === 0) return;
+    if (!hasNext || isLoading || isLoadingMore || (recipes?.length ?? 0) === 0)
+      return;
     void loadMore();
   };
 

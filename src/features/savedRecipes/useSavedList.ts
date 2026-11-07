@@ -52,18 +52,23 @@ export function useSavedList(filter: SavedListFilter = {}) {
     if (!result.ok) setErrorState({ key, message: result.message });
   }, [isReady, hasNext, loadMore, query, key]);
 
+  const safeItems = useMemo(
+    () => (Array.isArray(items) ? items : EMPTY),
+    [items],
+  );
+
   return useMemo(
-      () => ({
-        items: isReady ? items : EMPTY,
-        hasNext: isReady && hasNext,
-        error,
-        isLoading: isLoading || (!isReady && error === null),
-        isLoadingMore,
-        refresh,
-        loadMore: more,
-        toggleFavorite,
-        remove,
-      }),
-      [items, hasNext, isReady, error, isLoading, isLoadingMore, refresh, more, toggleFavorite, remove],
+    () => ({
+      items: isReady ? safeItems : EMPTY,
+      hasNext: isReady && Boolean(hasNext),
+      error,
+      isLoading: isLoading || (!isReady && error === null),
+      isLoadingMore,
+      refresh,
+      loadMore: more,
+      toggleFavorite,
+      remove,
+    }),
+    [safeItems, hasNext, isReady, error, isLoading, isLoadingMore, refresh, more, toggleFavorite, remove],
   );
 }

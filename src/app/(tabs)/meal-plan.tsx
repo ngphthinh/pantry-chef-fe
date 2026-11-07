@@ -253,6 +253,24 @@ export default function MealPlanHubScreen() {
     );
   };
 
+  const handleOpenRecipe = (entry: MealPlanEntryResponse) => {
+    if (!entry.recipeId) {
+      Alert.alert(
+        "Chưa liên kết công thức",
+        `Món "${entry.recipeTitle || "này"}" chưa có liên kết công thức chi tiết.`,
+      );
+      return;
+    }
+    // Nếu là ID số (Spoonacular không có dấu gạch ngang)
+    if (!entry.recipeId.includes("-")) {
+      router.push(
+        `/recipe/external/${encodeURIComponent(entry.recipeId)}` as Href,
+      );
+    } else {
+      router.push(`/recipe/saved/${entry.recipeId}` as Href);
+    }
+  };
+
   return (
     <View className="flex-1 bg-canvas dark:bg-canvas-dark">
       <Screen>
@@ -814,12 +832,25 @@ export default function MealPlanHubScreen() {
                           paddingBottom: idx < mealEntries.length - 1 ? 8 : 2,
                         }}>
                         <View className="flex-row items-center justify-between">
-                          <AppText
-                            variant="heading"
-                            className="text-base flex-1 pr-2"
-                            numberOfLines={1}>
-                            {entry.recipeTitle || "Món ăn"}
-                          </AppText>
+                          <Pressable
+                            className="flex-1 pr-2 active:opacity-70"
+                            onPress={() => handleOpenRecipe(entry)}>
+                            <View className="flex-row items-center gap-1.5">
+                              <AppText
+                                variant="heading"
+                                className="text-base flex-1"
+                                numberOfLines={1}>
+                                {entry.recipeTitle || "Món ăn"}
+                              </AppText>
+                              {entry.recipeId ? (
+                                <Ionicons
+                                  name="chevron-forward"
+                                  size={15}
+                                  color={palette.muted}
+                                />
+                              ) : null}
+                            </View>
+                          </Pressable>
 
                           <View className="flex-row items-center gap-2">
                             {/* Toggle Cooked Button */}

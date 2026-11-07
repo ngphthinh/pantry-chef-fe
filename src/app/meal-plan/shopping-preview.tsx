@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
+  Platform,
   Pressable,
   ScrollView,
   TextInput,
@@ -17,9 +19,38 @@ import { useAppTheme } from "@/core/theme/useAppTheme";
 import { showAlert } from "@/components/ui/dialogs";
 import { useMealPlan } from "@/features/mealplan/useMealPlan";
 import { useShopping } from "@/features/shopping/useShopping";
-import type { ShoppingItemResponse } from "@/types";
+import { toDisplayDate } from "@/core/format/datetime";
+import type { ShoppingItemResponse, ShoppingListResponse } from "@/types";
 
 const PAGE_SIZE = 8;
+
+/** Kiểm tra xem tên danh sách mua sắm có thuộc tuần thực đơn đang chọn không */
+function isShoppingListForWeek(listName: string, weekStart?: string): boolean {
+  if (!listName || !weekStart) return false;
+  const name = listName.toLowerCase().trim();
+
+  // Khớp chuỗi YYYY-MM-DD trực tiếp
+  if (name.includes(weekStart.toLowerCase())) return true;
+
+  const parts = weekStart.split("-").map(Number);
+  if (parts.length === 3) {
+    const [y, m, d] = parts;
+    const dPad = String(d).padStart(2, "0");
+    const mPad = String(m).padStart(2, "0");
+
+    const patterns = [
+      `${dPad}/${mPad}/${y}`,
+      `${d}/${m}/${y}`,
+      `${dPad}-${mPad}-${y}`,
+      `${d}-${m}-${y}`,
+    ];
+
+    for (const pat of patterns) {
+      if (name.includes(pat)) return true;
+    }
+  }
+  return false;
+}
 
 export default function MealPlanShoppingPreviewScreen() {
   const router = useRouter();
@@ -27,11 +58,21 @@ export default function MealPlanShoppingPreviewScreen() {
   const { currentPlan, shoppingPreview, isLoading, loadShoppingList } =
     useMealPlan();
 
-  const { createFromMealPlan, isSaving: savingList } = useShopping();
+  const {
+    lists,
+    load: loadShoppingLists,
+    createFromMealPlan,
+    removeList,
+    isSaving: savingList,
+  } = useShopping();
 
   // Search & Pagination State
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    void loadShoppingLists();
+  }, [loadShoppingLists]);
 
   useEffect(() => {
     if (currentPlan?.id) {
@@ -40,13 +81,16 @@ export default function MealPlanShoppingPreviewScreen() {
   }, [currentPlan?.id, loadShoppingList]);
 
   // Lọc nguyên liệu theo từ khoá tìm kiếm
+  const safeList = useMemo(
+    () => (Array.isArray(shoppingPreview) ? shoppingPreview : []),
+    [shoppingPreview],
+  );
+
   const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) return shoppingPreview;
+    if (!searchQuery.trim()) return safeList;
     const query = searchQuery.trim().toLowerCase();
-    return shoppingPreview.filter((item) =>
-      item.name.toLowerCase().includes(query),
-    );
-  }, [shoppingPreview, searchQuery]);
+    return safeList.filter((item) => item.name.toLowerCase().includes(query));
+  }, [safeList, searchQuery]);
 
   // Tính toán số trang
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / PAGE_SIZE));
@@ -64,11 +108,14 @@ export default function MealPlanShoppingPreviewScreen() {
     return filteredItems.slice(startIndex, startIndex + PAGE_SIZE);
   }, [filteredItems, currentPage]);
 
-  const handleSaveToShoppingList = async () => {
+  const executeSave = async (oldDuplicates: ShoppingListResponse[] = []) => {
     if (!currentPlan?.id) return;
-    if (shoppingPreview.length === 0) {
-      showAlert("Thông báo", "Không có nguyên liệu nào để tạo danh sách mua");
-      return;
+
+    // Dọn dẹp các danh sách cũ trùng tuần này để không bị nhân bản
+    if (oldDuplicates.length > 0) {
+      for (const old of oldDuplicates) {
+        await removeList(old.id).catch(() => {});
+      }
     }
 
     const result = await createFromMealPlan(currentPlan.id);
@@ -76,8 +123,88 @@ export default function MealPlanShoppingPreviewScreen() {
       showAlert("Chưa tạo được danh sách", result.message);
       return;
     }
-    // Mở thẳng danh sách vừa tạo
-    router.replace(`/shopping/${result.data.id}`);
+
+    const isUpdated = oldDuplicates.length > 0;
+    const message = isUpdated
+      ? `Đã cập nhật lại ${safeList.length} nguyên liệu cho thực đơn tuần này. Bạn có muốn mở danh sách đi chợ ngay bây giờ không?`
+      : `Hệ thống đã lưu ${safeList.length} nguyên liệu vào danh sách mua sắm. Bạn có muốn mở danh sách đi chợ ngay bây giờ không?`;
+
+    if (Platform.OS === "web") {
+      const openNow = window.confirm(
+        `${isUpdated ? "Đã cập nhật danh sách mua sắm!" : "Đã lưu danh sách mua sắm!"}\n\n${message}`,
+      );
+      if (openNow) {
+        router.push(`/shopping/${result.data.id}` as any);
+      } else {
+        router.back();
+      }
+      return;
+    }
+
+    Alert.alert(
+      isUpdated ? "Đã cập nhật danh sách mua sắm" : "Đã lưu danh sách mua sắm",
+      message,
+      [
+        {
+          text: "Để sau",
+          style: "cancel",
+          onPress: () => router.back(),
+        },
+        {
+          text: "Mở danh sách",
+          style: "default",
+          onPress: () => router.push(`/shopping/${result.data.id}` as any),
+        },
+      ],
+      { cancelable: true },
+    );
+  };
+
+  const handleSaveToShoppingList = async () => {
+    if (!currentPlan?.id) return;
+    if (safeList.length === 0) {
+      showAlert("Thông báo", "Không có nguyên liệu nào để tạo danh sách mua");
+      return;
+    }
+
+    // Kiểm tra xem đã có danh sách mua sắm nào trùng tuần này chưa
+    const existingDuplicates = lists.filter((l) =>
+      isShoppingListForWeek(l.name, currentPlan.weekStart),
+    );
+
+    if (existingDuplicates.length > 0) {
+      const weekDateLabel = currentPlan.weekStart
+        ? toDisplayDate(currentPlan.weekStart)
+        : "";
+
+      if (Platform.OS === "web") {
+        const confirmUpdate = window.confirm(
+          `Đã có danh sách mua sắm cho tuần này (${weekDateLabel}).\n\nBạn có muốn cập nhật lại danh sách theo thực đơn mới nhất không?`,
+        );
+        if (confirmUpdate) {
+          await executeSave(existingDuplicates);
+        }
+        return;
+      }
+
+      Alert.alert(
+        "Cập nhật danh sách mua sắm",
+        `Đã có danh sách mua sắm cho tuần ${weekDateLabel}. Bạn có muốn cập nhật lại danh sách này theo thực đơn mới nhất không?`,
+        [
+          { text: "Huỷ", style: "cancel" },
+          {
+            text: "Cập nhật lại",
+            style: "default",
+            onPress: () => void executeSave(existingDuplicates),
+          },
+        ],
+        { cancelable: true },
+      );
+      return;
+    }
+
+    // Chưa có danh sách nào -> lưu mới bình thường
+    await executeSave();
   };
 
   const formatQuantity = (item: ShoppingItemResponse) => {
@@ -140,7 +267,7 @@ export default function MealPlanShoppingPreviewScreen() {
               </View>
               <View>
                 <AppText className="font-bold text-brand">
-                  {shoppingPreview.length} nguyên liệu cần thiết
+                  {safeList.length} nguyên liệu cần thiết
                 </AppText>
                 <AppText variant="caption" className="text-muted">
                   Đã đối soát với các món trong tủ
@@ -151,7 +278,7 @@ export default function MealPlanShoppingPreviewScreen() {
           </Card>
 
           {/* Search bar when items exist */}
-          {shoppingPreview.length > 0 && (
+          {safeList.length > 0 && (
             <View
               style={{
                 backgroundColor: colors.surface,
@@ -194,14 +321,14 @@ export default function MealPlanShoppingPreviewScreen() {
           )}
 
           {/* List Content */}
-          {isLoading && shoppingPreview.length === 0 ? (
+          {isLoading && safeList.length === 0 ? (
             <View className="items-center py-16">
               <ActivityIndicator size="large" color={brand} />
               <AppText variant="caption" className="mt-2 text-muted">
                 Đang tính toán nguyên liệu...
               </AppText>
             </View>
-          ) : shoppingPreview.length === 0 ? (
+          ) : safeList.length === 0 ? (
             <Card className="items-center justify-center p-8 text-center shadow-sm">
               <Ionicons name="bag-check-outline" size={44} color={brand} />
               <AppText variant="heading" className="mt-2 text-center">
@@ -344,16 +471,16 @@ export default function MealPlanShoppingPreviewScreen() {
           )}
 
           {/* Save to Shopping List CTA */}
-          {shoppingPreview.length > 0 && (
+          {safeList.length > 0 && (
             <View className="pt-2">
               <TactileButton
                 title={
                   savingList
                     ? "Đang tạo danh sách mua..."
-                    : `Lưu ${shoppingPreview.length} món vào danh sách mua sắm`
+                    : `Lưu ${safeList.length} món vào danh sách mua sắm`
                 }
                 onPress={handleSaveToShoppingList}
-                disabled={savingList || shoppingPreview.length === 0}
+                disabled={savingList || safeList.length === 0}
               />
             </View>
           )}
