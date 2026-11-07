@@ -9,16 +9,20 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Screen } from "@/components/ui/Screen";
 import { BackHeader } from "@/components/recipe/BackHeader";
+import { AppliedSubstituteInfo, SubstituteButton } from "@/components/recipe/SubstituteButton";
 import { cn } from "@/components/ui/cn";
 import { showAlert } from "@/components/ui/dialogs";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { useCustomRecipeDetail } from "@/features/customRecipe/useCustomRecipeDetail";
 import { formatIngredientAmount } from "@/features/recipe/recipeLabels";
+import { useOpenAdaptedRecipe } from "@/features/ai/useOpenAdaptedRecipe";
+import { useAppliedSubstitutions } from "@/features/ai/useAppliedSubstitutions";
 
 export default function CustomRecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { palette, brand } = useAppTheme();
+  const openAdapted = useOpenAdaptedRecipe();
   const {
     recipe,
     meta,
@@ -30,6 +34,7 @@ export default function CustomRecipeDetailScreen() {
     load,
     confirmAndRemove,
   } = useCustomRecipeDetail(id);
+  const { adaptStepText } = useAppliedSubstitutions(recipe?.id, recipe?.title);
 
   // Khẩu phần đang xem (quy đổi cục bộ vì món tự tạo không có API scale)
   const [servings, setServings] = useState<number | null>(null);
@@ -159,19 +164,38 @@ export default function CustomRecipeDetailScreen() {
       <View className="gap-2">
         <AppText variant="heading">Nguyên liệu</AppText>
         <Card className="overflow-hidden">
-          {ingredientLines.map((line, index) => (
-            <View
-              key={line.id}
-              className={cn(
-                "flex-row items-center justify-between gap-3 px-4 py-3",
-                index > 0 && "border-t border-line dark:border-line-dark",
-              )}>
-              <AppText className="flex-1">{line.name}</AppText>
-              <AppText variant="caption" className="font-semibold">
-                {amountLabelOf(line)}
-              </AppText>
-            </View>
-          ))}
+          {ingredientLines.map((line, index) => {
+            const amount = amountLabelOf(line);
+            return (
+              <View
+                key={line.id}
+                className={cn(
+                  "flex-row items-center justify-between gap-3 px-4 py-3",
+                  index > 0 && "border-t border-line dark:border-line-dark",
+                )}>
+                <View className="flex-1">
+                  <AppText className="font-medium">{line.name}</AppText>
+                  <AppliedSubstituteInfo
+                    recipeTitle={recipe.title}
+                    recipeId={recipe.id}
+                    ingredientName={line.name}
+                  />
+                </View>
+                <View className="flex-row items-center gap-2">
+                  {amount ? (
+                    <AppText variant="caption" className="font-semibold">
+                      {amount}
+                    </AppText>
+                  ) : null}
+                  <SubstituteButton
+                    recipeTitle={recipe.title}
+                    recipeId={recipe.id}
+                    ingredientName={line.name}
+                  />
+                </View>
+              </View>
+            );
+          })}
         </Card>
       </View>
 
@@ -186,7 +210,7 @@ export default function CustomRecipeDetailScreen() {
                 <Badge label={step.timerLabel} tone="success" />
               ) : null}
             </View>
-            <AppText>{step.text}</AppText>
+            <AppText>{adaptStepText(step.text)}</AppText>
           </Card>
         ))}
       </View>
@@ -217,6 +241,11 @@ export default function CustomRecipeDetailScreen() {
               },
             })
           }
+        />
+        <Button
+          title="Điều chỉnh theo nguyên liệu loại trừ"
+          variant="outline"
+          onPress={() => openAdapted(recipe.id)}
         />
         <Button
           title="Món tương tự"

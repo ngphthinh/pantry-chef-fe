@@ -1,4 +1,4 @@
-import { Pressable, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -10,6 +10,7 @@ import { TextField } from "@/components/ui/TextField";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { useSubstitutions } from "@/features/ai/useSubstitutions";
 import { useSubstitutionForm } from "@/features/ai/useSubstitutionform";
+import { useAppliedSubstitutions } from "@/features/ai/useAppliedSubstitutions";
 
 function FieldError({ message }: { message?: string | null }) {
   if (!message) return null;
@@ -41,6 +42,10 @@ export default function AiSubstitutionsScreen() {
     submit,
     isSubmitting,
   } = useSubstitutionForm(params);
+  const { apply } = useAppliedSubstitutions(
+    params.recipeId,
+    params.recipeTitle || values.recipeTitle,
+  );
 
   return (
     <Screen>
@@ -117,8 +122,18 @@ export default function AiSubstitutionsScreen() {
           </Card>
         ) : null}
 
+        {/* Loading state */}
+        {isSubmitting ? (
+          <Card className="items-center gap-3 p-6 shadow-sm">
+            <ActivityIndicator size="large" color={brand} />
+            <AppText variant="caption" className="text-center font-medium">
+              Đang tìm gợi ý nguyên liệu thay thế...
+            </AppText>
+          </Card>
+        ) : null}
+
         {/* Empty */}
-        {isEmpty ? (
+        {!isSubmitting && isEmpty ? (
           <Card className="items-center gap-2 p-6 shadow-sm">
             <View className="h-16 w-16 items-center justify-center rounded-full bg-brandSoft dark:bg-soft-dark">
               <Ionicons
@@ -199,6 +214,41 @@ export default function AiSubstitutionsScreen() {
                 <AppText>{item.note}</AppText>
               </View>
             ) : null}
+
+            <Pressable
+              onPress={() => {
+                const targetMissing = values.missingIngredient.trim();
+                const targetRecipeId = params.recipeId;
+                const targetRecipeTitle =
+                  params.recipeTitle || values.recipeTitle;
+
+                if (targetRecipeId || targetRecipeTitle) {
+                  apply(targetMissing, {
+                    name: item.name,
+                    ratio: item.ratioLabel,
+                    note: item.note,
+                  });
+                  Alert.alert(
+                    "Đã chọn thay thế",
+                    `Đã áp dụng "${item.name}" thay cho "${targetMissing}" trong công thức.`,
+                    [{ text: "Quay lại công thức", onPress: () => router.back() }],
+                  );
+                } else {
+                  Alert.alert(
+                    "Đã chọn",
+                    `Bạn có thể dùng "${item.name}" ${item.ratioLabel ? `(${item.ratioLabel})` : ""} thay cho "${targetMissing}".`,
+                  );
+                }
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Chọn ${item.name} làm nguyên liệu thay thế`}
+              className="mt-1 flex-row items-center justify-center gap-2 rounded-xl bg-brand py-2.5 active:scale-98"
+            >
+              <Ionicons name="checkmark-circle" size={17} color="#FFFFFF" />
+              <AppText className="font-bold text-white">
+                Chọn thay thế này
+              </AppText>
+            </Pressable>
           </Card>
         ))}
       </View>

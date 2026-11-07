@@ -17,6 +17,12 @@ import type {
 
 export type AiStatus = "idle" | "loading";
 
+export interface AppliedSubstitution {
+  name: string;
+  ratio: string;
+  note?: string;
+}
+
 interface AiState {
   /** Bản nháp từ POST /v1/ai/meal-plan, CHƯA lưu lên server. */
   mealPlanDraft: AiMealPlanResponse | null;
@@ -41,6 +47,9 @@ interface AiState {
   adaptedRecipe: AiRecipeDetailResponse | null;
   /** Trạng thái tải riêng của phần điều chỉnh công thức. */
   adaptStatus: AiStatus;
+
+  /** Các nguyên liệu thay thế đã chọn áp dụng cho công thức: [recipeKey::ingredientName] */
+  appliedSubstitutions: Record<string, AppliedSubstitution>;
 }
 
 const initialState: AiState = {
@@ -54,6 +63,7 @@ const initialState: AiState = {
   substitutionsSearched: false,
   adaptedRecipe: null,
   adaptStatus: "idle",
+  appliedSubstitutions: {},
 };
 
 const aiSlice = createSlice({
@@ -108,6 +118,27 @@ const aiSlice = createSlice({
       state.substitutions = [];
       state.substitutionsSearched = false;
     },
+    substitutionApplied(
+      state,
+      action: PayloadAction<{
+        recipeKey: string;
+        originalIngredient: string;
+        substitution: AppliedSubstitution;
+      }>,
+    ) {
+      const key = `${action.payload.recipeKey}::${action.payload.originalIngredient.trim().toLowerCase()}`;
+      state.appliedSubstitutions[key] = action.payload.substitution;
+    },
+    substitutionRemoved(
+      state,
+      action: PayloadAction<{
+        recipeKey: string;
+        originalIngredient: string;
+      }>,
+    ) {
+      const key = `${action.payload.recipeKey}::${action.payload.originalIngredient.trim().toLowerCase()}`;
+      delete state.appliedSubstitutions[key];
+    },
 
     // --- Công thức đã điều chỉnh ---
     adaptStatusChanged(state, action: PayloadAction<AiStatus>) {
@@ -138,6 +169,8 @@ export const {
   substitutionStatusChanged,
   substitutionsLoaded,
   substitutionsCleared,
+  substitutionApplied,
+  substitutionRemoved,
   adaptStatusChanged,
   adaptedRecipeLoaded,
   adaptedRecipeCleared,

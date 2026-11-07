@@ -3,6 +3,9 @@ import type { SubstitutionRequest } from "@/types";
 import { aiValidators } from "./validation";
 import { useSubstitutions } from "./useSubstitutions";
 
+const UUID_REGEX =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
 type Param = string | string[] | undefined;
 
 interface Initial {
@@ -25,17 +28,22 @@ const first = (v: Param) => (Array.isArray(v) ? v[0] : v) ?? "";
  */
 export function useSubstitutionForm(initial: Initial = {}) {
   const { search, clear, isLoading } = useSubstitutions();
-  const recipeId = first(initial.recipeId);
+  const rawRecipeId = first(initial.recipeId);
+  const recipeId =
+    rawRecipeId && UUID_REGEX.test(rawRecipeId) ? rawRecipeId : undefined;
+
+  const initialTitle = first(initial.recipeTitle);
+  const initialMissing = first(initial.missingIngredient);
 
   const [values, setValues] = useState<FormValues>({
-    recipeTitle: first(initial.recipeTitle),
-    missingIngredient: first(initial.missingIngredient),
+    recipeTitle: initialTitle,
+    missingIngredient: initialMissing,
   });
   const [errors, setErrors] = useState<
     Partial<Record<keyof FormValues, string>>
   >({});
   const [requestError, setRequestError] = useState<string | null>(null);
-  const autoRan = useRef(false);
+  const lastSearched = useRef<string>("");
 
   const setField = useCallback(
     <K extends keyof FormValues>(key: K, value: FormValues[K]) => {
@@ -48,48 +56,70 @@ export function useSubstitutionForm(initial: Initial = {}) {
   // Có recipeId (mở từ chi tiết công thức) thì tên món là tuỳ chọn, ngược lại bắt buộc
   const titleRequired = !recipeId;
 
+  const executeSearch = useCallback(
+    async (ingredient: string, titleStr: string): Promise<void> => {
+      const trimmedIngredient = ingredient.trim();
+      const trimmedTitle = titleStr.trim();
+
+      const next = {
+        missingIngredient:
+          aiValidators.missingIngredient(trimmedIngredient) ?? undefined,
+        recipeTitle:
+          aiValidators.recipeTitle(trimmedTitle) ??
+          (titleRequired && !trimmedTitle ? "Vui lòng nhập tên món" : undefined),
+      };
+      setErrors(next);
+      if (next.missingIngredient || next.recipeTitle) return;
+
+      // Khớp SubstitutionRequest: phải có recipeTitle hoặc recipeId
+      const input: SubstitutionRequest = trimmedTitle
+        ? {
+            recipeTitle: trimmedTitle,
+            ...(recipeId ? { recipeId } : {}),
+            missingIngredient: trimmedIngredient,
+          }
+        : {
+            recipeId: recipeId!,
+            missingIngredient: trimmedIngredient,
+          };
+
+      setRequestError(null);
+      try {
+        await search(input);
+      } catch (error) {
+        setRequestError(
+          error instanceof Error
+            ? error.message
+            : "Không thể tìm nguyên liệu thay thế. Vui lòng thử lại.",
+        );
+      }
+    },
+    [recipeId, search, titleRequired],
+  );
+
   const submit = useCallback(async (): Promise<void> => {
-    const title = values.recipeTitle.trim();
-    const next = {
-      missingIngredient:
-        aiValidators.missingIngredient(values.missingIngredient) ?? undefined,
-      recipeTitle:
-        aiValidators.recipeTitle(values.recipeTitle) ??
-        (titleRequired && !title ? "Vui lòng nhập tên món" : undefined),
-    };
-    setErrors(next);
-    if (next.missingIngredient || next.recipeTitle) return;
+    await executeSearch(values.missingIngredient, values.recipeTitle);
+  }, [executeSearch, values.missingIngredient, values.recipeTitle]);
 
-    // Khớp SubstitutionRequest: phải có recipeTitle hoặc recipeId
-    const input: SubstitutionRequest = title
-      ? {
-          recipeTitle: title,
-          recipeId: recipeId || undefined,
-          missingIngredient: values.missingIngredient.trim(),
-        }
-      : { recipeId, missingIngredient: values.missingIngredient.trim() };
-
-    setRequestError(null);
-    try {
-      await search(input);
-    } catch (error) {
-      setRequestError(
-        error instanceof Error
-          ? error.message
-          : "Không thể tìm nguyên liệu thay thế. Vui lòng thử lại.",
-      );
-    }
-  }, [recipeId, search, titleRequired, values]);
-
+  // Đồng bộ lại khi params thay đổi hoặc chạy lần đầu khi có missingIngredient
   useEffect(() => {
-    clear(); // bỏ kết quả của lần mở trước
-    if (!autoRan.current && values.missingIngredient.trim()) {
-      autoRan.current = true;
-      void submit();
+    const nextTitle = first(initial.recipeTitle);
+    const nextMissing = first(initial.missingIngredient);
+
+    if (nextTitle !== values.recipeTitle || nextMissing !== values.missingIngredient) {
+      setValues({
+        recipeTitle: nextTitle,
+        missingIngredient: nextMissing,
+      });
     }
-    // chỉ chạy một lần khi màn hình mở
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    const searchKey = `${nextTitle}::${nextMissing}::${rawRecipeId}`;
+    if (nextMissing.trim() && lastSearched.current !== searchKey) {
+      lastSearched.current = searchKey;
+      clear();
+      void executeSearch(nextMissing, nextTitle);
+    }
+  }, [clear, executeSearch, initial.missingIngredient, initial.recipeId, initial.recipeTitle, rawRecipeId, values.missingIngredient, values.recipeTitle]);
 
   return {
     values,

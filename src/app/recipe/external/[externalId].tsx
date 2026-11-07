@@ -8,18 +8,23 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Screen } from '@/components/ui/Screen';
 import { BackHeader } from '@/components/recipe/BackHeader';
+import { AppliedSubstituteInfo, SubstituteButton } from '@/components/recipe/SubstituteButton';
 import { useAppTheme } from '@/core/theme/useAppTheme';
 import { formatIngredientAmount, formatTimer, recipeMetaLabel } from '@/features/recipe/recipeLabels';
 import { useRecipeDetail } from '@/features/recipe/useRecipeDetail';
+import { useOpenAdaptedRecipe } from '@/features/ai/useOpenAdaptedRecipe';
+import { useAppliedSubstitutions } from '@/features/ai/useAppliedSubstitutions';
 
 export default function ExternalRecipeDetailScreen() {
   const { externalId } = useLocalSearchParams<{ externalId: string }>();
   const router = useRouter();
   const { palette, brand } = useAppTheme();
   const recipe = useRecipeDetail(externalId);
+  const openAdapted = useOpenAdaptedRecipe();
   const [saving, setSaving] = useState(false);
 
   const { detail } = recipe;
+  const { adaptStepText } = useAppliedSubstitutions(detail?.id, detail?.title);
 
   const save = async () => {
     setSaving(true);
@@ -100,17 +105,40 @@ export default function ExternalRecipeDetailScreen() {
         <AppText variant="heading">Nguyên liệu</AppText>
         <Card className="overflow-hidden">
           {(Array.isArray(detail.ingredients) ? detail.ingredients : []).map(
-            (ingredient, index) => (
-            <View
-              key={ingredient.id}
-              className={`flex-row items-center justify-between gap-3 px-4 py-3 ${index > 0 ? 'border-t border-line dark:border-line-dark' : ''}`}
-            >
-              <AppText className="flex-1">{ingredient.name}</AppText>
-              <AppText variant="caption" className="font-semibold">
-                {formatIngredientAmount(ingredient.amount, ingredient.unit)}
-              </AppText>
-            </View>
-          ))}
+            (ingredient, index) => {
+              const amount = formatIngredientAmount(
+                ingredient.amount,
+                ingredient.unit,
+              );
+              return (
+                <View
+                  key={ingredient.id}
+                  className={`flex-row items-center justify-between gap-3 px-4 py-3 ${index > 0 ? 'border-t border-line dark:border-line-dark' : ''}`}
+                >
+                  <View className="flex-1">
+                    <AppText className="font-medium">{ingredient.name}</AppText>
+                    <AppliedSubstituteInfo
+                      recipeTitle={detail.title}
+                      recipeId={detail.id}
+                      ingredientName={ingredient.name}
+                    />
+                  </View>
+                  <View className="flex-row items-center gap-2">
+                    {amount ? (
+                      <AppText variant="caption" className="font-semibold">
+                        {amount}
+                      </AppText>
+                    ) : null}
+                    <SubstituteButton
+                      recipeTitle={detail.title}
+                      recipeId={detail.id}
+                      ingredientName={ingredient.name}
+                    />
+                  </View>
+                </View>
+              );
+            },
+          )}
         </Card>
       </View>
 
@@ -122,7 +150,7 @@ export default function ExternalRecipeDetailScreen() {
               <AppText variant="label">Bước {step.stepOrder}</AppText>
               {step.timerSeconds ? <Badge label={formatTimer(step.timerSeconds)} tone="success" /> : null}
             </View>
-            <AppText>{step.text}</AppText>
+            <AppText>{adaptStepText(step.text)}</AppText>
           </Card>
         ))}
       </View>
@@ -138,6 +166,12 @@ export default function ExternalRecipeDetailScreen() {
           variant="secondary"
           disabled={!recipe.mealPlanParams}
           onPress={() => recipe.mealPlanParams && router.push({ pathname: '/meal-plan/add-entry', params: recipe.mealPlanParams })}
+        />
+        <Button
+          title="Điều chỉnh theo nguyên liệu loại trừ"
+          variant="outline"
+          disabled={!detail.id}
+          onPress={() => detail.id && openAdapted(detail.id)}
         />
         <Button title="Lưu công thức" variant="outline" loading={saving} onPress={save} />
         <Button

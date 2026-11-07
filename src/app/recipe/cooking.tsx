@@ -8,6 +8,7 @@ import { BackHeader } from '@/components/recipe/BackHeader';
 import { useAppTheme } from '@/core/theme/useAppTheme';
 import { formatTimer } from '@/features/recipe/recipeLabels';
 import { useCookingMode } from '@/features/recipe/useCookingMode';
+import { useAppliedSubstitutions } from '@/features/ai/useAppliedSubstitutions';
 
 const PERCENT = 100;
 
@@ -16,6 +17,7 @@ export default function CookingScreen() {
   const router = useRouter();
   const { brand } = useAppTheme();
   const cooking = useCookingMode(externalId);
+  const { adaptStepText } = useAppliedSubstitutions(externalId, cooking.title);
 
   if (cooking.error) {
     return (
@@ -59,7 +61,7 @@ export default function CookingScreen() {
 
       <Card className="gap-3 p-6">
         <AppText variant="label">Bước {cooking.stepNumber}</AppText>
-        <AppText className="text-xl leading-8">{cooking.step.text}</AppText>
+        <AppText className="text-xl leading-8">{adaptStepText(cooking.step.text)}</AppText>
       </Card>
 
       {cooking.hasTimer && cooking.remainingSeconds !== null ? (
