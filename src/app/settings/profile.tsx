@@ -1,12 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Platform,
-  Pressable,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Image, Pressable, View } from "react-native";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
@@ -47,8 +40,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { brand, palette } = useAppTheme();
 
-  const { user, refresh, updateProfile, updateAvatar, deleteAccount } =
-    useUser();
+  const { user, refresh, updateProfile, updateAvatar } = useUser();
 
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -138,48 +130,6 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleDeleteAccount = () => {
-    const confirmDelete = async () => {
-      setLoading(true);
-
-      try {
-        await deleteAccount();
-        router.replace("/login");
-      } catch (error) {
-        Alert.alert(
-          "Lỗi",
-          error instanceof Error ? error.message : "Không thể xóa tài khoản.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (Platform.OS === "web") {
-      if (
-        window.confirm(
-          "Bạn có chắc chắn muốn xóa tài khoản? Hành động này có thể không thể hoàn tác.",
-        )
-      ) {
-        void confirmDelete();
-      }
-      return;
-    }
-
-    Alert.alert(
-      "Xóa tài khoản",
-      "Bạn có chắc chắn muốn xóa tài khoản? Hành động này có thể không thể hoàn tác.",
-      [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Xóa tài khoản",
-          style: "destructive",
-          onPress: () => void confirmDelete(),
-        },
-      ],
-    );
-  };
-
   return (
     <Screen>
       <View className="gap-5 pb-10">
@@ -188,7 +138,8 @@ export default function ProfileScreen() {
           <Pressable
             onPress={() => router.back()}
             hitSlop={8}
-            className="h-10 w-10 items-center justify-center rounded-full bg-soft active:scale-90 dark:bg-surface-dark">
+            className="h-10 w-10 items-center justify-center rounded-full bg-soft active:scale-90 dark:bg-surface-dark"
+          >
             <Ionicons name="arrow-back" size={20} color={palette.ink} />
           </Pressable>
           <View className="flex-1">
@@ -204,7 +155,8 @@ export default function ProfileScreen() {
           <Pressable
             onPress={handleChangeAvatar}
             disabled={avatarLoading}
-            className="active:scale-95">
+            className="active:scale-95"
+          >
             <View className="h-28 w-28 items-center justify-center overflow-hidden rounded-full border-4 border-surface bg-brandSoft shadow-md dark:border-soft-dark dark:bg-soft-dark">
               {user?.avatarUri ? (
                 <Image
@@ -270,53 +222,6 @@ export default function ProfileScreen() {
               title="Lưu thay đổi"
               loading={loading}
               onPress={handleUpdateProfile}
-            />
-          </Card>
-        </View>
-
-        {/* Security */}
-        <View className="gap-2.5">
-          <SectionTitle icon="shield-checkmark" label="Bảo mật" />
-          <Card className="overflow-hidden shadow-sm">
-            <Pressable
-              onPress={() => router.push("/settings/change-password")}
-              className="flex-row items-center gap-3 p-4 active:bg-soft dark:active:bg-soft-dark">
-              <View className="h-10 w-10 items-center justify-center rounded-2xl bg-brandSoft dark:bg-surface-dark">
-                <Ionicons name="key" size={20} color={brand} />
-              </View>
-              <View className="flex-1">
-                <AppText className="font-semibold">Đổi mật khẩu</AppText>
-                <AppText variant="caption">Cập nhật mật khẩu tài khoản</AppText>
-              </View>
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={palette.muted}
-              />
-            </Pressable>
-          </Card>
-        </View>
-
-        {/* Danger zone */}
-        <View className="gap-2.5">
-          <SectionTitle icon="warning" label="Vùng nguy hiểm" />
-          <Card className="gap-3 border border-dangerInk/40 bg-dangerBg/40 p-4 dark:border-dangerInk-dark/40 dark:bg-dangerBg-dark">
-            <View className="flex-row items-start gap-2.5">
-              <Ionicons
-                name="alert-circle"
-                size={20}
-                color={palette.dangerInk}
-              />
-              <AppText variant="caption" className="flex-1">
-                Xóa tài khoản có thể khiến bạn mất quyền truy cập dữ liệu cá
-                nhân.
-              </AppText>
-            </View>
-            <Button
-              title="Xóa tài khoản"
-              variant="danger"
-              loading={loading}
-              onPress={handleDeleteAccount}
             />
           </Card>
         </View>
