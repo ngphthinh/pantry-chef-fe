@@ -1,6 +1,5 @@
 {
   "expo": {
-    "runtimeVersion": { "policy": "appVersion" },
     "updates": {
       "url": "https://u.expo.dev/<PROJECT_ID>",
       "checkAutomatically": "ON_LOAD",
@@ -82,9 +81,6 @@
     },
     "runtimeVersion": {
       "policy": "appVersion"
-    },
-    "updates": {
-      "url": "https://u.expo.dev/e892198d-cfd2-4588-bff4-1b21d842b0ad"
     }
   }
 }
