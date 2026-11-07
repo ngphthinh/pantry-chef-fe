@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -16,6 +16,7 @@ import { Screen } from "@/components/ui/Screen";
 import { TactileButton } from "@/components/ui/TactileButton";
 import { useTheme } from "@/theme";
 import { useRecipeSearchHub } from "@/features/recipe/useRecipeSearchHub";
+import { PantryPickerModal } from "@/components/ui/PantryPickerModal";
 
 const SHORTCUTS: MenuItem[] = [
   {
@@ -38,12 +39,21 @@ const SHORTCUTS: MenuItem[] = [
   },
 ];
 
+const PREVIEW_LIMIT = 6;
+
 export default function SearchHub() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const hub = useRecipeSearchHub();
+  const [pickerOpen, setPickerOpen] = useState(false);
   const go = (route: string) => router.push(`/${route}` as Href);
-
+  const applySelection = (next: string[]) => {
+    const cur = new Set(hub.selected);
+    const nxt = new Set(next);
+    new Set([...cur, ...nxt]).forEach((n) => {
+      if (cur.has(n) !== nxt.has(n)) hub.toggle(n);
+    });
+  };
   const searchByName = () => {
     if (hub.prepareNameSearch()) go("search/results");
   };
@@ -52,9 +62,9 @@ export default function SearchHub() {
     if (hub.prepareSearch()) go("search/results");
   };
 
-  const isAllSelected =
-    hub.selectedCount === hub.pantryNames.length && hub.pantryNames.length > 0;
   const hasPantry = !hub.isPantryLoading && hub.pantryNames.length > 0;
+  const preview = hub.selected.slice(0, PREVIEW_LIMIT);
+  const extra = hub.selected.length - preview.length;
 
   return (
     <Screen>
@@ -70,10 +80,7 @@ export default function SearchHub() {
       <View
         style={[
           styles.searchBar,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-          },
+          { backgroundColor: colors.surface, borderColor: colors.border },
         ]}
         className="flex-row items-center">
         <Ionicons name="search" size={20} color={colors.primary} />
@@ -97,13 +104,12 @@ export default function SearchHub() {
         ) : null}
       </View>
 
-      {/* 3. Lối tắt khám phá nhanh (Bento Quick Shortcuts) */}
+      {/* 3. Lối tắt khám phá nhanh */}
       <MenuGroup title="Khám phá nhanh" items={SHORTCUTS} onNavigate={go} />
 
       {/* 4. Nấu theo nguyên liệu trong tủ */}
       <View style={styles.pantrySection}>
         <Card style={styles.pantryCard}>
-          {/* Card Header with Counter & Quick Select/Deselect */}
           <View
             style={styles.sectionHeader}
             className="flex-row items-center justify-between">
@@ -130,37 +136,12 @@ export default function SearchHub() {
                     styles.sectionSubtitle,
                     { color: colors.textSecondary },
                   ]}>
-                  Chọn nguyên liệu muốn nấu ({hub.selectedCount}/
-                  {hub.pantryNames.length})
+                  Đã chọn {hub.selectedCount}/{hub.pantryNames.length}
                 </AppText>
               </View>
             </View>
-
-            {hasPantry && (
-              <Pressable
-                onPress={isAllSelected ? hub.clearAll : hub.selectAll}
-                hitSlop={8}
-                style={[
-                  styles.toggleBtn,
-                  {
-                    backgroundColor: colors.surfaceVariant,
-                    borderColor: colors.border,
-                  },
-                ]}
-                className="flex-row items-center active:scale-95">
-                <AppText
-                  style={{
-                    color: colors.primary,
-                    fontSize: 12,
-                    fontWeight: "700",
-                  }}>
-                  {isAllSelected ? "Bỏ chọn hết" : "Chọn tất cả"}
-                </AppText>
-              </Pressable>
-            )}
           </View>
 
-          {/* Chips Grid */}
           {hub.isPantryLoading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={colors.primary} />
@@ -178,19 +159,58 @@ export default function SearchHub() {
               </AppText>
             </View>
           ) : (
-            <View style={styles.chipsContainer} className="flex-row flex-wrap">
-              {hub.pantryNames.map((name) => (
-                <Chip
-                  key={name}
-                  label={name}
-                  selected={hub.selected.includes(name)}
-                  onPress={() => hub.toggle(name)}
+            <>
+              {/* Nút mở màn chọn */}
+              <Pressable
+                onPress={() => setPickerOpen(true)}
+                style={[
+                  styles.pickerBtn,
+                  {
+                    backgroundColor: colors.surfaceVariant,
+                    borderColor: colors.border,
+                  },
+                ]}
+                className="active:opacity-70">
+                <Ionicons name="list" size={18} color={colors.primary} />
+                <AppText
+                  style={[styles.pickerText, { color: colors.textPrimary }]}>
+                  {hub.selectedCount === 0
+                    ? "Chọn nguyên liệu muốn nấu"
+                    : "Chỉnh sửa nguyên liệu đã chọn"}
+                </AppText>
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={colors.textSecondary}
                 />
-              ))}
-            </View>
+              </Pressable>
+
+              {/* Xem trước các món đã chọn */}
+              {hub.selectedCount > 0 && (
+                <View
+                  style={styles.chipsContainer}
+                  className="flex-row flex-wrap">
+                  {preview.map((name) => (
+                    <Chip
+                      key={name}
+                      label={name}
+                      selected
+                      onPress={() => hub.toggle(name)}
+                    />
+                  ))}
+                  {extra > 0 && (
+                    <Pressable onPress={() => setPickerOpen(true)} hitSlop={6}>
+                      <AppText
+                        style={{ color: colors.primary, fontWeight: "700" }}>
+                        +{extra} nữa
+                      </AppText>
+                    </Pressable>
+                  )}
+                </View>
+              )}
+            </>
           )}
 
-          {/* CTA Action Button */}
           {hasPantry && (
             <View style={styles.btnWrapper}>
               <TactileButton
@@ -204,14 +224,20 @@ export default function SearchHub() {
           )}
         </Card>
       </View>
+
+      <PantryPickerModal
+        visible={pickerOpen}
+        names={hub.pantryNames}
+        selected={hub.selected}
+        onApply={applySelection}
+        onClose={() => setPickerOpen(false)}
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    marginBottom: 6,
-  },
+  header: { marginBottom: 6 },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -225,28 +251,15 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 15,
-    paddingVertical: 0,
-  },
-  pantrySection: {
-    marginTop: 6,
-  },
-  pantryCard: {
-    padding: 16,
-    gap: 14,
-  },
+  searchInput: { flex: 1, fontSize: 15, paddingVertical: 0 },
+  pantrySection: { marginTop: 6 },
+  pantryCard: { padding: 16, gap: 14 },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  sectionTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
+  sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   cubeBadge: {
     width: 32,
     height: 32,
@@ -254,40 +267,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  sectionSubtitle: {
-    fontSize: 11,
-    marginTop: 1,
-  },
-  toggleBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
+  sectionTitle: { fontSize: 15, fontWeight: "700" },
+  sectionSubtitle: { fontSize: 11, marginTop: 1 },
+  pickerBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderRadius: 16,
     borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
+  pickerText: { flex: 1, fontSize: 14, fontWeight: "600" },
   chipsContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
-    paddingVertical: 4,
-  },
-  loadingContainer: {
-    paddingVertical: 20,
     alignItems: "center",
-  },
-  emptyContainer: {
-    alignItems: "center",
-    paddingVertical: 18,
     gap: 8,
   },
-  emptyText: {
-    textAlign: "center",
-    paddingHorizontal: 16,
-  },
-  btnWrapper: {
-    marginTop: 4,
-  },
+  loadingContainer: { paddingVertical: 20, alignItems: "center" },
+  emptyContainer: { alignItems: "center", paddingVertical: 18, gap: 8 },
+  emptyText: { textAlign: "center", paddingHorizontal: 16 },
+  btnWrapper: { marginTop: 4 },
 });

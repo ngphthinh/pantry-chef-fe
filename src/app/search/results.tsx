@@ -1,24 +1,39 @@
-import { ScrollView, TextInput, View } from 'react-native';
-import { AppText } from '@/components/ui/AppText';
-import { Chip } from '@/components/ui/Chip';
-import { Screen } from '@/components/ui/Screen';
-import { BackHeader } from '@/components/recipe/BackHeader';
-import { RecipeList } from '@/components/recipe/RecipeList';
-import { useAppTheme } from '@/core/theme/useAppTheme';
-import { useCuisines } from '@/features/cuisine/useCuisines';
+import { useState } from "react";
+import { Pressable, ScrollView, TextInput, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { AppText } from "@/components/ui/AppText";
+import { Chip } from "@/components/ui/Chip";
+import { Screen } from "@/components/ui/Screen";
+import { BackHeader } from "@/components/recipe/BackHeader";
+import { RecipeList } from "@/components/recipe/RecipeList";
+import { useAppTheme } from "@/core/theme/useAppTheme";
+import { useCuisines } from "@/features/cuisine/useCuisines";
 import {
   DIFFICULTY_LABELS,
   DIFFICULTY_OPTIONS,
   MAX_MINUTES_OPTIONS,
-} from '@/features/recipe/recipeLabels';
-import { useOpenRecipe } from '@/features/recipe/useOpenRecipe';
-import { useRecipeSearch } from '@/features/recipe/useRecipeSearch';
+} from "@/features/recipe/recipeLabels";
+import { useOpenRecipe } from "@/features/recipe/useOpenRecipe";
+import { useRecipeSearch } from "@/features/recipe/useRecipeSearch";
+import { PantryPickerModal } from "@/components/ui/PantryPickerModal";
+
+const PREVIEW_LIMIT = 6;
 
 export default function SearchResultsScreen() {
   const search = useRecipeSearch();
   const cuisines = useCuisines();
   const openRecipe = useOpenRecipe();
-  const { palette } = useAppTheme();
+  const { palette, brand } = useAppTheme();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const applySelection = (next: string[]) => {
+    const cur = new Set(search.ingredients);
+    const nxt = new Set(next);
+    new Set([...cur, ...nxt]).forEach((n) => {
+      if (cur.has(n) !== nxt.has(n)) search.toggleIngredient(n);
+    });
+  };
+  const preview = search.ingredients.slice(0, PREVIEW_LIMIT);
+  const extra = search.ingredients.length - preview.length;
 
   const nameHeader = (
     <View className="gap-2 pb-3">
@@ -38,32 +53,66 @@ export default function SearchResultsScreen() {
     <View className="gap-3 pb-3">
       <View className="gap-2">
         <View className="flex-row items-center justify-between">
-          <AppText variant="label">Nguyên liệu (chạm để thêm/bỏ)</AppText>
-          <AppText variant="caption">Đã chọn {search.ingredients.length}</AppText>
+          <AppText variant="label">Nguyên liệu</AppText>
+          <AppText variant="caption">
+            Đã chọn {search.ingredients.length}/{search.ingredientChips.length}
+          </AppText>
         </View>
+
         {search.ingredientChips.length === 0 ? (
           <AppText variant="caption">Tủ của bạn đang trống.</AppText>
         ) : (
-          <View className="flex-row flex-wrap gap-2">
-            {search.ingredientChips.map((name) => (
-              <Chip
-                key={name}
-                label={name}
-                selected={search.ingredients.includes(name)}
-                onPress={() => search.toggleIngredient(name)}
+          <>
+            <Pressable
+              onPress={() => setPickerOpen(true)}
+              accessibilityRole="button"
+              className="flex-row items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3 active:opacity-70 dark:border-line-dark dark:bg-surface-dark">
+              <Ionicons name="list" size={18} color={brand} />
+              <AppText className="flex-1 font-semibold">
+                {search.ingredients.length === 0
+                  ? "Chọn nguyên liệu"
+                  : "Chỉnh sửa nguyên liệu đã chọn"}
+              </AppText>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={palette.muted}
               />
-            ))}
-          </View>
+            </Pressable>
+
+            {search.ingredients.length > 0 && (
+              <View className="flex-row flex-wrap items-center gap-2">
+                {preview.map((name) => (
+                  <Chip
+                    key={name}
+                    label={name}
+                    selected
+                    onPress={() => search.toggleIngredient(name)}
+                  />
+                ))}
+                {extra > 0 && (
+                  <Pressable onPress={() => setPickerOpen(true)} hitSlop={6}>
+                    <AppText className="font-bold text-brand">
+                      +{extra} nữa
+                    </AppText>
+                  </Pressable>
+                )}
+              </View>
+            )}
+          </>
         )}
       </View>
 
       <View className="gap-2">
         <AppText variant="label">Độ khó</AppText>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerClassName="gap-2">
           {DIFFICULTY_OPTIONS.map((option) => (
             <Chip
-              key={option ?? 'all'}
-              label={option ? DIFFICULTY_LABELS[option] : 'Tất cả'}
+              key={option ?? "all"}
+              label={option ? DIFFICULTY_LABELS[option] : "Tất cả"}
               selected={search.difficulty === option}
               onPress={() => search.setDifficulty(option)}
             />
@@ -73,11 +122,14 @@ export default function SearchResultsScreen() {
 
       <View className="gap-2">
         <AppText variant="label">Thời gian</AppText>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerClassName="gap-2">
           {MAX_MINUTES_OPTIONS.map((option) => (
             <Chip
-              key={option ?? 'any'}
-              label={option ? `≤ ${option} phút` : 'Bất kỳ'}
+              key={option ?? "any"}
+              label={option ? `≤ ${option} phút` : "Bất kỳ"}
               selected={search.maxMinutes === option}
               onPress={() => search.setMaxMinutes(option)}
             />
@@ -88,8 +140,15 @@ export default function SearchResultsScreen() {
       {cuisines.length > 0 ? (
         <View className="gap-2">
           <AppText variant="label">Ẩm thực</AppText>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-2">
-            <Chip label="Tất cả" selected={!search.cuisineId} onPress={() => search.setCuisine(undefined)} />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerClassName="gap-2">
+            <Chip
+              label="Tất cả"
+              selected={!search.cuisineId}
+              onPress={() => search.setCuisine(undefined)}
+            />
             {cuisines.map((cuisine) => (
               <Chip
                 key={cuisine.id}
@@ -108,7 +167,11 @@ export default function SearchResultsScreen() {
     <Screen scroll={false}>
       <BackHeader
         title="Kết quả"
-        subtitle={search.isNameMode ? 'Tìm theo tên món' : 'Món khớp với nguyên liệu bạn chọn'}
+        subtitle={
+          search.isNameMode
+            ? "Tìm theo tên món"
+            : "Món khớp với nguyên liệu bạn chọn"
+        }
       />
       <RecipeList
         items={search.items}
@@ -116,18 +179,30 @@ export default function SearchResultsScreen() {
         isLoadingMore={search.isLoadingMore}
         error={search.error}
         isEmpty={search.isEmpty || !search.hasInput}
-        emptyTitle={search.hasInput ? 'Chưa tìm thấy món phù hợp' : 'Chưa có điều kiện tìm'}
+        emptyTitle={
+          search.hasInput
+            ? "Chưa tìm thấy món phù hợp"
+            : "Chưa có điều kiện tìm"
+        }
         emptyMessage={
           search.hasInput
-            ? 'Thử bỏ bớt bộ lọc hoặc đổi nguyên liệu.'
+            ? "Thử bỏ bớt bộ lọc hoặc đổi nguyên liệu."
             : search.isNameMode
-              ? 'Nhập tên món để bắt đầu tìm.'
-              : 'Chọn ít nhất một nguyên liệu để tìm món.'
+              ? "Nhập tên món để bắt đầu tìm."
+              : "Chọn ít nhất một nguyên liệu để tìm món."
         }
         header={search.isNameMode ? nameHeader : ingredientHeader}
         onPressItem={openRecipe}
         onEndReached={search.hasNext ? search.loadMore : undefined}
         onRefresh={search.reload}
+      />
+
+      <PantryPickerModal
+        visible={pickerOpen}
+        names={search.ingredientChips}
+        selected={search.ingredients}
+        onApply={applySelection}
+        onClose={() => setPickerOpen(false)}
       />
     </Screen>
   );
