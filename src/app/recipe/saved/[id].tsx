@@ -18,12 +18,8 @@ import { cn } from "@/components/ui/cn";
 import {confirmAction, notify } from "@/core/ui/dialogs";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { useSavedRecipeForm } from "@/features/savedRecipes/useSavedRecipeForm";
-<<<<<<< HEAD
-=======
-import { useResolvedSavedRecipeId } from "@/features/savedRecipes/useResolvedSavedRecipeId";
 import { useOpenAdaptedRecipe } from "@/features/ai/useOpenAdaptedRecipe";
 import { useAppliedSubstitutions } from "@/features/ai/useAppliedSubstitutions";
->>>>>>> ace6f51 (feat(ai): implement recipe substitution, adapt recipe, and fix meal plan creation)
 
 function SectionTitle({
   icon,
@@ -49,28 +45,20 @@ export default function SavedRecipeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { brand } = useAppTheme();
-<<<<<<< HEAD
-=======
   const openAdapted = useOpenAdaptedRecipe();
-  const { resolvedId, isResolving, resolveError } = useResolvedSavedRecipeId();
->>>>>>> ace6f51 (feat(ai): implement recipe substitution, adapt recipe, and fix meal plan creation)
   const {
     recipe,
     values,
     errors,
     setField,
     submit,
-      remove,
+    remove,
     isDirty,
     isLoading,
     isSubmitting,
     loadError,
-<<<<<<< HEAD
   } = useSavedRecipeForm(id);
-=======
-  } = useSavedRecipeForm(resolvedId as string);
   const { adaptStepText } = useAppliedSubstitutions(recipe?.id, recipe?.title);
->>>>>>> ace6f51 (feat(ai): implement recipe substitution, adapt recipe, and fix meal plan creation)
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const handleSave = async () => {
