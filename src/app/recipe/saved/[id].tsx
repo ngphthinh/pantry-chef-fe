@@ -1,14 +1,9 @@
-// app/recipe/saved/[id].tsx  (SavedRecipeScreen)
 import { useState } from "react";
 import { ActivityIndicator, Pressable, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 
 import { SavedRecipeImage } from "@/components/saved/SavedRecipeImage";
-import {
-  AppliedSubstituteInfo,
-  SubstituteButton,
-} from "@/components/recipe/SubstituteButton";
 import { AddToCollectionModal } from "@/components/ui/AddToCollectionModal";
 import { AppText } from "@/components/ui/AppText";
 import { BackHeader } from "@/components/ui/BackHeader";
@@ -211,28 +206,16 @@ export default function SavedRecipeScreen() {
                       "flex-row items-center justify-between gap-3 px-4 py-3",
                       index > 0 && "border-t border-line dark:border-line-dark",
                     )}>
-                    <View className="flex-1">
-                      <AppText className="font-semibold">{ing.name}</AppText>
-                      <AppliedSubstituteInfo
-                        recipeTitle={recipe.title}
-                        recipeId={recipe.id}
-                        ingredientName={ing.name}
-                      />
-                    </View>
-                    <View className="flex-row items-center gap-2">
-                      {amount ? (
-                        <View className="rounded-full bg-brandSoft px-2.5 py-1 dark:bg-surface-dark">
-                          <AppText className="text-xs font-bold text-brand">
-                            {amount}
-                          </AppText>
-                        </View>
-                      ) : null}
-                      <SubstituteButton
-                        recipeTitle={recipe.title}
-                        recipeId={recipe.id}
-                        ingredientName={ing.name}
-                      />
-                    </View>
+                    <AppText className="flex-1 font-semibold">
+                      {ing.name}
+                    </AppText>
+                    {amount ? (
+                      <View className="rounded-full bg-brandSoft px-2.5 py-1 dark:bg-surface-dark">
+                        <AppText className="text-xs font-bold text-brand">
+                          {amount}
+                        </AppText>
+                      </View>
+                    ) : null}
                   </View>
                 );
               })
@@ -256,7 +239,7 @@ export default function SavedRecipeScreen() {
                   </AppText>
                 </View>
                 <View className="flex-1">
-                  <AppText>{adaptStepText(s.text)}</AppText>
+                  <AppText>{s.text}</AppText>
                 </View>
               </Card>
             ))
@@ -264,12 +247,6 @@ export default function SavedRecipeScreen() {
         </View>
 
         {/* Actions */}
-        <Button
-          title="Điều chỉnh theo nguyên liệu loại trừ"
-          variant="outline"
-          disabled={!recipe?.id}
-          onPress={() => recipe?.id && openAdapted(recipe.id)}
-        />
         <Button
           title="Lưu thay đổi"
           variant="primary"
