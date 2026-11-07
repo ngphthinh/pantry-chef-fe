@@ -1,5 +1,6 @@
 import type {
   CursorResponse,
+  IngredientBatchCreateRequest,
   IngredientCategoryRequest,
   IngredientCategoryResponse,
   IngredientCreateRequest,
@@ -17,6 +18,7 @@ export interface IngredientQuery {
 }
 
 export interface IIngredientApi {
+  createBatch(body: IngredientBatchCreateRequest): Promise<IngredientResponse[]>;
   search(query: IngredientQuery): Promise<CursorResponse<IngredientResponse>>;
   getById(id: string): Promise<IngredientResponse>;
   getByBarcode(code: string): Promise<IngredientResponse>;

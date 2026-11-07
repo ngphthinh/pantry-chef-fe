@@ -41,3 +41,7 @@ export interface IngredientResponse {
   category: IngredientCategoryResponse;
   system: boolean;
 }
+
+export interface IngredientBatchCreateRequest {
+  items: IngredientCreateRequest[];
+}

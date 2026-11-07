@@ -1,5 +1,11 @@
-import React, { useState } from "react";
-import { Alert, Pressable, ScrollView, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  View,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { AppText } from "@/components/ui/AppText";
@@ -10,6 +16,8 @@ import { Screen } from "@/components/ui/Screen";
 import { getErrorMessage } from "@/core/http/apiError";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { ingredientPicker } from "@/features/ingredient/ingredientPicker";
+import { ingredientCatalog } from "@/features/ingredient/ingredientCatalog";
+import { bestMatch, normalize } from "@/features/ingredient/ingredientMatch";
 import { usePantry } from "@/features/pantry/usePantry";
 import type { PantryItemCreateRequest, StorageLocation, Unit } from "@/types";
 
@@ -24,12 +32,13 @@ interface ScannedParamItem {
 interface ScannedReviewItem {
   key: string;
   name: string;
+  nameEn?: string;
   confidence: number;
   quantity: number;
   unit: Unit;
   location: StorageLocation;
   expiryDate?: string;
-  /** Gán qua `select-ingredient`; chưa có thì chưa lưu được. */
+  /** Tự khớp từ danh mục, hoặc gán tay qua `select-ingredient`. Không có thì sẽ tạo mới khi lưu. */
   ingredientId?: string;
   ingredientName?: string;
 }
@@ -88,6 +97,7 @@ function parseItems(raw?: string): ScannedReviewItem[] {
     return list.map((r, index) => ({
       key: `${index}-${r.nameEn ?? r.name}`,
       name: r.name,
+      nameEn: r.nameEn,
       confidence: r.confidence,
       location: "FRIDGE" as StorageLocation,
       ...parseQuantityHint(r.quantityHint),
@@ -106,8 +116,55 @@ export default function PantryScanReviewScreen() {
   const [items, setItems] = useState<ScannedReviewItem[]>(() =>
     parseItems(params.items),
   );
+  const [isMatching, setIsMatching] = useState(items.length > 0);
+  const [isCreating, setIsCreating] = useState(false);
 
-  const unassigned = items.filter((i) => !i.ingredientId).length;
+  // Tự khớp từng món với danh mục nguyên liệu
+  useEffect(() => {
+    if (items.length === 0) return;
+    let cancelled = false;
+
+    (async () => {
+      const results = await Promise.all(
+        items.map(async (it) => {
+          try {
+            const candidates = await ingredientCatalog.search(it.name);
+            return [it.key, bestMatch(it.name, candidates)] as const;
+          } catch {
+            return [it.key, null] as const;
+          }
+        }),
+      );
+      if (cancelled) return;
+
+      const byKey = new Map(results);
+      setItems((prev) =>
+        prev.map((it) => {
+          const m = byKey.get(it.key);
+          if (!m || it.ingredientId) return it; // đã gán tay thì giữ
+          return {
+            ...it,
+            ingredientId: m.id,
+            ingredientName: m.name,
+            // chỉ lấy đơn vị mặc định khi AI không gợi ý đơn vị cụ thể
+            unit:
+              it.unit === "PCS" && isUnit(m.defaultUnit)
+                ? m.defaultUnit
+                : it.unit,
+          };
+        }),
+      );
+      setIsMatching(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const newCount = items.filter((i) => !i.ingredientId).length;
+  const busy = isSaving || isCreating || isMatching;
 
   const updateItemQty = (key: string, delta: number) => {
     setItems((prev) =>
@@ -126,7 +183,7 @@ export default function PantryScanReviewScreen() {
     setItems((prev) => prev.filter((i) => i.key !== key));
   };
 
-  /** Mở màn chọn nguyên liệu mà vẫn giữ danh sách này (không bị thay thế). */
+  /** Đổi tay nếu AI khớp sai: mở màn chọn nguyên liệu mà vẫn giữ danh sách này. */
   const pickIngredient = (key: string) => {
     ingredientPicker.request((picked) => {
       setItems((prev) =>
@@ -155,17 +212,58 @@ export default function PantryScanReviewScreen() {
       Alert.alert("Thông báo", "Không có nguyên liệu nào để lưu");
       return;
     }
-    if (unassigned > 0) {
-      Alert.alert(
-        "Thông báo",
-        `Còn ${unassigned} món chưa chọn nguyên liệu trong danh mục.`,
-      );
-      return;
-    }
 
     try {
+      // 1) Gom các món chưa khớp, gộp trùng tên, tạo 1 lần bằng batch
+      const resolved = new Map<string, { id: string; name: string }>(); // key -> ingredient
+      const pending = items.filter((i) => !i.ingredientId);
+
+      if (pending.length > 0) {
+        const uniq = new Map<string, ScannedReviewItem>(); // normalized name -> item đại diện
+        for (const i of pending) {
+          const n = normalize(i.name);
+          if (!uniq.has(n)) uniq.set(n, i);
+        }
+        const reps = [...uniq.values()];
+
+        setIsCreating(true);
+        let created;
+        try {
+          created = await ingredientCatalog.createBatch(
+            reps.map((r) => ({
+              name: r.name,
+              nameEn: r.nameEn,
+              defaultUnit: r.unit,
+            })),
+          );
+        } finally {
+          setIsCreating(false);
+        }
+
+        const byNorm = new Map<string, { id: string; name: string }>();
+        reps.forEach((r, idx) =>
+          byNorm.set(normalize(r.name), {
+            id: created[idx].id,
+            name: created[idx].name,
+          }),
+        );
+        for (const i of pending)
+          resolved.set(i.key, byNorm.get(normalize(i.name))!);
+
+        // lưu lại để nếu bước 2 lỗi, bấm lưu lại không tạo trùng
+        setItems((prev) =>
+          prev.map((it) => {
+            const r = resolved.get(it.key);
+            return r
+              ? { ...it, ingredientId: r.id, ingredientName: r.name }
+              : it;
+          }),
+        );
+      }
+
+      // 2) Lưu vào tủ
       const batchPayload: PantryItemCreateRequest[] = items.map((i) => ({
-        ingredientId: i.ingredientId as string,
+        ingredientId: (i.ingredientId ?? resolved.get(i.key)?.id) as string,
         quantity: i.quantity,
         unit: i.unit,
         location: i.location,
@@ -189,8 +287,7 @@ export default function PantryScanReviewScreen() {
           <View className="flex-row items-center gap-3">
             <Pressable
               onPress={() => router.back()}
-              className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark"
-            >
+              className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark">
               <Ionicons name="arrow-back" size={20} color={palette.ink} />
             </Pressable>
             <View>
@@ -207,8 +304,8 @@ export default function PantryScanReviewScreen() {
         <Card className="flex-row items-center gap-3 bg-brandSoft/50 p-4 shadow-sm dark:bg-surface-dark">
           <Ionicons name="sparkles" size={24} color={brand} />
           <AppText variant="caption" className="flex-1 font-medium text-brand">
-            Chọn nguyên liệu trong danh mục cho từng món, chỉnh số lượng hoặc bỏ
-            món nhận diện sai trước khi lưu.
+            Món trùng danh mục được tự khớp, món chưa có sẽ được tạo mới khi
+            lưu. Chỉnh số lượng hoặc bỏ món nhận diện sai trước khi lưu.
           </AppText>
         </Card>
 
@@ -232,8 +329,7 @@ export default function PantryScanReviewScreen() {
                   onPress={() => removeItem(item.key)}
                   accessibilityRole="button"
                   accessibilityLabel={`Bỏ ${item.name}`}
-                  className="h-8 w-8 items-center justify-center rounded-full bg-dangerBg dark:bg-dangerBg-dark"
-                >
+                  className="h-8 w-8 items-center justify-center rounded-full bg-dangerBg dark:bg-dangerBg-dark">
                   <Ionicons
                     name="trash-outline"
                     size={16}
@@ -242,38 +338,46 @@ export default function PantryScanReviewScreen() {
                 </Pressable>
               </View>
 
-              {/* Gán nguyên liệu trong danh mục */}
+              {/* Trạng thái khớp nguyên liệu */}
               <Pressable
                 onPress={() => pickIngredient(item.key)}
+                disabled={busy}
                 accessibilityRole="button"
                 className={`mt-3 flex-row items-center justify-between rounded-2xl p-3 active:opacity-70 ${
                   item.ingredientId
                     ? "bg-brandSoft dark:bg-surface-dark"
                     : "border border-dashed border-line dark:border-line-dark"
-                }`}
-              >
+                }`}>
                 <View className="flex-1 flex-row items-center gap-2">
-                  <Ionicons
-                    name={
-                      item.ingredientId ? "checkmark-circle" : "search-outline"
-                    }
-                    size={18}
-                    color={item.ingredientId ? brand : palette.muted}
-                  />
+                  {isMatching && !item.ingredientId ? (
+                    <ActivityIndicator size="small" color={brand} />
+                  ) : (
+                    <Ionicons
+                      name={
+                        item.ingredientId
+                          ? "checkmark-circle"
+                          : "add-circle-outline"
+                      }
+                      size={18}
+                      color={item.ingredientId ? brand : palette.muted}
+                    />
+                  )}
                   <AppText
                     numberOfLines={1}
                     className={
                       item.ingredientId
                         ? "flex-1 font-bold text-brand"
                         : "flex-1 text-muted"
-                    }
-                  >
-                    {item.ingredientName ??
-                      "Chọn nguyên liệu trong danh mục..."}
+                    }>
+                    {isMatching && !item.ingredientId
+                      ? "Đang khớp với danh mục..."
+                      : item.ingredientId
+                        ? `Khớp: ${item.ingredientName}`
+                        : `Sẽ tạo mới: ${item.name}`}
                   </AppText>
                 </View>
                 <AppText variant="caption" className="font-bold text-brand">
-                  {item.ingredientId ? "Đổi" : "Chọn"}
+                  Đổi
                 </AppText>
               </Pressable>
 
@@ -293,8 +397,7 @@ export default function PantryScanReviewScreen() {
                 <View className="flex-row items-center gap-2 rounded-2xl bg-soft p-1 dark:bg-soft-dark">
                   <Pressable
                     onPress={() => updateItemQty(item.key, -1)}
-                    className="h-7 w-7 items-center justify-center rounded-xl bg-white shadow-xs active:scale-95 dark:bg-surface-dark"
-                  >
+                    className="h-7 w-7 items-center justify-center rounded-xl bg-white shadow-xs active:scale-95 dark:bg-surface-dark">
                     <Ionicons name="remove" size={16} color={palette.ink} />
                   </Pressable>
                   <AppText className="min-w-16 text-center font-bold">
@@ -302,8 +405,7 @@ export default function PantryScanReviewScreen() {
                   </AppText>
                   <Pressable
                     onPress={() => updateItemQty(item.key, 1)}
-                    className="h-7 w-7 items-center justify-center rounded-xl bg-white shadow-xs active:scale-95 dark:bg-surface-dark"
-                  >
+                    className="h-7 w-7 items-center justify-center rounded-xl bg-white shadow-xs active:scale-95 dark:bg-surface-dark">
                     <Ionicons name="add" size={16} color={palette.ink} />
                   </Pressable>
                 </View>
@@ -322,15 +424,19 @@ export default function PantryScanReviewScreen() {
           {/* Submit batch */}
           <Button
             title={
-              isSaving
-                ? "Đang lưu vào tủ..."
-                : unassigned > 0
-                  ? `Còn ${unassigned} món chưa chọn nguyên liệu`
-                  : `Lưu tất cả (${items.length} món)`
+              isMatching
+                ? "Đang khớp nguyên liệu..."
+                : isCreating
+                  ? "Đang tạo nguyên liệu mới..."
+                  : isSaving
+                    ? "Đang lưu vào tủ..."
+                    : newCount > 0
+                      ? `Lưu tất cả (${items.length} món, tạo mới ${newCount})`
+                      : `Lưu tất cả (${items.length} món)`
             }
             onPress={handleSaveBatch}
             variant="primary"
-            disabled={isSaving || items.length === 0 || unassigned > 0}
+            disabled={busy || items.length === 0}
             className="mt-3"
           />
         </ScrollView>

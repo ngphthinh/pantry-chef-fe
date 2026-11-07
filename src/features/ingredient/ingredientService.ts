@@ -27,6 +27,13 @@ export class IngredientService {
     private readonly categoryAdmin: IIngredientCategoryAdminApi,
   ) {}
 
+  createBatch = (
+    items: IngredientCreateRequest[],
+  ): Promise<IngredientResponse[]> =>
+    this.translateIngredientError(() =>
+      this.ingredients.createBatch({ items: items.map(this.normalize) }),
+    );
+
   search = (
     query: IngredientQuery = {},
   ): Promise<CursorResponse<IngredientResponse>> =>
