@@ -49,7 +49,9 @@ export default function ExternalRecipeDetailScreen() {
     );
   }
 
-  const steps = [...detail.steps].sort((a, b) => a.stepOrder - b.stepOrder);
+  const steps = [...(Array.isArray(detail.steps) ? detail.steps : [])].sort(
+    (a, b) => a.stepOrder - b.stepOrder,
+  );
 
   return (
     <Screen>
@@ -97,7 +99,8 @@ export default function ExternalRecipeDetailScreen() {
       <View className="gap-2">
         <AppText variant="heading">Nguyên liệu</AppText>
         <Card className="overflow-hidden">
-          {detail.ingredients.map((ingredient, index) => (
+          {(Array.isArray(detail.ingredients) ? detail.ingredients : []).map(
+            (ingredient, index) => (
             <View
               key={ingredient.id}
               className={`flex-row items-center justify-between gap-3 px-4 py-3 ${index > 0 ? 'border-t border-line dark:border-line-dark' : ''}`}

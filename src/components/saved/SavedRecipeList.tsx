@@ -53,10 +53,11 @@ export function SavedRecipeList({ favoriteOnly = false, header }: Props) {
   });
 
   const isFiltering = keyword !== "" || minRating !== undefined;
-  const visible = favoriteOnly ? items.filter((i) => i.favorite) : items;
+  const safeItems = Array.isArray(items) ? items : [];
+  const visible = favoriteOnly ? safeItems.filter((i) => i.favorite) : safeItems;
 
   const handleEndReached = () => {
-    if (visible.length === 0 || isLoading || isLoadingMore) return;
+    if (!visible || visible.length === 0 || isLoading || isLoadingMore) return;
     void loadMore();
   };
 

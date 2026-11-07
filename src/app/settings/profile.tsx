@@ -19,6 +19,8 @@ import { TextField } from "@/components/ui/TextField";
 import type { UserUpdateRequest } from "@/types";
 import type { PickedImage } from "@/types";
 import { useAppTheme } from "@/core/theme/useAppTheme";
+import { getErrorMessage } from "@/core/http/apiError";
+import { validateImageSize } from "@/core/utils/imageValidation";
 import { useUser } from "@/features/auth/useUser";
 
 function SectionTitle({
@@ -112,6 +114,13 @@ export default function ProfileScreen() {
 
       const asset = result.assets[0];
 
+      // Kiểm tra dung lượng ảnh (Tối đa 10MB)
+      const sizeValidation = validateImageSize(asset);
+      if (!sizeValidation.valid) {
+        Alert.alert("Ảnh quá dung lượng", sizeValidation.error);
+        return;
+      }
+
       const image: PickedImage = {
         uri: asset.uri,
         fileName: asset.fileName ?? "avatar.jpg",
@@ -123,12 +132,7 @@ export default function ProfileScreen() {
 
       Alert.alert("Thành công", "Ảnh đại diện đã được cập nhật.");
     } catch (error) {
-      Alert.alert(
-        "Lỗi",
-        error instanceof Error
-          ? error.message
-          : "Không thể cập nhật ảnh đại diện.",
-      );
+      Alert.alert("Lỗi", getErrorMessage(error));
     } finally {
       setAvatarLoading(false);
     }

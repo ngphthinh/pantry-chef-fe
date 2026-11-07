@@ -19,6 +19,13 @@ export function toApiError(error: unknown): ApiError {
 
     const data = error.response?.data;
 
+    if (error.response?.status === 413) {
+      return new ApiError(
+        "Dung lượng ảnh vượt quá giới hạn cho phép của hệ thống (tối đa 10MB).",
+        413,
+      );
+    }
+
     const message =
       data?.message ??
       data?.detail ??
@@ -33,7 +40,20 @@ export function toApiError(error: unknown): ApiError {
 }
 
 export function getErrorMessage(error: unknown): string {
+  if (axios.isAxiosError(error) && error.response?.status === 413) {
+    return "Dung lượng ảnh vượt quá giới hạn cho phép của hệ thống (tối đa 10MB).";
+  }
+
   if (error instanceof Error) {
+    const msg = error.message.toLowerCase();
+    if (
+      msg.includes("maximum upload size") ||
+      msg.includes("payload too large") ||
+      msg.includes("sizelimitexceeded") ||
+      msg.includes("quá dung lượng")
+    ) {
+      return "Dung lượng ảnh vượt quá giới hạn cho phép của hệ thống (tối đa 10MB).";
+    }
     return error.message;
   }
 

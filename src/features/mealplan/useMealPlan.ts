@@ -127,6 +127,11 @@ export function useMealPlan() {
 
   const addEntry = useCallback(
     async (body: MealPlanEntryCreateRequest) => {
+      const todayStr = formatLocalDate(new Date());
+      if (body.date < todayStr) {
+        throw new Error("Không thể thêm bữa ăn cho ngày trong quá khứ");
+      }
+
       let planId = currentPlan?.id;
       if (!planId) {
         // Tự động tạo plan nếu chưa có
@@ -141,6 +146,39 @@ export function useMealPlan() {
       return dispatch(addMealPlanEntry(planId, body));
     },
     [dispatch, currentPlan, selectedWeekStart],
+  );
+
+  const addEntries = useCallback(
+    async (entries: MealPlanEntryCreateRequest[]) => {
+      if (entries.length === 0) return [];
+      const todayStr = formatLocalDate(new Date());
+      for (const body of entries) {
+        if (body.date < todayStr) {
+          throw new Error("Không thể thêm bữa ăn cho ngày trong quá khứ");
+        }
+      }
+
+      let planId = currentPlan?.id;
+      if (!planId) {
+        const [y, m, d] = entries[0].date.split("-").map(Number);
+        const targetWeekStart = getMondayOfWeek(new Date(y, m - 1, d, 12, 0, 0));
+        const newPlan = await dispatch(
+          createMealPlan({
+            weekStart: targetWeekStart,
+            entries,
+          }),
+        );
+        return newPlan.entries;
+      }
+
+      const results: MealPlanEntryResponse[] = [];
+      for (const entry of entries) {
+        const res = await dispatch(addMealPlanEntry(planId, entry));
+        results.push(res);
+      }
+      return results;
+    },
+    [dispatch, currentPlan],
   );
 
   const toggleCooked = useCallback(
@@ -232,6 +270,7 @@ export function useMealPlan() {
     goToCurrentWeek,
     goToSpecificWeek,
     addEntry,
+    addEntries,
     toggleCooked,
     updateEntry,
     removeEntry,

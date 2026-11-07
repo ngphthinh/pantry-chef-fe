@@ -86,6 +86,12 @@ export function useShopping() {
     [dispatch],
   );
 
+  /** Xoá trực tiếp không cần dialog hỏi (dùng cho trường hợp ghi đè/cập nhật). */
+  const removeList = useCallback(
+    (id: string) => runAction(() => dispatch(deleteShoppingList(id)), "Không thể xoá danh sách."),
+    [dispatch],
+  );
+
   return useMemo(
     () => ({
       lists,
@@ -100,6 +106,7 @@ export function useShopping() {
       createFromMealPlan,
       createFromRecipe,
       confirmAndRemove,
+      removeList,
     }),
     [
       lists,
@@ -112,6 +119,7 @@ export function useShopping() {
       createFromMealPlan,
       createFromRecipe,
       confirmAndRemove,
+      removeList,
     ],
   );
 }

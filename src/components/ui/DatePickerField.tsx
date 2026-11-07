@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Modal, Pressable } from "react-native";
+import { Alert, Modal, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Calendar, LocaleConfig } from "react-native-calendars";
 
@@ -112,12 +112,20 @@ export function DatePickerField({
                 key={isDark ? "dark" : "light"} // theme của lịch không tự cập nhật nên remount khi đổi sáng/tối
                 current={value}
                 minDate={minDate}
+                disableAllTouchEventsForDisabledDays={true}
                 firstDay={1}
                 enableSwipeMonths
                 markedDates={{
                   [value]: { selected: true, selectedColor: brand },
                 }}
                 onDayPress={(day) => {
+                  if (minDate && day.dateString < minDate) {
+                    Alert.alert(
+                      "Ngày không hợp lệ",
+                      "Không thể chọn ngày trong quá khứ.",
+                    );
+                    return;
+                  }
                   onChange(day.dateString);
                   setOpen(false);
                 }}

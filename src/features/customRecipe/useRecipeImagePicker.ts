@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { getErrorMessage } from "@/core/http/apiError";
+import { validateImageSize } from "@/core/utils/imageValidation";
 import type { PickedImage } from "@/types";
 
 /** `message` rỗng nghĩa là người dùng tự huỷ, màn hình không cần báo lỗi. */
@@ -24,6 +25,13 @@ export function useRecipeImagePicker() {
       if (result.canceled || !result.assets[0]) return { ok: false };
 
       const asset = result.assets[0];
+
+      // Kiểm tra dung lượng ảnh (Tối đa 10MB)
+      const sizeValidation = validateImageSize(asset);
+      if (!sizeValidation.valid) {
+        return { ok: false, message: sizeValidation.error };
+      }
+
       return {
         ok: true,
         image: {

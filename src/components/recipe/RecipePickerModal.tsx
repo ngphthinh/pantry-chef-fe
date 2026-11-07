@@ -21,17 +21,27 @@ type TabMode = "suggestions" | "random" | "search" | "custom";
 interface RecipePickerModalProps {
   visible: boolean;
   onClose: () => void;
-  onSelectRecipe: (recipe: RecipeSummaryResponse) => void;
+  onSelectRecipe?: (recipe: RecipeSummaryResponse) => void;
+  onSelectRecipes?: (recipes: RecipeSummaryResponse[]) => void;
   selectedRecipeId?: string;
+  selectedRecipeIds?: string[];
+  initialSelectedRecipes?: RecipeSummaryResponse[];
+  multiSelect?: boolean;
 }
 
 export function RecipePickerModal({
   visible,
   onClose,
   onSelectRecipe,
+  onSelectRecipes,
   selectedRecipeId,
+  selectedRecipeIds,
+  initialSelectedRecipes,
+  multiSelect,
 }: RecipePickerModalProps) {
-  const { palette, brand } = useAppTheme();
+  const { palette, brand, isDark } = useAppTheme();
+  const isMulti = Boolean(multiSelect || onSelectRecipes);
+  const [selectedMap, setSelectedMap] = useState<Map<string, RecipeSummaryResponse>>(new Map());
   const [activeTab, setActiveTab] = useState<TabMode>("suggestions");
   const [recipes, setRecipes] = useState<RecipeSummaryResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -78,6 +88,53 @@ export function RecipePickerModal({
     if (visible) loadRecipes(activeTab, submittedQuery);
   }, [visible, activeTab, submittedQuery, loadRecipes]);
 
+  // Đồng bộ danh sách đang chọn khi modal hiển thị
+  useEffect(() => {
+    if (visible) {
+      const map = new Map<string, RecipeSummaryResponse>();
+      if (initialSelectedRecipes && initialSelectedRecipes.length > 0) {
+        initialSelectedRecipes.forEach((r) => {
+          const key = r.id || r.externalId;
+          if (key) map.set(key, r);
+        });
+      } else if (selectedRecipeIds && selectedRecipeIds.length > 0) {
+        selectedRecipeIds.forEach((id) => {
+          map.set(id, { id, title: "", imageUrl: null } as RecipeSummaryResponse);
+        });
+      } else if (selectedRecipeId) {
+        map.set(selectedRecipeId, { id: selectedRecipeId, title: "", imageUrl: null } as RecipeSummaryResponse);
+      }
+      setSelectedMap(map);
+    }
+  }, [visible, selectedRecipeId, selectedRecipeIds, initialSelectedRecipes]);
+
+  const handleToggleRecipe = (item: RecipeSummaryResponse) => {
+    const key = item.id || item.externalId;
+    if (!key) return;
+
+    if (!isMulti) {
+      onSelectRecipe?.(item);
+      onClose();
+      return;
+    }
+
+    setSelectedMap((prev) => {
+      const next = new Map(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.set(key, item);
+      }
+      return next;
+    });
+  };
+
+  const handleConfirm = () => {
+    const list = Array.from(selectedMap.values()).filter(Boolean);
+    onSelectRecipes?.(list);
+    onClose();
+  };
+
   const handleTabChange = (tab: TabMode) => setActiveTab(tab);
 
   const handleSearchSubmit = () => {
@@ -107,12 +164,14 @@ export function RecipePickerModal({
       <View className="flex-1 bg-canvas dark:bg-canvas-dark">
         {/* Header */}
         <View className="flex-row items-center justify-between border-b border-line px-5 py-4 dark:border-line-dark">
-          <View>
+          <View className="flex-1 pr-2">
             <AppText variant="title" className="text-xl font-bold">
-              Chọn công thức
+              {isMulti ? "Chọn các món cho bữa ăn" : "Chọn công thức"}
             </AppText>
             <AppText variant="caption" className="text-muted">
-              Kết nối trực tiếp với thực đơn bữa ăn
+              {isMulti
+                ? "Chạm để chọn nhiều món ăn cùng lúc"
+                : "Kết nối trực tiếp với thực đơn bữa ăn"}
             </AppText>
           </View>
           <Pressable
@@ -261,23 +320,42 @@ export function RecipePickerModal({
             }
             contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
             renderItem={({ item }) => {
-              const isSelected =
-                selectedRecipeId && item.id === selectedRecipeId;
+              const key = item.id || item.externalId || "";
+              const isSelected = isMulti
+                ? selectedMap.has(key)
+                : Boolean(selectedRecipeId && item.id === selectedRecipeId);
               const diffBadge = getDifficultyLabel(item.difficulty);
 
               return (
                 <Pressable
-                  onPress={() => {
-                    onSelectRecipe(item);
-                    onClose();
-                  }}
+                  onPress={() => handleToggleRecipe(item)}
                   className="active:opacity-85">
                   <Card
-                    className={`flex-row overflow-hidden p-3 transition-all ${
+                    className={`flex-row items-center overflow-hidden p-3 transition-all ${
                       isSelected
                         ? "border-2 border-brand bg-brandSoft dark:bg-surface-dark"
                         : "border border-line dark:border-line-dark"
                     }`}>
+                    {/* Checkbox selector in multi-select mode */}
+                    {isMulti && (
+                      <View
+                        style={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: 6,
+                          borderWidth: 1.8,
+                          borderColor: isSelected ? brand : palette.muted,
+                          backgroundColor: isSelected ? brand : "transparent",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginRight: 10,
+                        }}>
+                        {isSelected && (
+                          <Ionicons name="checkmark" size={15} color="#fff" />
+                        )}
+                      </View>
+                    )}
+
                     {/* Thumbnail */}
                     <View className="h-20 w-20 overflow-hidden rounded-xl bg-soft dark:bg-canvas-dark">
                       {item.imageUrl ? (
@@ -306,7 +384,7 @@ export function RecipePickerModal({
                             className="flex-1 text-base font-bold text-ink dark:text-ink-dark">
                             {item.title}
                           </AppText>
-                          {isSelected && (
+                          {isSelected && !isMulti && (
                             <View className="rounded-full bg-brand/15 px-2.5 py-0.5">
                               <AppText className="text-xs font-bold text-brand">
                                 Đang chọn
@@ -385,6 +463,38 @@ export function RecipePickerModal({
               );
             }}
           />
+        )}
+
+        {/* Multi-select bottom action bar */}
+        {isMulti && (
+          <View className="border-t border-line bg-surface px-5 py-3.5 dark:border-line-dark dark:bg-surface-dark flex-row items-center justify-between shadow-lg">
+            <View className="flex-1 pr-3">
+              <AppText className="text-sm font-bold text-ink dark:text-ink-dark">
+                Đã chọn {selectedMap.size} món
+              </AppText>
+              <AppText
+                variant="caption"
+                className="text-muted"
+                numberOfLines={1}>
+                {selectedMap.size === 0
+                  ? "Chạm vào các món để thêm vào bữa"
+                  : "Bấm xác nhận để đưa vào thực đơn"}
+              </AppText>
+            </View>
+            <Pressable
+              onPress={handleConfirm}
+              disabled={selectedMap.size === 0}
+              style={{
+                backgroundColor:
+                  selectedMap.size > 0 ? brand : isDark ? "#333" : "#D1D5DB",
+                opacity: selectedMap.size > 0 ? 1 : 0.6,
+              }}
+              className="rounded-xl px-5 py-2.5 active:opacity-80">
+              <AppText className="text-sm font-bold text-white">
+                Xác nhận ({selectedMap.size})
+              </AppText>
+            </Pressable>
+          </View>
         )}
       </View>
     </Modal>

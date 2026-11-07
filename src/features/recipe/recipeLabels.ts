@@ -76,6 +76,7 @@ export function formatTimer(totalSeconds: number): string {
 export function recipeHref(recipe: RecipeSummaryResponse): string | null {
   if (recipe.externalId) return `/recipe/external/${encodeURIComponent(recipe.externalId)}`;
   if (recipe.custom && recipe.id) return `/recipe/custom/${recipe.id}`;
+  if (recipe.id) return `/recipe/saved/${recipe.id}`;
   return null;
 }
 

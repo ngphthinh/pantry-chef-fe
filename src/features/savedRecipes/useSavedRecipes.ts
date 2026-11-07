@@ -21,11 +21,15 @@ type ListQuery = Omit<SavedRecipeQuery, "cursor">;
 
 export function useSavedRecipes() {
     const dispatch = useAppDispatch();
-    const items = useAppSelector((s) => s.savedRecipes.items);
-    const detail = useAppSelector((s) => s.savedRecipes.detail);
-    const status = useAppSelector((s) => s.savedRecipes.status);
-    const hasNext = useAppSelector((s) => s.savedRecipes.hasNext);
-    const queryKey = useAppSelector((s) => s.savedRecipes.queryKey);
+    const rawItems = useAppSelector((s) => s.savedRecipes?.items);
+    const items = useMemo(
+        () => (Array.isArray(rawItems) ? rawItems : []),
+        [rawItems],
+    );
+    const detail = useAppSelector((s) => s.savedRecipes?.detail);
+    const status = useAppSelector((s) => s.savedRecipes?.status);
+    const hasNext = useAppSelector((s) => s.savedRecipes?.hasNext);
+    const queryKey = useAppSelector((s) => s.savedRecipes?.queryKey);
 
     const load = useCallback(
         (query?: ListQuery) =>

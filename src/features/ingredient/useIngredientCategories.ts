@@ -18,9 +18,9 @@ export function useIngredientCategories() {
     [dispatch],
   );
 
-  // Lỗi bỏ qua: bộ lọc theo nhóm không bắt buộc nên màn hình vẫn dùng được khi chưa có nhóm.
+  // Tải mới danh mục từ server khi mount để luôn đồng bộ danh mục mới nhất
   useEffect(() => {
-    void load();
+    void load(true);
   }, [load]);
 
   return useMemo(

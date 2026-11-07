@@ -257,9 +257,9 @@ export default function MoreHub() {
                   paddingVertical: 2,
                   borderRadius: 8,
                 }}>
-                <AppText style={{ fontSize: 10, fontWeight: "800", color: colors.primary }}>
+                {/* <AppText style={{ fontSize: 10, fontWeight: "800", color: colors.primary }}>
                   BẾP TRƯỞNG
-                </AppText>
+                </AppText> */}
               </View>
             </View>
 

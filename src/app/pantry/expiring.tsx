@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -7,7 +7,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, type Href } from "expo-router";
 import { AppText } from "@/components/ui/AppText";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -36,17 +36,62 @@ const TONE_MAP = {
 
 export default function PantryExpiringScreen() {
   const router = useRouter();
-  const { brand, palette } = useAppTheme();
-  const { expiringItems, isLoading, loadExpiring, consume, remove } =
-    usePantry();
+  const params = useLocalSearchParams<{ tab?: string }>();
+  const { brand, palette, isDark, colors } = useAppTheme();
+  const {
+    items,
+    expiringItems,
+    isLoading,
+    loadExpiring,
+    loadItems,
+    consume,
+    remove,
+  } = usePantry();
+
+  // Tab chuyển đổi: "soon" (Sắp hết hạn) hoặc "expired" (Đã hết hạn)
+  const [activeTab, setActiveTab] = useState<"soon" | "expired">(
+    params.tab === "expired" ? "expired" : "soon",
+  );
 
   const [selectedDays, setSelectedDays] = useState(3);
-  // Text đang gõ; null = đang dùng chip nhanh
+  // Text đang gõ số ngày; null = đang dùng chip nhanh
   const [customText, setCustomText] = useState<string | null>(null);
 
   useEffect(() => {
+    if (params.tab === "expired") {
+      setActiveTab("expired");
+    } else if (params.tab === "soon") {
+      setActiveTab("soon");
+    }
+  }, [params.tab]);
+
+  useEffect(() => {
     loadExpiring(selectedDays).catch(() => {});
-  }, [selectedDays, loadExpiring]);
+    if (items.length === 0) {
+      loadItems().catch(() => {});
+    }
+  }, [selectedDays, loadExpiring, loadItems, items.length]);
+
+  // Danh sách CHỈ thực phẩm SẮP hết hạn
+  const soonItems = useMemo(
+    () => expiringItems.filter((i) => i.freshness.status === "soon"),
+    [expiringItems],
+  );
+
+  // Danh sách CHỈ thực phẩm ĐÃ hết hạn (kết hợp từ expiringItems và toàn bộ items trong tủ)
+  const expiredItems = useMemo(() => {
+    const map = new Map<string, (typeof expiringItems)[number]>();
+    expiringItems.forEach((i) => {
+      if (i.freshness.status === "expired") map.set(i.id, i);
+    });
+    items.forEach((i) => {
+      if (i.freshness.status === "expired") map.set(i.id, i);
+    });
+    return Array.from(map.values()).sort(
+      (a, b) =>
+        (a.freshness.daysRemaining ?? 0) - (b.freshness.daysRemaining ?? 0),
+    );
+  }, [expiringItems, items]);
 
   const handlePickPreset = (days: number) => {
     setCustomText(null);
@@ -82,7 +127,7 @@ export default function PantryExpiringScreen() {
                 if (isNaN(qty) || qty <= 0) return;
                 try {
                   await consume(item.id, qty);
-                  await loadExpiring(selectedDays);
+                  await Promise.all([loadExpiring(selectedDays), loadItems()]);
                   Alert.alert("Thành công", `Đã dùng ${qty} ${item.unit}`);
                 } catch {
                   Alert.alert("Lỗi", "Không thể dùng bớt");
@@ -103,7 +148,7 @@ export default function PantryExpiringScreen() {
               onPress: async () => {
                 try {
                   await consume(item.id, item.quantity);
-                  await loadExpiring(selectedDays);
+                  await Promise.all([loadExpiring(selectedDays), loadItems()]);
                 } catch {
                   Alert.alert("Lỗi", "Không thể thao tác");
                 }
@@ -113,10 +158,10 @@ export default function PantryExpiringScreen() {
         );
   };
 
-  const handleQuickRemove = (id: string) => {
+  const handleQuickRemove = (id: string, name?: string) => {
     Alert.alert(
-      "Xoá khỏi tủ",
-      "Bạn có chắc chắn muốn bỏ nguyên liệu đã hết hạn này?",
+      "Bỏ thực phẩm hết hạn",
+      `Bạn có chắc chắn muốn bỏ "${name || "nguyên liệu"}" đã hết hạn này khỏi tủ?`,
       [
         { text: "Huỷ", style: "cancel" },
         {
@@ -125,7 +170,8 @@ export default function PantryExpiringScreen() {
           onPress: async () => {
             try {
               await remove(id);
-              await loadExpiring(selectedDays);
+              await Promise.all([loadExpiring(selectedDays), loadItems()]);
+              Alert.alert("Thành công", `Đã bỏ ${name || "nguyên liệu"} khỏi tủ.`);
             } catch {
               Alert.alert("Lỗi", "Không thể xoá");
             }
@@ -134,142 +180,534 @@ export default function PantryExpiringScreen() {
       ],
     );
   };
+
+  const handleClearAllExpired = () => {
+    if (expiredItems.length === 0) return;
+    Alert.alert(
+      "Dọn sạch thực phẩm hết hạn",
+      `Bạn có chắc muốn bỏ toàn bộ ${expiredItems.length} thực phẩm đã hết hạn khỏi tủ?`,
+      [
+        { text: "Huỷ", style: "cancel" },
+        {
+          text: "Bỏ tất cả",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await Promise.all(expiredItems.map((item) => remove(item.id)));
+              await Promise.all([loadExpiring(selectedDays), loadItems()]);
+              Alert.alert(
+                "Đã dọn dẹp",
+                `Đã dọn bỏ thành công ${expiredItems.length} thực phẩm hết hạn!`,
+              );
+            } catch {
+              Alert.alert("Lỗi", "Không thể hoàn tất việc dọn dẹp.");
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <View className="flex-1 bg-canvas dark:bg-canvas-dark">
       <Screen>
         {/* Header */}
-        <View className="flex-row items-center justify-between pb-2">
+        <View className="flex-row items-center justify-between pb-1">
           <View className="flex-row items-center gap-3">
             <Pressable
               onPress={() => router.back()}
-              className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark">
+              className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark active:opacity-75">
               <Ionicons name="arrow-back" size={20} color={palette.ink} />
             </Pressable>
             <View>
-              <AppText variant="title">Sắp hết hạn</AppText>
+              <AppText variant="title">
+                {activeTab === "soon" ? "Sắp hết hạn" : "Đã hết hạn"}
+              </AppText>
               <AppText variant="caption">
-                Ưu tiên chế biến để tránh lãng phí
+                {activeTab === "soon"
+                  ? "Ưu tiên chế biến để tránh lãng phí"
+                  : "Kiểm tra và dọn bỏ để bảo vệ sức khỏe"}
               </AppText>
             </View>
           </View>
-          <View className="h-9 w-9 items-center justify-center rounded-2xl bg-warnBg shadow-sm dark:bg-warnBg-dark">
+          <View
+            style={{
+              backgroundColor:
+                activeTab === "soon"
+                  ? isDark
+                    ? "rgba(245, 158, 11, 0.25)"
+                    : "#FEF3C7"
+                  : isDark
+                    ? "rgba(239, 68, 68, 0.25)"
+                    : "#FEE2E2",
+            }}
+            className="h-10 w-10 items-center justify-center rounded-2xl shadow-sm">
+            <Ionicons
+              name={activeTab === "soon" ? "hourglass-outline" : "trash-outline"}
+              size={20}
+              color={
+                activeTab === "soon"
+                  ? isDark
+                    ? "#FBBF24"
+                    : "#D97706"
+                  : isDark
+                    ? "#F87171"
+                    : "#DC2626"
+              }
+            />
+          </View>
+        </View>
+
+        {/* 2 Tab Switcher: Sắp hết hạn vs Đã hết hạn */}
+        <View
+          style={{
+            backgroundColor: isDark ? "rgba(255, 255, 255, 0.05)" : "#F1F5F9",
+            borderColor: colors.border,
+            borderWidth: 1,
+            borderRadius: 18,
+            padding: 4,
+          }}
+          className="flex-row items-center gap-1.5 my-2">
+          {/* Tab 1: Sắp hết hạn */}
+          <Pressable
+            onPress={() => setActiveTab("soon")}
+            style={{
+              backgroundColor:
+                activeTab === "soon"
+                  ? isDark
+                    ? "rgba(245, 158, 11, 0.25)"
+                    : "#FEF3C7"
+                  : "transparent",
+              borderColor:
+                activeTab === "soon"
+                  ? isDark
+                    ? "rgba(245, 158, 11, 0.45)"
+                    : "rgba(217, 119, 6, 0.3)"
+                  : "transparent",
+              borderWidth: 1,
+              borderRadius: 14,
+            }}
+            className="flex-1 flex-row items-center justify-center py-2.5 px-3 gap-2 active:opacity-80">
             <Ionicons
               name="hourglass-outline"
-              size={20}
-              color={palette.warnInk}
+              size={17}
+              color={
+                activeTab === "soon"
+                  ? isDark
+                    ? "#FBBF24"
+                    : "#D97706"
+                  : palette.muted
+              }
             />
-          </View>
-        </View>
-
-        {/* Chip nhanh */}
-        <View className="flex-row flex-wrap gap-2 py-1">
-          {DAY_OPTIONS.map((opt) => (
-            <Chip
-              key={opt.days}
-              label={opt.label}
-              selected={customText === null && selectedDays === opt.days}
-              onPress={() => handlePickPreset(opt.days)}
-            />
-          ))}
-        </View>
-
-        {/* Nhập số ngày */}
-        <View className="flex-row items-end gap-3">
-          <View className="flex-1">
-            <TextField
-              label="Hoặc nhập số ngày"
-              value={customText ?? ""}
-              onChangeText={handleCustomChange}
-              placeholder={`Ví dụ: 14 (tối đa ${MAX_DAYS})`}
-              keyboardType="number-pad"
-              maxLength={3}
-            />
-          </View>
-          <View className="h-12 justify-center">
-            <AppText className="font-semibold text-muted">ngày tới</AppText>
-          </View>
-        </View>
-
-        {isCustomInvalid && (
-          <AppText variant="caption" className="px-1 font-bold text-dangerInk">
-            Nhập số ngày từ 1 đến {MAX_DAYS}.
-          </AppText>
-        )}
-
-        {/* Content */}
-        {isLoading ? (
-          <View className="items-center py-16">
-            <ActivityIndicator size="large" color={brand} />
-            <AppText variant="caption" className="mt-2">
-              Đang quét nguyên liệu sắp hết hạn...
+            <AppText
+              style={{
+                fontSize: 13,
+                fontWeight: activeTab === "soon" ? "800" : "600",
+                color:
+                  activeTab === "soon"
+                    ? isDark
+                      ? "#FBBF24"
+                      : "#D97706"
+                    : palette.muted,
+              }}>
+              Sắp hết hạn
             </AppText>
-          </View>
-        ) : expiringItems.length === 0 ? (
-          <Card className="items-center justify-center p-8 text-center shadow-sm">
-            <View className="mb-3 h-16 w-16 items-center justify-center rounded-full bg-successBg shadow-inner dark:bg-surface-dark">
-              <Ionicons
-                name="checkmark-done"
-                size={32}
-                color={palette.successInk}
-              />
+            <View
+              style={{
+                backgroundColor:
+                  activeTab === "soon"
+                    ? isDark
+                      ? "rgba(245, 158, 11, 0.35)"
+                      : "rgba(217, 119, 6, 0.18)"
+                    : isDark
+                      ? "rgba(255, 255, 255, 0.08)"
+                      : "#E2E8F0",
+                paddingHorizontal: 7,
+                paddingVertical: 1.5,
+                borderRadius: 9999,
+              }}>
+              <AppText
+                style={{
+                  fontSize: 11,
+                  fontWeight: "800",
+                  color:
+                    activeTab === "soon"
+                      ? isDark
+                        ? "#FDE68A"
+                        : "#92400E"
+                      : palette.muted,
+                }}>
+                {soonItems.length}
+              </AppText>
             </View>
-            <AppText variant="heading" className="text-center">
-              Tuyệt vời!
-            </AppText>
-            <AppText variant="caption" className="mt-1 text-center">
-              Không có nguyên liệu nào sắp hết hạn trong {selectedDays} ngày
-              tới.
-            </AppText>
-          </Card>
-        ) : (
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            className="gap-3 pb-12">
-            {expiringItems.map((item) => (
-              <Card key={item.id} className="p-4 shadow-sm">
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center gap-3">
-                    <PantryItemThumbnail
-                      photoUri={item.photoUri}
-                      location={item.location}
-                      className="h-11 w-11"
-                      fallbackIcon="alarm-outline"
-                      fallbackIconColor={palette.warnInk}
-                      fallbackBgClassName="bg-warnBg dark:bg-warnBg-dark"
-                    />
-                    <View>
-                      <AppText variant="heading">{item.ingredientName}</AppText>
-                      <AppText variant="caption">
-                        {Math.round(item.quantity)} {item.unit} · HSD:{" "}
-                        {item.expiryDate
-                          ? toDisplayDate(item.expiryDate)
-                          : "N/A"}
-                      </AppText>
-                    </View>
-                  </View>
-                  <Badge
-                    label={item.freshness.label}
-                    tone={TONE_MAP[item.freshness.status]}
-                  />
-                </View>
+          </Pressable>
 
-                <View className="mt-3 flex-row gap-2 border-t border-line pt-3 dark:border-line-dark">
-                  <Button
-                    title="Dùng bớt"
-                    variant="primary"
-                    className="flex-1"
-                    onPress={() => handleQuickConsume(item)}
-                  />
-                  <Button
-                    title="Bỏ đi"
-                    variant="outline"
-                    className="flex-1"
-                    onPress={() => handleQuickRemove(item.id)}
+          {/* Tab 2: Đã hết hạn */}
+          <Pressable
+            onPress={() => setActiveTab("expired")}
+            style={{
+              backgroundColor:
+                activeTab === "expired"
+                  ? isDark
+                    ? "rgba(239, 68, 68, 0.25)"
+                    : "#FEE2E2"
+                  : "transparent",
+              borderColor:
+                activeTab === "expired"
+                  ? isDark
+                    ? "rgba(239, 68, 68, 0.45)"
+                    : "rgba(220, 38, 38, 0.3)"
+                  : "transparent",
+              borderWidth: 1,
+              borderRadius: 14,
+            }}
+            className="flex-1 flex-row items-center justify-center py-2.5 px-3 gap-2 active:opacity-80">
+            <Ionicons
+              name="trash-outline"
+              size={17}
+              color={
+                activeTab === "expired"
+                  ? isDark
+                    ? "#F87171"
+                    : "#DC2626"
+                  : palette.muted
+              }
+            />
+            <AppText
+              style={{
+                fontSize: 13,
+                fontWeight: activeTab === "expired" ? "800" : "600",
+                color:
+                  activeTab === "expired"
+                    ? isDark
+                      ? "#F87171"
+                      : "#DC2626"
+                    : palette.muted,
+              }}>
+              Đã hết hạn
+            </AppText>
+            <View
+              style={{
+                backgroundColor:
+                  activeTab === "expired"
+                    ? isDark
+                      ? "rgba(239, 68, 68, 0.35)"
+                      : "rgba(220, 38, 38, 0.18)"
+                    : isDark
+                      ? "rgba(255, 255, 255, 0.08)"
+                      : "#E2E8F0",
+                paddingHorizontal: 7,
+                paddingVertical: 1.5,
+                borderRadius: 9999,
+              }}>
+              <AppText
+                style={{
+                  fontSize: 11,
+                  fontWeight: "800",
+                  color:
+                    activeTab === "expired"
+                      ? isDark
+                        ? "#FECACA"
+                        : "#991B1B"
+                      : palette.muted,
+                }}>
+                {expiredItems.length}
+              </AppText>
+            </View>
+          </Pressable>
+        </View>
+
+        {/* Nội dung Tab: Sắp hết hạn */}
+        {activeTab === "soon" ? (
+          <View className="flex-1 gap-2.5">
+            {/* Chip nhanh chọn mốc ngày */}
+            <View className="flex-row flex-wrap gap-2 py-0.5">
+              {DAY_OPTIONS.map((opt) => (
+                <Chip
+                  key={opt.days}
+                  label={opt.label}
+                  selected={customText === null && selectedDays === opt.days}
+                  onPress={() => handlePickPreset(opt.days)}
+                />
+              ))}
+            </View>
+
+            {/* Nhập số ngày tuỳ chọn */}
+            <View className="flex-row items-end gap-3">
+              <View className="flex-1">
+                <TextField
+                  label="Hoặc nhập số ngày"
+                  value={customText ?? ""}
+                  onChangeText={handleCustomChange}
+                  placeholder={`Ví dụ: 14 (tối đa ${MAX_DAYS})`}
+                  keyboardType="number-pad"
+                  maxLength={3}
+                />
+              </View>
+              <View className="h-12 justify-center">
+                <AppText className="font-semibold text-muted">ngày tới</AppText>
+              </View>
+            </View>
+
+            {isCustomInvalid && (
+              <AppText variant="caption" className="px-1 font-bold text-dangerInk">
+                Nhập số ngày từ 1 đến {MAX_DAYS}.
+              </AppText>
+            )}
+
+            {/* Danh sách món sắp hết hạn */}
+            {isLoading ? (
+              <View className="items-center py-16">
+                <ActivityIndicator size="large" color={brand} />
+                <AppText variant="caption" className="mt-2">
+                  Đang quét nguyên liệu sắp hết hạn...
+                </AppText>
+              </View>
+            ) : soonItems.length === 0 ? (
+              <Card className="items-center justify-center p-8 text-center shadow-sm">
+                <View className="mb-3 h-16 w-16 items-center justify-center rounded-full bg-successBg shadow-inner dark:bg-surface-dark">
+                  <Ionicons
+                    name="checkmark-done"
+                    size={32}
+                    color={palette.successInk}
                   />
                 </View>
+                <AppText variant="heading" className="text-center">
+                  Tuyệt vời!
+                </AppText>
+                <AppText variant="caption" className="mt-1 text-center">
+                  Không có nguyên liệu nào sắp hết hạn trong {selectedDays} ngày
+                  tới.
+                </AppText>
               </Card>
-            ))}
-          </ScrollView>
+            ) : (
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                className="gap-3 pb-12">
+                {soonItems.map((item) => (
+                  <Card key={item.id} className="p-4 shadow-sm mb-3">
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-row items-center gap-3 flex-1 pr-2">
+                        <PantryItemThumbnail
+                          photoUri={item.photoUri}
+                          location={item.location}
+                          className="h-12 w-12 rounded-2xl"
+                          fallbackIcon="alarm-outline"
+                          fallbackIconColor={palette.warnInk}
+                          fallbackBgClassName="bg-warnBg dark:bg-warnBg-dark"
+                        />
+                        <View className="flex-1">
+                          <AppText variant="heading" numberOfLines={1}>
+                            {item.ingredientName}
+                          </AppText>
+                          <AppText variant="caption" className="mt-0.5">
+                            {Math.round(item.quantity)} {item.unit} · HSD:{" "}
+                            {item.expiryDate
+                              ? toDisplayDate(item.expiryDate)
+                              : "N/A"}
+                          </AppText>
+                        </View>
+                      </View>
+                      <Badge
+                        label={item.freshness.label}
+                        tone={TONE_MAP[item.freshness.status]}
+                      />
+                    </View>
+
+                    <View className="mt-3 flex-row gap-2 border-t border-line pt-3 dark:border-line-dark">
+                      <Button
+                        title="Dùng bớt"
+                        variant="primary"
+                        className="flex-1"
+                        onPress={() => handleQuickConsume(item)}
+                      />
+                      <Button
+                        title="Chi tiết"
+                        variant="outline"
+                        className="flex-1"
+                        onPress={() => router.push(`/pantry/${item.id}` as Href)}
+                      />
+                    </View>
+                  </Card>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        ) : (
+          /* Nội dung Tab: Đã hết hạn */
+          <View className="flex-1 gap-3">
+            {/* Hộp cảnh báo an toàn thực phẩm */}
+            <View
+              style={{
+                backgroundColor: isDark
+                  ? "rgba(239, 68, 68, 0.14)"
+                  : "#FEF2F2",
+                borderColor: isDark
+                  ? "rgba(239, 68, 68, 0.35)"
+                  : "rgba(220, 38, 38, 0.25)",
+                borderWidth: 1.2,
+              }}
+              className="flex-row items-center gap-3 rounded-2xl p-3.5">
+              <View
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(239, 68, 68, 0.25)"
+                    : "rgba(220, 38, 38, 0.15)",
+                }}
+                className="h-10 w-10 items-center justify-center rounded-xl">
+                <Ionicons
+                  name="warning"
+                  size={20}
+                  color={isDark ? "#F87171" : "#DC2626"}
+                />
+              </View>
+              <View className="flex-1">
+                <AppText
+                  style={{
+                    color: isDark ? "#FECACA" : "#991B1B",
+                    fontWeight: "800",
+                    fontSize: 13,
+                  }}>
+                  Cảnh báo an toàn vệ sinh
+                </AppText>
+                <AppText
+                  style={{
+                    color: isDark ? "rgba(254, 202, 202, 0.85)" : "#B91C1C",
+                    fontSize: 11.5,
+                    marginTop: 1,
+                  }}>
+                  Thực phẩm quá hạn có thể hư hỏng. Hãy dọn bỏ để giữ tủ luôn sạch sẽ!
+                </AppText>
+              </View>
+            </View>
+
+            {/* Nút hành động dọn sạch tất cả nếu có nhiều hơn 1 món hết hạn */}
+            {expiredItems.length > 1 && (
+              <View className="flex-row items-center justify-between px-1">
+                <AppText variant="caption" className="font-bold text-muted">
+                  Có {expiredItems.length} món cần bỏ
+                </AppText>
+                <Pressable
+                  onPress={handleClearAllExpired}
+                  style={{
+                    backgroundColor: isDark
+                      ? "rgba(239, 68, 68, 0.2)"
+                      : "#FEE2E2",
+                    borderColor: isDark
+                      ? "rgba(239, 68, 68, 0.4)"
+                      : "rgba(220, 38, 38, 0.3)",
+                    borderWidth: 1,
+                  }}
+                  className="flex-row items-center gap-1.5 rounded-xl px-3 py-1.5 active:scale-95">
+                  <Ionicons
+                    name="trash"
+                    size={14}
+                    color={isDark ? "#F87171" : "#DC2626"}
+                  />
+                  <AppText
+                    style={{
+                      color: isDark ? "#F87171" : "#DC2626",
+                      fontSize: 11.5,
+                      fontWeight: "700",
+                    }}>
+                    Bỏ tất cả món hết hạn
+                  </AppText>
+                </Pressable>
+              </View>
+            )}
+
+            {/* Danh sách món đã hết hạn */}
+            {isLoading ? (
+              <View className="items-center py-16">
+                <ActivityIndicator size="large" color={brand} />
+                <AppText variant="caption" className="mt-2">
+                  Đang tải danh sách...
+                </AppText>
+              </View>
+            ) : expiredItems.length === 0 ? (
+              <Card className="items-center justify-center p-8 text-center shadow-sm">
+                <View className="mb-3 h-16 w-16 items-center justify-center rounded-full bg-successBg shadow-inner dark:bg-surface-dark">
+                  <Ionicons
+                    name="shield-checkmark"
+                    size={32}
+                    color={palette.successInk}
+                  />
+                </View>
+                <AppText variant="heading" className="text-center">
+                  Kho thực phẩm sạch sẽ!
+                </AppText>
+                <AppText variant="caption" className="mt-1 text-center">
+                  Tuyệt vời! Không có thực phẩm nào bị quá hạn trong tủ của bạn.
+                </AppText>
+              </Card>
+            ) : (
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                className="gap-3 pb-12">
+                {expiredItems.map((item) => (
+                  <Card
+                    key={item.id}
+                    style={{
+                      borderColor: isDark
+                        ? "rgba(239, 68, 68, 0.3)"
+                        : "rgba(220, 38, 38, 0.2)",
+                      borderWidth: 1.2,
+                    }}
+                    className="p-4 shadow-sm mb-3">
+                    <View className="flex-row items-center justify-between">
+                      <View className="flex-row items-center gap-3 flex-1 pr-2">
+                        <PantryItemThumbnail
+                          photoUri={item.photoUri}
+                          location={item.location}
+                          className="h-12 w-12 rounded-2xl"
+                          fallbackIcon="trash-outline"
+                          fallbackIconColor={isDark ? "#F87171" : "#DC2626"}
+                          fallbackBgClassName="bg-red-50 dark:bg-red-950/40"
+                        />
+                        <View className="flex-1">
+                          <AppText
+                            variant="heading"
+                            numberOfLines={1}
+                            style={{
+                              color: isDark ? "#FCA5A5" : "#991B1B",
+                            }}>
+                            {item.ingredientName}
+                          </AppText>
+                          <AppText variant="caption" className="mt-0.5">
+                            {Math.round(item.quantity)} {item.unit} · HSD:{" "}
+                            {item.expiryDate
+                              ? toDisplayDate(item.expiryDate)
+                              : "N/A"}
+                          </AppText>
+                        </View>
+                      </View>
+                      <Badge
+                        label={item.freshness.label}
+                        tone="danger"
+                      />
+                    </View>
+
+                    <View className="mt-3 flex-row gap-2 border-t border-line pt-3 dark:border-line-dark">
+                      <Button
+                        title="Bỏ đi"
+                        variant="outline"
+                        className="flex-1 border-red-300 dark:border-red-800"
+                        onPress={() =>
+                          handleQuickRemove(item.id, item.ingredientName)
+                        }
+                      />
+                      <Button
+                        title="Chi tiết"
+                        variant="outline"
+                        className="flex-1"
+                        onPress={() => router.push(`/pantry/${item.id}` as Href)}
+                      />
+                    </View>
+                  </Card>
+                ))}
+              </ScrollView>
+            )}
+          </View>
         )}
       </Screen>
     </View>
