@@ -3,7 +3,10 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   View,
@@ -15,7 +18,7 @@ import { AppText } from "@/components/ui/AppText";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { DatePickerModal } from "@/components/ui/DatePickerModal";
+import { InlineCalendar } from "@/components/ui/InlineCalendar";
 import { Screen } from "@/components/ui/Screen";
 import { TextField } from "@/components/ui/TextField";
 import { useTheme } from "@/theme";
@@ -23,6 +26,8 @@ import { usePantry } from "@/features/pantry/usePantry";
 import { pantryValidators } from "@/features/pantry/validation";
 import type { StorageLocation, Unit } from "@/types";
 import { toDisplayDate } from "@/core/format/datetime";
+import { getErrorMessage } from "@/core/http/apiError";
+import { validateImageSize } from "@/core/utils/imageValidation";
 
 const TONE_MAP = {
   fresh: "success",
@@ -56,7 +61,7 @@ export default function PantryItemDetailScreen() {
   const [consumeModalVisible, setConsumeModalVisible] = useState(false);
   const [consumeAmount, setConsumeAmount] = useState("1");
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
   const [editQty, setEditQty] = useState("");
   const [editExpiry, setEditExpiry] = useState("");
   const [editLocation, setEditLocation] = useState<StorageLocation>("FRIDGE");
@@ -92,6 +97,7 @@ export default function PantryItemDetailScreen() {
       setEditQty(String(Math.round(selectedItem.quantity)));
       setEditExpiry(selectedItem.expiryDate || "");
       setEditLocation(selectedItem.location || "FRIDGE");
+      setShowCalendar(false);
     }
   }, [selectedItem]);
 
@@ -166,6 +172,13 @@ export default function PantryItemDetailScreen() {
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
 
+      // Kiểm tra dung lượng ảnh (Tối đa 10MB)
+      const sizeValidation = validateImageSize(asset);
+      if (!sizeValidation.valid) {
+        Alert.alert("Ảnh quá dung lượng", sizeValidation.error);
+        return;
+      }
+
       try {
         await uploadPhoto(id, {
           uri: asset.uri,
@@ -174,8 +187,8 @@ export default function PantryItemDetailScreen() {
         });
 
         Alert.alert("Thành công", "Đã cập nhật ảnh.");
-      } catch {
-        Alert.alert("Lỗi", "Không thể tải ảnh lên.");
+      } catch (err: unknown) {
+        Alert.alert("Lỗi tải ảnh", getErrorMessage(err));
       }
     }
   };
@@ -218,6 +231,14 @@ export default function PantryItemDetailScreen() {
 
     if (!res.canceled && res.assets[0]) {
       const asset = res.assets[0];
+
+      // Kiểm tra dung lượng ảnh (Tối đa 10MB)
+      const sizeValidation = validateImageSize(asset);
+      if (!sizeValidation.valid) {
+        Alert.alert("Ảnh quá dung lượng", sizeValidation.error);
+        return;
+      }
+
       try {
         await uploadPhoto(id, {
           uri: asset.uri,
@@ -225,8 +246,8 @@ export default function PantryItemDetailScreen() {
           mimeType: asset.mimeType || "image/jpeg",
         });
         Alert.alert("Thành công", "Đã tải ảnh lên");
-      } catch {
-        Alert.alert("Lỗi", "Không thể tải ảnh lên");
+      } catch (err: unknown) {
+        Alert.alert("Lỗi tải ảnh", getErrorMessage(err));
       }
     }
   };
@@ -448,9 +469,32 @@ export default function PantryItemDetailScreen() {
       </Screen>
 
       {/* Modal Consume */}
-      <Modal visible={consumeModalVisible} transparent animationType="slide">
-        <View className="flex-1 justify-end bg-black/50">
-          <Card className="m-4 gap-4 p-6 shadow-2xl">
+      <Modal
+        visible={consumeModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setConsumeModalVisible(false)}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{
+            flex: 1,
+            justifyContent: "flex-end",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          }}>
+          <Pressable
+            style={{ flex: 1 }}
+            onPress={() => {
+              Keyboard.dismiss();
+              setConsumeModalVisible(false);
+            }}
+          />
+          <Card
+            style={{
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
+              paddingBottom: Platform.OS === "ios" ? 34 : 20,
+            }}
+            className="p-6 gap-4 shadow-2xl">
             <AppText variant="heading">Dùng bớt nguyên liệu</AppText>
             <AppText variant="caption">
               Lượng hiện có: {Math.round(selectedItem.quantity)}{" "}
@@ -465,12 +509,15 @@ export default function PantryItemDetailScreen() {
               placeholder="Ví dụ: 1"
             />
 
-            <View className="flex-row gap-3">
+            <View className="flex-row gap-3 pt-2">
               <Button
                 title="Huỷ"
                 variant="outline"
                 className="flex-1"
-                onPress={() => setConsumeModalVisible(false)}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setConsumeModalVisible(false);
+                }}
               />
               <Button
                 title={isConsuming ? "Đang xử lý..." : "Xác nhận dùng"}
@@ -481,134 +528,251 @@ export default function PantryItemDetailScreen() {
               />
             </View>
           </Card>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Modal Edit */}
-      <Modal visible={editModalVisible} transparent animationType="slide">
-        <View className="flex-1 justify-end bg-black/50">
-          <Card className="m-4 gap-4 p-6 shadow-2xl">
-            <AppText variant="heading">Chỉnh sửa nguyên liệu</AppText>
-
-            <TextField
-              label="Số lượng"
-              value={editQty}
-              onChangeText={setEditQty}
-              keyboardType="numeric"
-            />
-
-            <View>
-              <AppText variant="label" className="mb-2">
-                Hạn sử dụng
+      <Modal
+        visible={editModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditModalVisible(false)}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{
+            flex: 1,
+            justifyContent: "flex-end",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          }}>
+          <Pressable
+            style={{ flex: 1 }}
+            onPress={() => {
+              Keyboard.dismiss();
+              setEditModalVisible(false);
+            }}
+          />
+          <Card
+            style={{
+              maxHeight: "85%",
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
+              paddingBottom: Platform.OS === "ios" ? 34 : 20,
+            }}
+            className="p-5 shadow-2xl">
+            {/* Header Modal */}
+            <View className="flex-row items-center justify-between pb-3 border-b border-line dark:border-line-dark">
+              <AppText variant="heading" className="text-lg font-bold">
+                Chỉnh sửa nguyên liệu
               </AppText>
-
               <Pressable
-                onPress={() => setCalendarOpen(true)}
-                className="flex-row items-center justify-between rounded-2xl border border-line bg-soft p-3.5 dark:border-line-dark dark:bg-soft-dark">
-                <View className="flex-row items-center gap-3">
-                  <View className="h-9 w-9 items-center justify-center rounded-xl bg-brandSoft dark:bg-surface-dark">
-                    <Ionicons name="calendar-outline" size={18} color={brand} />
-                  </View>
-                  <View>
-                    <AppText
-                      className={
-                        editExpiry
-                          ? "font-bold text-ink dark:text-ink-dark"
-                          : "text-muted"
-                      }>
-                      {editExpiry
-                        ? toDisplayDate(editExpiry)
-                        : "Chạm để chọn từ lịch..."}
-                    </AppText>
-                    <AppText variant="caption">
-                      Không cho phép ngày trong quá khứ
-                    </AppText>
-                  </View>
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setEditModalVisible(false);
+                }}
+                className="h-8 w-8 items-center justify-center rounded-full bg-soft dark:bg-surface-dark active:opacity-70">
+                <Ionicons name="close" size={18} color={palette.muted} />
+              </Pressable>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ gap: 16, paddingTop: 14, paddingBottom: 16 }}>
+              {/* Số lượng */}
+              <View>
+                <TextField
+                  label={`Số lượng (${selectedItem?.unit || "đơn vị"})`}
+                  value={editQty}
+                  onChangeText={setEditQty}
+                  keyboardType="numeric"
+                  placeholder="Ví dụ: 1"
+                />
+              </View>
+
+              {/* Vị trí bảo quản */}
+              <View>
+                <AppText variant="label" className="mb-2">
+                  Vị trí bảo quản
+                </AppText>
+                <View className="flex-row gap-2">
+                  {[
+                    { key: "FRIDGE" as StorageLocation, label: "Tủ mát ❄️" },
+                    { key: "FREEZER" as StorageLocation, label: "Tủ đông 🧊" },
+                    { key: "PANTRY_SHELF" as StorageLocation, label: "Kệ bếp 🥫" },
+                  ].map((loc) => {
+                    const isSelected = editLocation === loc.key;
+                    return (
+                      <Pressable
+                        key={loc.key}
+                        onPress={() => {
+                          Keyboard.dismiss();
+                          setEditLocation(loc.key);
+                        }}
+                        style={{
+                          backgroundColor: isSelected
+                            ? isDark
+                              ? "rgba(16, 185, 129, 0.2)"
+                              : colors.primarySoft
+                            : isDark
+                              ? "rgba(255, 255, 255, 0.05)"
+                              : "#F1F5F9",
+                          borderColor: isSelected
+                            ? colors.primary
+                            : isDark
+                              ? "rgba(255, 255, 255, 0.1)"
+                              : colors.border,
+                          borderWidth: isSelected ? 1.5 : 1,
+                        }}
+                        className="flex-1 py-2.5 px-1 items-center justify-center rounded-xl active:scale-95">
+                        <AppText
+                          style={{
+                            fontSize: 12,
+                            fontWeight: isSelected ? "700" : "500",
+                            color: isSelected ? colors.primary : colors.textPrimary,
+                          }}>
+                          {loc.label}
+                        </AppText>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Hạn sử dụng */}
+              <View>
+                <View className="flex-row items-center justify-between mb-2">
+                  <AppText variant="label">Hạn sử dụng</AppText>
+                  <AppText variant="caption" style={{ color: colors.textSecondary, fontSize: 11 }}>
+                    Không chọn ngày quá khứ
+                  </AppText>
                 </View>
 
-                {editExpiry ? (
-                  <Pressable
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      setEditExpiry("");
-                    }}
-                    className="p-1">
+                {/* Ô chọn ngày */}
+                <Pressable
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setShowCalendar((prev) => !prev);
+                  }}
+                  className="flex-row items-center justify-between rounded-2xl border border-line bg-soft p-3.5 dark:border-line-dark dark:bg-soft-dark active:opacity-80">
+                  <View className="flex-row items-center gap-3">
+                    <View className="h-9 w-9 items-center justify-center rounded-xl bg-brandSoft dark:bg-surface-dark">
+                      <Ionicons name="calendar-outline" size={18} color={brand} />
+                    </View>
+                    <View>
+                      <AppText
+                        className={
+                          editExpiry
+                            ? "font-bold text-ink dark:text-ink-dark"
+                            : "text-muted"
+                        }>
+                        {editExpiry
+                          ? toDisplayDate(editExpiry)
+                          : "Chạm để tự chọn ngày từ lịch..."}
+                      </AppText>
+                      <AppText variant="caption" style={{ color: brand, fontWeight: "600" }}>
+                        {showCalendar ? "Thu gọn lịch ▲" : "Mở lịch chọn ngày ▼"}
+                      </AppText>
+                    </View>
+                  </View>
+
+                  {editExpiry ? (
+                    <Pressable
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        setEditExpiry("");
+                      }}
+                      className="p-1">
+                      <Ionicons
+                        name="close-circle"
+                        size={18}
+                        color={palette.muted}
+                      />
+                    </Pressable>
+                  ) : (
                     <Ionicons
-                      name="close-circle"
+                      name="chevron-down"
                       size={18}
                       color={palette.muted}
                     />
-                  </Pressable>
-                ) : (
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={palette.muted}
-                  />
+                  )}
+                </Pressable>
+
+                {/* Inline Calendar khi mở (đã có ràng buộc minDate = new Date() không cho chọn ngày quá khứ) */}
+                {showCalendar && (
+                  <View className="mt-2 overflow-hidden rounded-2xl border border-line bg-surface dark:border-line-dark dark:bg-surface-dark p-2">
+                    <InlineCalendar
+                      selectedDate={editExpiry}
+                      onSelectDate={(date) => {
+                        setEditExpiry(date);
+                        setShowCalendar(false);
+                      }}
+                      minDate={new Date()}
+                    />
+                  </View>
                 )}
-              </Pressable>
 
-              {/* Quick Presets */}
-              <View className="mt-2.5 flex-row flex-wrap gap-2">
-                {[
-                  { label: "+3 ngày", days: 3 },
-                  { label: "+1 tuần", days: 7 },
-                  { label: "+2 tuần", days: 14 },
-                  { label: "+1 tháng", days: 30 },
-                ].map((p) => (
-                  <Pressable
-                    key={p.days}
-                    onPress={() => {
-                      const d = new Date();
-                      d.setDate(d.getDate() + p.days);
-                      const y = d.getFullYear();
-                      const m = String(d.getMonth() + 1).padStart(2, "0");
-                      const day = String(d.getDate()).padStart(2, "0");
-                      setEditExpiry(`${y}-${m}-${day}`);
-                    }}
-                    style={{
-                      backgroundColor: isDark ? "rgba(16, 185, 129, 0.15)" : "#E8F5EE",
-                      borderColor: isDark ? "rgba(16, 185, 129, 0.3)" : "rgba(46, 125, 79, 0.25)",
-                      borderWidth: 1,
-                    }}
-                    className="rounded-xl px-3 py-1.5 active:opacity-80">
-                    <AppText
-                      style={{ color: colors.primary }}
-                      className="text-xs font-bold">
-                      {p.label}
-                    </AppText>
-                  </Pressable>
-                ))}
+                {/* Quick Presets */}
+                <View className="mt-2.5 flex-row flex-wrap gap-2">
+                  {[
+                    { label: "+3 ngày", days: 3 },
+                    { label: "+1 tuần", days: 7 },
+                    { label: "+2 tuần", days: 14 },
+                    { label: "+1 tháng", days: 30 },
+                  ].map((p) => (
+                    <Pressable
+                      key={p.days}
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        const d = new Date();
+                        d.setDate(d.getDate() + p.days);
+                        const y = d.getFullYear();
+                        const m = String(d.getMonth() + 1).padStart(2, "0");
+                        const day = String(d.getDate()).padStart(2, "0");
+                        setEditExpiry(`${y}-${m}-${day}`);
+                      }}
+                      style={{
+                        backgroundColor: isDark
+                          ? "rgba(16, 185, 129, 0.15)"
+                          : "#E8F5EE",
+                        borderColor: isDark
+                          ? "rgba(16, 185, 129, 0.3)"
+                          : "rgba(46, 125, 79, 0.25)",
+                        borderWidth: 1,
+                      }}
+                      className="rounded-xl px-3 py-1.5 active:scale-95">
+                      <AppText
+                        style={{ color: colors.primary }}
+                        className="text-xs font-bold">
+                        {p.label}
+                      </AppText>
+                    </Pressable>
+                  ))}
+                </View>
               </View>
-            </View>
 
-            <View className="flex-row gap-3 pt-2">
-              <Button
-                title="Huỷ"
-                variant="outline"
-                className="flex-1"
-                onPress={() => setEditModalVisible(false)}
-              />
-              <Button
-                title={isSaving ? "Đang lưu..." : "Lưu"}
-                variant="primary"
-                className="flex-1"
-                onPress={handleUpdate}
-                disabled={isSaving}
-              />
-            </View>
+              {/* Action buttons */}
+              <View className="flex-row gap-3 pt-3">
+                <Button
+                  title="Huỷ"
+                  variant="outline"
+                  className="flex-1"
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setEditModalVisible(false);
+                  }}
+                />
+                <Button
+                  title={isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+                  variant="primary"
+                  className="flex-1"
+                  onPress={handleUpdate}
+                  disabled={isSaving}
+                />
+              </View>
+            </ScrollView>
           </Card>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
-
-      {/* Date Picker Modal */}
-      <DatePickerModal
-        visible={calendarOpen}
-        onClose={() => setCalendarOpen(false)}
-        onSelectDate={(date) => setEditExpiry(date)}
-        currentValue={editExpiry}
-        minDate={new Date()}
-      />
     </View>
   );
 }

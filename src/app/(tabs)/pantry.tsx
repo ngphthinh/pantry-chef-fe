@@ -14,7 +14,6 @@ import { AppText } from "@/components/ui/AppText";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Chip } from "@/components/ui/Chip";
 import { ListScreen } from "@/components/ui/ListScreen";
 import { PantryItemThumbnail } from "@/components/pantry/PantryItemThumbnail";
 import { useTheme } from "@/theme";
@@ -64,10 +63,10 @@ const LOCATIONS: {
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
 }[] = [
-  { value: "ALL", label: "Tất cả vị trí", icon: "apps-outline" },
-  { value: "FRIDGE", label: "Tủ mát ❄️", icon: "leaf-outline" },
-  { value: "FREEZER", label: "Tủ đông 🧊", icon: "snow-outline" },
-  { value: "PANTRY_SHELF", label: "Kệ bếp 🥫", icon: "cube-outline" },
+  { value: "ALL", label: "Tất cả", icon: "apps-outline" },
+  { value: "FRIDGE", label: "Tủ mát", icon: "snow-outline" },
+  { value: "FREEZER", label: "Tủ đông", icon: "cube-outline" },
+  { value: "PANTRY_SHELF", label: "Kệ bếp", icon: "basket-outline" },
 ];
 
 export default function PantryHubScreen() {
@@ -163,6 +162,16 @@ export default function PantryHubScreen() {
     return ["Tất cả", ...new Set(items.map((i) => i.categoryName || "Khác"))];
   }, [items]);
 
+  // Đếm số lượng món theo từng danh mục
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { "Tất cả": items.length };
+    items.forEach((item) => {
+      const cat = item.categoryName || "Khác";
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+    return counts;
+  }, [items]);
+
   // Lọc theo vị trí và danh mục
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
@@ -247,15 +256,19 @@ export default function PantryHubScreen() {
           onPress={() => router.push("/pantry/expiring" as Href)}
           style={{
             backgroundColor: isDark ? "rgba(245, 158, 11, 0.14)" : "#FEF3C7",
-            borderColor: isDark ? "rgba(245, 158, 11, 0.35)" : "rgba(217, 119, 6, 0.25)",
+            borderColor: isDark
+              ? "rgba(245, 158, 11, 0.35)"
+              : "rgba(217, 119, 6, 0.25)",
             borderWidth: 1.2,
           }}
           className="overflow-hidden rounded-3xl p-3.5 shadow-sm active:scale-[0.99]">
           <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center gap-3">
+            <View className="flex-row items-center gap-3 flex-1 pr-2">
               <View
                 style={{
-                  backgroundColor: isDark ? "rgba(245, 158, 11, 0.25)" : "rgba(217, 119, 6, 0.15)",
+                  backgroundColor: isDark
+                    ? "rgba(245, 158, 11, 0.25)"
+                    : "rgba(217, 119, 6, 0.15)",
                 }}
                 className="h-10 w-10 items-center justify-center rounded-2xl">
                 <Ionicons
@@ -264,7 +277,7 @@ export default function PantryHubScreen() {
                   color={isDark ? "#FBBF24" : "#D97706"}
                 />
               </View>
-              <View>
+              <View className="flex-1">
                 <AppText
                   style={{
                     color: isDark ? "#FDE68A" : "#92400E",
@@ -285,7 +298,9 @@ export default function PantryHubScreen() {
             </View>
             <View
               style={{
-                backgroundColor: isDark ? "rgba(245, 158, 11, 0.2)" : "rgba(217, 119, 6, 0.1)",
+                backgroundColor: isDark
+                  ? "rgba(245, 158, 11, 0.2)"
+                  : "rgba(217, 119, 6, 0.1)",
               }}
               className="h-7 w-7 items-center justify-center rounded-full">
               <Ionicons
@@ -298,37 +313,134 @@ export default function PantryHubScreen() {
         </Pressable>
       )}
 
-      {/* Storage Location Filter Chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="-mx-4 px-4 py-0.5"
-        contentContainerStyle={{ gap: 8 }}>
-        {LOCATIONS.map((loc) => (
-          <Chip
-            key={loc.value}
-            label={loc.label}
-            selected={selectedLocation === loc.value}
-            onPress={() => setSelectedLocation(loc.value)}
-          />
-        ))}
-      </ScrollView>
+      {/* 1. Storage Location Segmented Dock (Modern, 4 Cột vừa vặn, không cuộn) */}
+      <View
+        style={{
+          backgroundColor: isDark ? "rgba(255, 255, 255, 0.05)" : "#EEF2EF",
+          borderColor: isDark ? "rgba(255, 255, 255, 0.08)" : "#E2E8E4",
+          borderWidth: 1,
+          borderRadius: 16,
+          padding: 3,
+          flexDirection: "row",
+          alignItems: "center",
+        }}>
+        {LOCATIONS.map((loc) => {
+          const isSelected = selectedLocation === loc.value;
+          return (
+            <Pressable
+              key={loc.value}
+              onPress={() => setSelectedLocation(loc.value)}
+              style={{
+                flex: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 5,
+                paddingVertical: 8,
+                paddingHorizontal: 2,
+                borderRadius: 13,
+                backgroundColor: isSelected ? colors.surface : "transparent",
+                ...(isSelected
+                  ? {
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 1.5 },
+                      shadowOpacity: isDark ? 0.35 : 0.08,
+                      shadowRadius: 3,
+                      elevation: 2,
+                    }
+                  : {}),
+              }}>
+              <Ionicons
+                name={loc.icon}
+                size={14}
+                color={isSelected ? colors.primary : colors.textSecondary}
+              />
+              <AppText
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: isSelected ? "700" : "500",
+                  color: isSelected ? colors.primary : colors.textSecondary,
+                }}
+                numberOfLines={1}>
+                {loc.label}
+              </AppText>
+            </Pressable>
+          );
+        })}
+      </View>
 
-      {/* Category Filters */}
-      {categories.length > 2 && (
+      {/* 2. Category Filter Pills (Soft Tag Pills, cuộn mượt mà có badge đếm số lượng) */}
+      {categories.length > 1 && (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           className="-mx-4 px-4 py-0.5"
-          contentContainerStyle={{ gap: 8 }}>
-          {categories.map((cat) => (
-            <Chip
-              key={cat}
-              label={cat}
-              selected={selectedCategory === cat}
-              onPress={() => setSelectedCategory(cat)}
-            />
-          ))}
+          contentContainerStyle={{ gap: 8, alignItems: "center" }}>
+          {categories.map((cat) => {
+            const isSelected = selectedCategory === cat;
+            const count = categoryCounts[cat] ?? 0;
+            return (
+              <Pressable
+                key={cat}
+                onPress={() => setSelectedCategory(cat)}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingVertical: 6,
+                  paddingHorizontal: 12,
+                  borderRadius: 999,
+                  backgroundColor: isSelected
+                    ? isDark
+                      ? "rgba(16, 185, 129, 0.18)"
+                      : "#EAF6EE"
+                    : colors.surface,
+                  borderColor: isSelected ? colors.primary : colors.border,
+                  borderWidth: isSelected ? 1.5 : 1,
+                  gap: 6,
+                }}>
+                {isSelected && (
+                  <View
+                    style={{
+                      width: 5,
+                      height: 5,
+                      borderRadius: 2.5,
+                      backgroundColor: colors.primary,
+                    }}
+                  />
+                )}
+                <AppText
+                  style={{
+                    fontSize: 12.5,
+                    fontWeight: isSelected ? "700" : "500",
+                    color: isSelected ? colors.primary : colors.textPrimary,
+                  }}>
+                  {cat}
+                </AppText>
+                <View
+                  style={{
+                    paddingHorizontal: 5.5,
+                    paddingVertical: 1,
+                    borderRadius: 999,
+                    backgroundColor: isSelected
+                      ? isDark
+                        ? "rgba(16, 185, 129, 0.28)"
+                        : "rgba(46, 125, 79, 0.12)"
+                      : isDark
+                        ? "rgba(255, 255, 255, 0.08)"
+                        : "#F0F2F1",
+                  }}>
+                  <AppText
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: isSelected ? "700" : "600",
+                      color: isSelected ? colors.primary : colors.textSecondary,
+                    }}>
+                    {count}
+                  </AppText>
+                </View>
+              </Pressable>
+            );
+          })}
         </ScrollView>
       )}
 

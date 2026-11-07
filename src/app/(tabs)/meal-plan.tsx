@@ -66,6 +66,31 @@ export default function MealPlanHubScreen() {
   // Text đang gõ ở ô nhập tay (dd-MM-yyyy); null = hiển thị theo targetWeekStart
   const [manualText, setManualText] = useState<string | null>(null);
 
+  // Trạng thái thu gọn/mở rộng từng bữa ăn
+  const [collapsedMeals, setCollapsedMeals] = useState<Record<MealType, boolean>>({
+    BREAKFAST: false,
+    LUNCH: false,
+    DINNER: false,
+  });
+
+  const toggleMealCollapse = (type: MealType) => {
+    setCollapsedMeals((prev) => ({ ...prev, [type]: !prev[type] }));
+  };
+
+  const isAllCollapsed = useMemo(
+    () => Object.values(collapsedMeals).every(Boolean),
+    [collapsedMeals],
+  );
+
+  const toggleAllMeals = () => {
+    const nextState = !isAllCollapsed;
+    setCollapsedMeals({
+      BREAKFAST: nextState,
+      LUNCH: nextState,
+      DINNER: nextState,
+    });
+  };
+
   // Thứ Hai của tuần hiện tại trong thực tế
   const currentMonday = useMemo(() => getMondayOfWeek(new Date()), []);
 
@@ -554,13 +579,47 @@ export default function MealPlanHubScreen() {
         {/* Meals For Selected Day */}
         <View className="gap-3 pb-16">
           <View className="flex-row items-center justify-between px-1">
-            <AppText variant="label" className="text-base font-bold">
-              {activeDay?.dayName} (
-              {activeDay ? toDisplayDate(activeDay.date) : ""})
-            </AppText>
-            <AppText variant="caption">
-              {activeDay?.entries.length || 0} món đã lên lịch
-            </AppText>
+            <View>
+              <AppText variant="label" className="text-base font-bold">
+                {activeDay?.dayName} (
+                {activeDay ? toDisplayDate(activeDay.date) : ""})
+              </AppText>
+              <AppText variant="caption">
+                {activeDay?.entries.length || 0} món đã lên lịch
+              </AppText>
+            </View>
+
+            {activeDay && activeDay.entries.length > 0 && (
+              <Pressable
+                onPress={toggleAllMeals}
+                hitSlop={8}
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.06)"
+                    : colors.surfaceVariant,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                }}
+                className="flex-row items-center gap-1.5 rounded-xl px-2.5 py-1.5 active:opacity-70">
+                <Ionicons
+                  name={
+                    isAllCollapsed
+                      ? "chevron-down-circle-outline"
+                      : "chevron-up-circle-outline"
+                  }
+                  size={14}
+                  color={brand}
+                />
+                <AppText
+                  style={{
+                    color: brand,
+                    fontSize: 11.5,
+                    fontWeight: "700",
+                  }}>
+                  {isAllCollapsed ? "Mở rộng tất cả" : "Thu gọn tất cả"}
+                </AppText>
+              </Pressable>
+            )}
           </View>
 
           {(["BREAKFAST", "LUNCH", "DINNER"] as MealType[]).map((type) => {
@@ -568,12 +627,15 @@ export default function MealPlanHubScreen() {
               activeDay?.entries.filter((e) => e.mealType === type) || [];
             const meta = MEAL_ICONS[type];
             const count = mealEntries.length;
+            const isCollapsed = collapsedMeals[type];
 
             return (
               <Card key={type} className="p-4 shadow-sm">
-                {/* Header: Icon, Label, Count Badge, and + Thêm món button if !isPastDay */}
+                {/* Header: Icon, Label, Count Badge, and + Thêm món button + Chevron Toggle */}
                 <View className="flex-row items-center justify-between pb-2.5 border-b border-line/40 dark:border-line-dark/40">
-                  <View className="flex-row items-center gap-2.5">
+                  <Pressable
+                    onPress={() => count > 0 && toggleMealCollapse(type)}
+                    className="flex-row items-center gap-2.5 flex-1 pr-2 active:opacity-75">
                     <View
                       className="h-9 w-9 items-center justify-center rounded-2xl"
                       style={{ backgroundColor: `${meta.color}20` }}>
@@ -608,55 +670,75 @@ export default function MealPlanHubScreen() {
                         </AppText>
                       </View>
                     </View>
-                  </View>
+                  </Pressable>
 
-                  {!isPastDay ? (
-                    <Pressable
-                      onPress={() =>
-                        router.push(
-                          `/meal-plan/add-entry?defaultDate=${activeDay.date}&defaultMealType=${type}` as Href,
-                        )
-                      }
-                      style={{
-                        backgroundColor: colors.primarySoft,
-                        borderColor: isDark
-                          ? "rgba(16, 185, 129, 0.3)"
-                          : "rgba(46, 125, 79, 0.2)",
-                        borderWidth: 1,
-                      }}
-                      className="flex-row items-center gap-1 rounded-xl px-2.5 py-1.5 active:scale-95">
-                      <Ionicons name="add" size={14} color={colors.primary} />
-                      <AppText
+                  <View className="flex-row items-center gap-2">
+                    {!isPastDay ? (
+                      <Pressable
+                        onPress={() =>
+                          router.push(
+                            `/meal-plan/add-entry?defaultDate=${activeDay.date}&defaultMealType=${type}` as Href,
+                          )
+                        }
                         style={{
-                          color: colors.primary,
-                          fontSize: 11,
-                          fontWeight: "700",
-                        }}>
-                        Thêm món
-                      </AppText>
-                    </Pressable>
-                  ) : (
-                    <View
-                      style={{
-                        backgroundColor: isDark
-                          ? "rgba(255,255,255,0.06)"
-                          : "#F1F5F9",
-                      }}
-                      className="rounded-lg px-2 py-1">
-                      <AppText
-                        variant="caption"
+                          backgroundColor: colors.primarySoft,
+                          borderColor: isDark
+                            ? "rgba(16, 185, 129, 0.3)"
+                            : "rgba(46, 125, 79, 0.2)",
+                          borderWidth: 1,
+                        }}
+                        className="flex-row items-center gap-1 rounded-xl px-2.5 py-1.5 active:scale-95">
+                        <Ionicons name="add" size={14} color={colors.primary} />
+                        <AppText
+                          style={{
+                            color: colors.primary,
+                            fontSize: 11,
+                            fontWeight: "700",
+                          }}>
+                          Thêm món
+                        </AppText>
+                      </Pressable>
+                    ) : (
+                      <View
                         style={{
-                          color: colors.textSecondary,
-                          fontSize: 10,
-                          fontWeight: "600",
-                        }}>
-                        Đã qua
-                      </AppText>
-                    </View>
-                  )}
+                          backgroundColor: isDark
+                            ? "rgba(255,255,255,0.06)"
+                            : "#F1F5F9",
+                        }}
+                        className="rounded-lg px-2 py-1">
+                        <AppText
+                          variant="caption"
+                          style={{
+                            color: colors.textSecondary,
+                            fontSize: 10,
+                            fontWeight: "600",
+                          }}>
+                          Đã qua
+                        </AppText>
+                      </View>
+                    )}
+
+                    {count > 0 && (
+                      <Pressable
+                        onPress={() => toggleMealCollapse(type)}
+                        hitSlop={8}
+                        style={{
+                          backgroundColor: isDark
+                            ? "rgba(255,255,255,0.06)"
+                            : "#F1F5F9",
+                        }}
+                        className="h-8 w-8 items-center justify-center rounded-full active:opacity-70">
+                        <Ionicons
+                          name={isCollapsed ? "chevron-down" : "chevron-up"}
+                          size={16}
+                          color={colors.textSecondary}
+                        />
+                      </Pressable>
+                    )}
+                  </View>
                 </View>
 
-                {/* List of Dishes or Empty state */}
+                {/* List of Dishes or Empty state or Collapsed summary */}
                 {count === 0 ? (
                   <View className="py-3 items-center justify-center">
                     <AppText
@@ -670,6 +752,54 @@ export default function MealPlanHubScreen() {
                         : "Chưa lên thực đơn cho bữa này"}
                     </AppText>
                   </View>
+                ) : isCollapsed ? (
+                  /* Compact Preview when collapsed */
+                  <Pressable
+                    onPress={() => toggleMealCollapse(type)}
+                    className="pt-2.5 flex-row items-center justify-between active:opacity-75">
+                    <View className="flex-row items-center gap-2 flex-1 pr-2">
+                      <Ionicons
+                        name="restaurant-outline"
+                        size={14}
+                        color={colors.textSecondary}
+                      />
+                      <AppText
+                        variant="caption"
+                        numberOfLines={1}
+                        style={{
+                          color: colors.textSecondary,
+                          fontSize: 12,
+                          flex: 1,
+                        }}>
+                        {mealEntries
+                          .map((e) => e.recipeTitle || "Món ăn")
+                          .join(" • ")}
+                      </AppText>
+                    </View>
+                    <View
+                      style={{
+                        backgroundColor: colors.primarySoft,
+                        borderColor: isDark
+                          ? "rgba(16, 185, 129, 0.25)"
+                          : "rgba(46, 125, 79, 0.15)",
+                        borderWidth: 1,
+                      }}
+                      className="flex-row items-center gap-1 rounded-full px-2 py-0.5">
+                      <AppText
+                        style={{
+                          color: colors.primary,
+                          fontSize: 11,
+                          fontWeight: "700",
+                        }}>
+                        Mở rộng
+                      </AppText>
+                      <Ionicons
+                        name="chevron-down"
+                        size={12}
+                        color={colors.primary}
+                      />
+                    </View>
+                  </Pressable>
                 ) : (
                   <View className="pt-1">
                     {mealEntries.map((entry, idx) => (
@@ -771,6 +901,28 @@ export default function MealPlanHubScreen() {
                         ) : null}
                       </View>
                     ))}
+
+                    {/* Quick collapse button at the bottom of the meal card */}
+                    {count > 1 && (
+                      <Pressable
+                        onPress={() => toggleMealCollapse(type)}
+                        className="mt-2.5 flex-row items-center justify-center gap-1 py-1.5 border-t border-line/40 dark:border-line-dark/40 active:opacity-70">
+                        <AppText
+                          variant="caption"
+                          style={{
+                            color: colors.textSecondary,
+                            fontSize: 11,
+                            fontWeight: "600",
+                          }}>
+                          Thu gọn {meta.label.toLowerCase()}
+                        </AppText>
+                        <Ionicons
+                          name="chevron-up"
+                          size={13}
+                          color={colors.textSecondary}
+                        />
+                      </Pressable>
+                    )}
                   </View>
                 )}
               </Card>

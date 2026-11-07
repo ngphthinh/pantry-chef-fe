@@ -50,9 +50,10 @@ export function calculateFreshness(expiryDate?: string | null): FreshnessInfo {
   const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays < 0) {
+    const absDays = Math.abs(diffDays);
     return {
       status: 'expired',
-      label: 'Hết hạn',
+      label: absDays === 1 ? 'Hết hạn hôm qua' : `Hết hạn ${absDays} ngày`,
       daysRemaining: diffDays,
     };
   }

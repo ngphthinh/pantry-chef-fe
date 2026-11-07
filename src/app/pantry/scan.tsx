@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/Card";
 import { cn } from "@/components/ui/cn";
 import { Screen } from "@/components/ui/Screen";
 import { getErrorMessage } from "@/core/http/apiError";
+import { validateImageSize } from "@/core/utils/imageValidation";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { useAiRecognition } from "@/features/ai/useAiRecognition";
 import type { PickedImage, RecognizedIngredientResponse } from "@/types";
@@ -121,6 +122,14 @@ export default function ScanIngredientsScreen() {
       if (result.canceled) return;
 
       const asset = result.assets[0];
+
+      // Kiểm tra dung lượng ảnh (Tối đa 10MB)
+      const sizeValidation = validateImageSize(asset);
+      if (!sizeValidation.valid) {
+        setError(sizeValidation.error ?? "Dung lượng ảnh vượt quá giới hạn cho phép.");
+        return;
+      }
+
       setImageLoading(true);
       setImage({
         uri: asset.uri,
