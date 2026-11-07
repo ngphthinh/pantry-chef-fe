@@ -11,6 +11,7 @@ import { useAuth } from "@/features/auth/useAuth";
 import { forbiddenEvent } from "@/core/events/emitter";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { ThemeProvider } from "@/theme";
+import UpdateBanner from "@/components/ui/UpdateBanner";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -101,6 +102,7 @@ export default function RootLayout() {
         <AppBootstrap>
           <ThemeProvider>
             <RootNavigator />
+            <UpdateBanner  />
           </ThemeProvider>
         </AppBootstrap>
       </Provider>
