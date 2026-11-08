@@ -4,6 +4,7 @@ import { useForm } from "@/components/ui/useForm";
 import { useTheme } from "@/theme";
 import { useAuth } from "@/features/auth/useAuth";
 import { validators } from "@/features/auth/validation";
+import { getErrorMessage } from "@/core/http/apiError";
 import {
   AuthErrorBanner,
   AuthFooter,
@@ -42,7 +43,8 @@ export default function RegisterScreen() {
           linkText="Đăng nhập"
           href="/login"
         />
-      }>
+      }
+    >
       <GlassInput3D
         label="Họ tên"
         iconName="person-outline"

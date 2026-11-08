@@ -434,24 +434,91 @@ export default function PantryItemDetailScreen() {
 
         {/* Stats Grid */}
         <View className="flex-row gap-3">
+          {/* Card Số lượng */}
           <Card className="flex-1 p-4 shadow-sm">
-            <AppText variant="caption">Số lượng hiện có</AppText>
-            <AppText
-              variant="title"
-              className="mt-1"
-              style={{ color: colors.primary }}
-            >
-              {Math.round(selectedItem.quantity)}{" "}
-              {UNIT_LABEL[selectedItem.unit]}
-            </AppText>
+            <View className="flex-row items-center justify-between">
+              <AppText
+                variant="caption"
+                style={{ color: colors.textSecondary, fontWeight: "600" }}
+              >
+                Số lượng hiện có
+              </AppText>
+              <View
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(16, 185, 129, 0.16)"
+                    : "rgba(46, 125, 79, 0.08)",
+                }}
+                className="h-8 w-8 items-center justify-center rounded-xl"
+              >
+                <Ionicons
+                  name="cube-outline"
+                  size={16}
+                  color={colors.primary}
+                />
+              </View>
+            </View>
+
+            <View className="mt-3">
+              <AppText
+                variant="title"
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={{
+                  color: colors.primary,
+                  fontSize: 22,
+                  fontWeight: "800",
+                  letterSpacing: -0.3,
+                }}
+              >
+                {Math.round(selectedItem.quantity)}{" "}
+                {UNIT_LABEL[selectedItem.unit]}
+              </AppText>
+            </View>
           </Card>
+
+          {/* Card Hạn sử dụng */}
           <Card className="flex-1 p-4 shadow-sm">
-            <AppText variant="caption">Hạn sử dụng</AppText>
-            <AppText variant="title" className="mt-1 text-sm font-bold">
-              {selectedItem.expiryDate
-                ? toDisplayDate(selectedItem.expiryDate)
-                : "Không có"}
-            </AppText>
+            <View className="flex-row items-center justify-between">
+              <AppText
+                variant="caption"
+                style={{ color: colors.textSecondary, fontWeight: "600" }}
+              >
+                Hạn sử dụng
+              </AppText>
+              <View
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(255, 255, 255, 0.08)"
+                    : "rgba(0, 0, 0, 0.04)",
+                }}
+                className="h-8 w-8 items-center justify-center rounded-xl"
+              >
+                <Ionicons
+                  name="calendar-outline"
+                  size={16}
+                  color={colors.textPrimary}
+                />
+              </View>
+            </View>
+
+            <View className="mt-3">
+              <AppText
+                variant="title"
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                style={{
+                  color: colors.textPrimary,
+                  fontSize: 19,
+                  fontWeight: "800",
+                  letterSpacing: -0.3,
+                }}
+              >
+                {selectedItem.expiryDate
+                  ? toDisplayDate(selectedItem.expiryDate)
+                  : "Không thời hạn"}
+              </AppText>
+            </View>
           </Card>
         </View>
 

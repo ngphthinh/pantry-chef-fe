@@ -92,11 +92,28 @@ export function vnStartOfDayToUtcIso(date: string): string {
 }
 
 export const toIsoDate = (date: string): string => {
-  const [day, month, year] = date.split("-");
-  return `${year}-${month}-${day}`;
+  if (!date) return "";
+  const parts = date.trim().split(/[-/]/);
+  if (parts.length === 3) {
+    const [day, month, year] = parts;
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+  return date;
 };
 
 export const toDisplayDate = (date: string): string => {
-  const [year, month, day] = date.split("-");
-  return `${day}-${month}-${year}`;
+  if (!date) return "";
+  const parts = date.trim().split(/[-/]/);
+  if (parts.length === 3) {
+    if (parts[0].length === 4) {
+      // YYYY-MM-DD -> DD/MM/YYYY
+      const [year, month, day] = parts;
+      return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+    } else {
+      // DD-MM-YYYY or DD/MM/YYYY -> DD/MM/YYYY
+      const [day, month, year] = parts;
+      return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
+    }
+  }
+  return date;
 };

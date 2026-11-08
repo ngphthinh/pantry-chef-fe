@@ -172,15 +172,16 @@ export default function PantryHubScreen() {
     return counts;
   }, [items]);
 
-  // Lọc theo vị trí và danh mục
+  // Lọc theo vị trí, danh mục và loại bỏ nguyên liệu có số lượng <= 0
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
+      const hasQuantity = Number(item.quantity) > 0;
       const matchLocation =
         selectedLocation === "ALL" || item.location === selectedLocation;
       const matchCategory =
         selectedCategory === "Tất cả" ||
         (item.categoryName || "Khác") === selectedCategory;
-      return matchLocation && matchCategory;
+      return hasQuantity && matchLocation && matchCategory;
     });
   }, [items, selectedLocation, selectedCategory]);
 
@@ -486,6 +487,10 @@ export default function PantryHubScreen() {
 
   // Render từng thẻ nguyên liệu bằng ListScreen
   const renderItem: ListRenderItem<EnrichedPantryItem> = ({ item, index }) => {
+    if (Number(item.quantity) <= 0) {
+      return null;
+    }
+
     const prevCat =
       index > 0 ? sortedFilteredItems[index - 1]?.categoryName || "Khác" : null;
     const currentCat = item.categoryName || "Khác";
