@@ -1,14 +1,14 @@
-import { Alert, Image, Pressable, View } from "react-native";
-import { useRouter, type Href } from "expo-router";
-import { AppText } from "@/components/ui/AppText";
-import { Card } from "@/components/ui/Card";
-import { MenuGroup, type MenuItem } from "@/components/ui/MenuGroup";
-import { Screen } from "@/components/ui/Screen";
-import { Ionicons } from "@expo/vector-icons";
-import { useTheme } from "@/theme";
-import { useAdminAccess } from "@/features/admin/useAdminAccess";
-import { confirmAction, notify } from "@/core/ui/dialogs";
-import { useMoreMenu } from "@/features/more/useMoreMenu";
+import {Alert, Image, Pressable, View} from "react-native";
+import {useRouter, type Href} from "expo-router";
+import {AppText} from "@/components/ui/AppText";
+import {Card} from "@/components/ui/Card";
+import {MenuGroup, type MenuItem} from "@/components/ui/MenuGroup";
+import {Screen} from "@/components/ui/Screen";
+import {Ionicons} from "@expo/vector-icons";
+import {useTheme} from "@/theme";
+import {useAdminAccess} from "@/features/admin/useAdminAccess";
+import {confirmAction, notify} from "@/core/ui/dialogs";
+import {useMoreMenu} from "@/features/more/useMoreMenu";
 
 interface Section {
   title: string;
@@ -66,7 +66,7 @@ const SECTIONS: Section[] = [
     items: [
       {
         icon: "contrast-outline",
-        title: "Giao diện sáng / tối / hệ thống, hệ đo",
+        title: "Giao diện ",
         route: "settings/preferences",
       },
       {
@@ -153,9 +153,9 @@ const ADMIN_SECTION: Section = {
 
 export default function MoreHub() {
   const router = useRouter();
-  const { colors, isDark } = useTheme();
-  const { isAdmin } = useAdminAccess();
-  const { profile, signOut, deleteAccount } = useMoreMenu();
+  const {colors, isDark} = useTheme();
+  const {isAdmin} = useAdminAccess();
+  const {profile, signOut, deleteAccount} = useMoreMenu();
   const go = (route: string) => router.push(`/${route}` as Href);
 
   const handleSignOut = async () => {
@@ -197,9 +197,12 @@ export default function MoreHub() {
 
   return (
     <Screen>
-      <AppText variant="title">Thêm</AppText>
+      <AppText variant='title'>Thêm</AppText>
 
-      <Pressable onPress={() => go("settings/profile")} className="active:scale-[0.99]">
+      <Pressable
+        onPress={() => go("settings/profile")}
+        className='active:scale-[0.99]'
+      >
         <Card
           style={{
             flexDirection: "row",
@@ -207,7 +210,8 @@ export default function MoreHub() {
             padding: 16,
             gap: 16,
             borderRadius: 22,
-          }}>
+          }}
+        >
           {/* Avatar with Emerald Ring */}
           <View
             style={{
@@ -219,12 +223,13 @@ export default function MoreHub() {
               backgroundColor: isDark ? "rgba(16, 185, 129, 0.2)" : "#DCFCE7",
               borderColor: colors.primary,
               borderWidth: 2,
-            }}>
+            }}
+          >
             {profile?.avatarUri ? (
               <Image
-                source={{ uri: profile.avatarUri }}
-                style={{ width: 52, height: 52, borderRadius: 26 }}
-                resizeMode="cover"
+                source={{uri: profile.avatarUri}}
+                style={{width: 52, height: 52, borderRadius: 26}}
+                resizeMode='cover'
               />
             ) : (
               <AppText
@@ -232,22 +237,24 @@ export default function MoreHub() {
                   fontSize: 22,
                   fontWeight: "800",
                   color: colors.primary,
-                }}>
+                }}
+              >
                 {profile?.initial?.trim()?.charAt(0)?.toUpperCase() ?? "P"}
               </AppText>
             )}
           </View>
 
           {/* User information */}
-          <View style={{ flex: 1, gap: 2 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <View style={{flex: 1, gap: 2}}>
+            <View style={{flexDirection: "row", alignItems: "center", gap: 6}}>
               <AppText
                 style={{
                   fontSize: 16,
                   fontWeight: "700",
                   color: colors.textPrimary,
                 }}
-                numberOfLines={1}>
+                numberOfLines={1}
+              >
                 {profile?.name?.trim() || "Người dùng"}
               </AppText>
               <View
@@ -256,16 +263,24 @@ export default function MoreHub() {
                   paddingHorizontal: 7,
                   paddingVertical: 2,
                   borderRadius: 8,
-                }}>
-                <AppText style={{ fontSize: 10, fontWeight: "800", color: colors.primary }}>
+                }}
+              >
+                <AppText
+                  style={{
+                    fontSize: 10,
+                    fontWeight: "800",
+                    color: colors.primary,
+                  }}
+                >
                   BẾP TRƯỞNG
                 </AppText>
               </View>
             </View>
 
             <AppText
-              style={{ fontSize: 13, color: colors.textSecondary }}
-              numberOfLines={1}>
+              style={{fontSize: 13, color: colors.textSecondary}}
+              numberOfLines={1}
+            >
               {profile?.email || "Chưa cập nhật email"}
             </AppText>
 
@@ -275,7 +290,8 @@ export default function MoreHub() {
                 fontWeight: "600",
                 color: colors.primary,
                 marginTop: 2,
-              }}>
+              }}
+            >
               Xem & chỉnh sửa hồ sơ →
             </AppText>
           </View>
@@ -288,9 +304,16 @@ export default function MoreHub() {
               borderRadius: 16,
               alignItems: "center",
               justifyContent: "center",
-              backgroundColor: isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.04)",
-            }}>
-            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+              backgroundColor: isDark
+                ? "rgba(255, 255, 255, 0.06)"
+                : "rgba(0, 0, 0, 0.04)",
+            }}
+          >
+            <Ionicons
+              name='chevron-forward'
+              size={16}
+              color={colors.textSecondary}
+            />
           </View>
         </Card>
       </Pressable>
@@ -302,7 +325,7 @@ export default function MoreHub() {
           onNavigate={go}
         />
       ))}
-      <MenuGroup title="Tài khoản" items={account} onNavigate={go} />
+      <MenuGroup title='Tài khoản' items={account} onNavigate={go} />
     </Screen>
   );
 }

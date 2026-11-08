@@ -1,16 +1,17 @@
-import React, { useEffect, useState } from "react";
-import { Alert, Pressable, ScrollView, View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter, type Href } from "expo-router";
-import { AppText } from "@/components/ui/AppText";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { DatePickerModal } from "@/components/ui/DatePickerModal";
-import { Screen } from "@/components/ui/Screen";
-import { TextField } from "@/components/ui/TextField";
-import { useAppTheme } from "@/core/theme/useAppTheme";
-import { usePantryForm } from "@/features/pantry/usePantryForm";
-import type { StorageLocation, Unit } from "@/types";
+import React, {useEffect, useState} from "react";
+import {Alert, Pressable, ScrollView, View} from "react-native";
+import {Ionicons} from "@expo/vector-icons";
+import {useLocalSearchParams, useRouter, type Href} from "expo-router";
+import {AppText} from "@/components/ui/AppText";
+import {Button} from "@/components/ui/Button";
+import {Card} from "@/components/ui/Card";
+import {DatePickerModal} from "@/components/ui/DatePickerModal";
+import {Screen} from "@/components/ui/Screen";
+import {TextField} from "@/components/ui/TextField";
+import {useAppTheme} from "@/core/theme/useAppTheme";
+import {usePantryForm} from "@/features/pantry/usePantryForm";
+import type {StorageLocation, Unit} from "@/types";
+import {toDisplayDate} from "@/core/format/datetime";
 
 const UNITS: Unit[] = ["G", "KG", "ML", "L", "PCS", "TBSP", "TSP", "CUP"];
 const LOCATIONS: {
@@ -18,14 +19,14 @@ const LOCATIONS: {
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
 }[] = [
-  { value: "FRIDGE", label: "Tủ mát", icon: "leaf-outline" },
-  { value: "FREEZER", label: "Tủ đông", icon: "snow-outline" },
-  { value: "PANTRY_SHELF", label: "Kệ bếp", icon: "cube-outline" },
+  {value: "FRIDGE", label: "Tủ mát", icon: "leaf-outline"},
+  {value: "FREEZER", label: "Tủ đông", icon: "snow-outline"},
+  {value: "PANTRY_SHELF", label: "Kệ bếp", icon: "cube-outline"},
 ];
 
 export default function NewPantryItemScreen() {
   const router = useRouter();
-  const { brand, palette } = useAppTheme();
+  const {brand, palette} = useAppTheme();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const params = useLocalSearchParams<{
     ingredientId?: string;
@@ -33,7 +34,7 @@ export default function NewPantryItemScreen() {
     defaultUnit?: string;
   }>();
 
-  const { values, errors, isSaving, setField, submit } = usePantryForm();
+  const {values, errors, isSaving, setField, submit} = usePantryForm();
 
   // Nhận ingredientId & ingredientName từ màn hình chọn nguyên liệu hoặc quét barcode (của Việt)
   useEffect(() => {
@@ -58,7 +59,7 @@ export default function NewPantryItemScreen() {
       const saved = await submit();
       if (saved === null) return;
       Alert.alert("Thành công", "Đã thêm nguyên liệu vào tủ đồ!", [
-        { text: "OK", onPress: () => router.back() },
+        {text: "OK", onPress: () => router.back()},
       ]);
     } catch (err) {
       Alert.alert(
@@ -71,34 +72,34 @@ export default function NewPantryItemScreen() {
   };
 
   return (
-    <View className="flex-1 bg-canvas dark:bg-canvas-dark">
+    <View className='flex-1 bg-canvas dark:bg-canvas-dark'>
       <Screen>
         {/* Header */}
-        <View className="flex-row items-center gap-3 pb-2">
+        <View className='flex-row items-center gap-3 pb-2'>
           <Pressable
             onPress={() => router.back()}
-            className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark"
+            className='h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark'
           >
-            <Ionicons name="arrow-back" size={20} color={palette.ink} />
+            <Ionicons name='arrow-back' size={20} color={palette.ink} />
           </Pressable>
-          <AppText variant="title">Thêm nguyên liệu</AppText>
+          <AppText variant='title'>Thêm nguyên liệu</AppText>
         </View>
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          className="gap-4 pb-12"
+          className='gap-4 pb-12'
         >
           {/* Ingredient Selector Card */}
-          <Card className="p-4 shadow-sm">
-            <AppText variant="label" className="mb-2">
+          <Card className='p-4 shadow-sm'>
+            <AppText variant='label' className='mb-2'>
               Nguyên liệu
             </AppText>
 
             {values.ingredientName ? (
-              <View className="flex-row items-center justify-between rounded-2xl bg-brandSoft p-3 dark:bg-surface-dark">
-                <View className="flex-row items-center gap-2.5">
-                  <Ionicons name="checkmark-circle" size={20} color={brand} />
-                  <AppText className="font-bold text-brand">
+              <View className='flex-row items-center justify-between rounded-2xl bg-brandSoft p-3 dark:bg-surface-dark'>
+                <View className='flex-row items-center gap-2.5'>
+                  <Ionicons name='checkmark-circle' size={20} color={brand} />
+                  <AppText className='font-bold text-brand'>
                     {values.ingredientName}
                   </AppText>
                 </View>
@@ -106,9 +107,9 @@ export default function NewPantryItemScreen() {
                   onPress={() =>
                     router.push("/pantry/select-ingredient" as Href)
                   }
-                  className="rounded-lg bg-brand/10 px-2.5 py-1"
+                  className='rounded-lg bg-brand/10 px-2.5 py-1'
                 >
-                  <AppText variant="caption" className="font-bold text-brand">
+                  <AppText variant='caption' className='font-bold text-brand'>
                     Đổi
                   </AppText>
                 </Pressable>
@@ -116,20 +117,20 @@ export default function NewPantryItemScreen() {
             ) : (
               <Pressable
                 onPress={() => router.push("/pantry/select-ingredient" as Href)}
-                className="flex-row items-center justify-between rounded-2xl border border-dashed border-line p-3.5 active:bg-soft"
+                className='flex-row items-center justify-between rounded-2xl border border-dashed border-line p-3.5 active:bg-soft'
               >
-                <View className="flex-row items-center gap-2">
+                <View className='flex-row items-center gap-2'>
                   <Ionicons
-                    name="search-outline"
+                    name='search-outline'
                     size={18}
                     color={palette.muted}
                   />
-                  <AppText className="text-muted">
+                  <AppText className='text-muted'>
                     Chọn từ danh mục nguyên liệu...
                   </AppText>
                 </View>
                 <Ionicons
-                  name="chevron-forward"
+                  name='chevron-forward'
                   size={16}
                   color={palette.muted}
                 />
@@ -137,27 +138,27 @@ export default function NewPantryItemScreen() {
             )}
 
             {errors.ingredientId && (
-              <AppText variant="caption" className="mt-1 text-danger">
+              <AppText variant='caption' className='mt-1 text-danger'>
                 {errors.ingredientId}
               </AppText>
             )}
           </Card>
 
           {/* Quantity & Unit */}
-          <Card className="p-4 shadow-sm">
+          <Card className='p-4 shadow-sm'>
             <TextField
-              label="Số lượng"
-              placeholder="Ví dụ: 500"
-              keyboardType="numeric"
+              label='Số lượng'
+              placeholder='Ví dụ: 500'
+              keyboardType='numeric'
               value={values.quantity}
               onChangeText={(text) => setField("quantity", text)}
               error={errors.quantity}
             />
 
-            <AppText variant="label" className="mb-2 mt-4">
+            <AppText variant='label' className='mb-2 mt-4'>
               Đơn vị đo
             </AppText>
-            <View className="flex-row flex-wrap gap-2">
+            <View className='flex-row flex-wrap gap-2'>
               {UNITS.map((u) => {
                 const isSelected = values.unit === u;
                 return (
@@ -184,11 +185,11 @@ export default function NewPantryItemScreen() {
           </Card>
 
           {/* Location 3D Selector */}
-          <Card className="p-4 shadow-sm">
-            <AppText variant="label" className="mb-2.5">
+          <Card className='p-4 shadow-sm'>
+            <AppText variant='label' className='mb-2.5'>
               Vị trí bảo quản
             </AppText>
-            <View className="flex-row gap-2.5">
+            <View className='flex-row gap-2.5'>
               {LOCATIONS.map((loc) => {
                 const isSelected = values.location === loc.value;
                 return (
@@ -220,18 +221,18 @@ export default function NewPantryItemScreen() {
           </Card>
 
           {/* Expiry Date */}
-          <Card className="p-4 shadow-sm">
-            <AppText variant="label" className="mb-2">
+          <Card className='p-4 shadow-sm'>
+            <AppText variant='label' className='mb-2'>
               Hạn sử dụng
             </AppText>
 
             <Pressable
               onPress={() => setCalendarOpen(true)}
-              className="flex-row items-center justify-between rounded-2xl border border-line bg-soft p-3.5 dark:border-line-dark dark:bg-soft-dark"
+              className='flex-row items-center justify-between rounded-2xl border border-line bg-soft p-3.5 dark:border-line-dark dark:bg-soft-dark'
             >
-              <View className="flex-row items-center gap-3">
-                <View className="h-9 w-9 items-center justify-center rounded-xl bg-brandSoft dark:bg-surface-dark">
-                  <Ionicons name="calendar-outline" size={18} color={brand} />
+              <View className='flex-row items-center gap-3'>
+                <View className='h-9 w-9 items-center justify-center rounded-xl bg-brandSoft dark:bg-surface-dark'>
+                  <Ionicons name='calendar-outline' size={18} color={brand} />
                 </View>
                 <View>
                   <AppText
@@ -241,9 +242,14 @@ export default function NewPantryItemScreen() {
                         : "text-muted"
                     }
                   >
-                    {values.expiryDate || "Chạm để chọn từ lịch..."}
+                    {values.expiryDate
+                      ? (() => {
+                          const [y, m, d] = values.expiryDate.split("-");
+                          return `${d}/${m}/${y.slice(-2)}`;
+                        })()
+                      : "Chạm để chọn từ lịch..."}
                   </AppText>
-                  <AppText variant="caption">
+                  <AppText variant='caption'>
                     Không cho phép chọn ngày trong quá khứ
                   </AppText>
                 </View>
@@ -255,17 +261,17 @@ export default function NewPantryItemScreen() {
                     e.stopPropagation();
                     setField("expiryDate", "");
                   }}
-                  className="p-1"
+                  className='p-1'
                 >
                   <Ionicons
-                    name="close-circle"
+                    name='close-circle'
                     size={18}
                     color={palette.muted}
                   />
                 </Pressable>
               ) : (
                 <Ionicons
-                  name="chevron-forward"
+                  name='chevron-forward'
                   size={18}
                   color={palette.muted}
                 />
@@ -273,18 +279,18 @@ export default function NewPantryItemScreen() {
             </Pressable>
 
             {errors.expiryDate && (
-              <AppText variant="caption" className="mt-1.5 text-danger">
-                {errors.expiryDate}
+              <AppText variant='caption' className='mt-1.5 text-danger'>
+                {toDisplayDate(errors.expiryDate)}
               </AppText>
             )}
 
             {/* Quick Presets */}
-            <View className="mt-3 flex-row flex-wrap gap-2">
+            <View className='mt-3 flex-row flex-wrap gap-2'>
               {[
-                { label: "+3 ngày", days: 3 },
-                { label: "+1 tuần", days: 7 },
-                { label: "+2 tuần", days: 14 },
-                { label: "+1 tháng", days: 30 },
+                {label: "+3 ngày", days: 3},
+                {label: "+1 tuần", days: 7},
+                {label: "+2 tuần", days: 14},
+                {label: "+1 tháng", days: 30},
               ].map((p) => (
                 <Pressable
                   key={p.days}
@@ -296,9 +302,9 @@ export default function NewPantryItemScreen() {
                     const day = String(d.getDate()).padStart(2, "0");
                     setField("expiryDate", `${y}-${m}-${day}`);
                   }}
-                  className="rounded-xl border border-line bg-brandSoft px-3 py-1.5 dark:bg-surface-dark"
+                  className='rounded-xl border border-line bg-brandSoft px-3 py-1.5 dark:bg-surface-dark'
                 >
-                  <AppText className="text-xs font-bold text-brand">
+                  <AppText className='text-xs font-bold text-brand'>
                     {p.label}
                   </AppText>
                 </Pressable>
@@ -310,9 +316,9 @@ export default function NewPantryItemScreen() {
           <Button
             title={isSaving ? "Đang lưu..." : "Thêm vào tủ nguyên liệu"}
             onPress={handleSubmit}
-            variant="primary"
+            variant='primary'
             disabled={isSaving}
-            className="mt-2"
+            className='mt-2'
           />
         </ScrollView>
 
