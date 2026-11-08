@@ -51,7 +51,8 @@ const pantrySlice = createSlice({
       action: PayloadAction<{ response: CursorResponse<PantryItemResponse>; append: boolean }>,
     ) {
       const { response, append } = action.payload;
-      const content = Array.isArray(response?.content) ? response.content : [];
+      const rawContent = Array.isArray(response?.content) ? response.content : [];
+      const content = rawContent.filter((i) => Number(i.quantity) > 0);
       if (append) {
         const existingIds = new Set((state.items || []).map((i) => i.id));
         const newItems = content.filter((i) => !existingIds.has(i.id));
@@ -64,29 +65,43 @@ const pantrySlice = createSlice({
       state.error = null;
     },
     expiringItemsReceived(state, action: PayloadAction<PantryItemResponse[]>) {
-      state.expiringItems = Array.isArray(action.payload) ? action.payload : [];
+      const raw = Array.isArray(action.payload) ? action.payload : [];
+      state.expiringItems = raw.filter((i) => Number(i.quantity) > 0);
     },
     selectedItemReceived(state, action: PayloadAction<PantryItemResponse | null>) {
       state.selectedItem = action.payload;
     },
     itemCreated(state, action: PayloadAction<PantryItemResponse>) {
-      state.items.unshift(action.payload);
+      if (Number(action.payload.quantity) > 0) {
+        state.items.unshift(action.payload);
+      }
       if (state.selectedItem?.id === action.payload.id) {
         state.selectedItem = action.payload;
       }
     },
     batchItemsCreated(state, action: PayloadAction<PantryItemResponse[]>) {
-      state.items = [...action.payload, ...state.items];
+      const validItems = action.payload.filter((i) => Number(i.quantity) > 0);
+      state.items = [...validItems, ...state.items];
     },
     itemUpdated(state, action: PayloadAction<PantryItemResponse>) {
       const updated = action.payload;
+      const isDepleted = Number(updated.quantity) <= 0;
+
       const index = state.items.findIndex((i) => i.id === updated.id);
       if (index !== -1) {
-        state.items[index] = updated;
+        if (isDepleted) {
+          state.items.splice(index, 1);
+        } else {
+          state.items[index] = updated;
+        }
       }
       const expIndex = state.expiringItems.findIndex((i) => i.id === updated.id);
       if (expIndex !== -1) {
-        state.expiringItems[expIndex] = updated;
+        if (isDepleted) {
+          state.expiringItems.splice(expIndex, 1);
+        } else {
+          state.expiringItems[expIndex] = updated;
+        }
       }
       if (state.selectedItem?.id === updated.id) {
         state.selectedItem = updated;

@@ -85,20 +85,25 @@ export default function PantryExpiringScreen() {
     }
   }, [selectedDays, loadExpiring, loadItems, items.length]);
 
-  // Danh sách CHỈ thực phẩm SẮP hết hạn
+  // Danh sách CHỈ thực phẩm SẮP hết hạn (loại bỏ các món có số lượng <= 0)
   const soonItems = useMemo(
-    () => expiringItems.filter((i) => i.freshness.status === "soon"),
+    () =>
+      expiringItems.filter(
+        (i) => i.freshness.status === "soon" && Number(i.quantity) > 0,
+      ),
     [expiringItems],
   );
 
-  // Danh sách CHỈ thực phẩm ĐÃ hết hạn (kết hợp từ expiringItems và toàn bộ items trong tủ)
+  // Danh sách CHỈ thực phẩm ĐÃ hết hạn (kết hợp từ expiringItems và toàn bộ items trong tủ, loại bỏ số lượng <= 0)
   const expiredItems = useMemo(() => {
     const map = new Map<string, (typeof expiringItems)[number]>();
     expiringItems.forEach((i) => {
-      if (i.freshness.status === "expired") map.set(i.id, i);
+      if (i.freshness.status === "expired" && Number(i.quantity) > 0)
+        map.set(i.id, i);
     });
     items.forEach((i) => {
-      if (i.freshness.status === "expired") map.set(i.id, i);
+      if (i.freshness.status === "expired" && Number(i.quantity) > 0)
+        map.set(i.id, i);
     });
     return Array.from(map.values()).sort(
       (a, b) =>

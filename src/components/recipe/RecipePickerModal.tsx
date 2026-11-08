@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppText } from "@/components/ui/AppText";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -40,6 +41,7 @@ export function RecipePickerModal({
   multiSelect,
 }: RecipePickerModalProps) {
   const { palette, brand, isDark } = useAppTheme();
+  const insets = useSafeAreaInsets();
   const isMulti = Boolean(multiSelect || onSelectRecipes);
   const [selectedMap, setSelectedMap] = useState<Map<string, RecipeSummaryResponse>>(new Map());
   const [activeTab, setActiveTab] = useState<TabMode>("suggestions");
@@ -318,7 +320,11 @@ export function RecipePickerModal({
             keyExtractor={(item, idx) =>
               item.id || item.externalId || `recipe-${idx}`
             }
-            contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
+            contentContainerStyle={{
+              padding: 16,
+              gap: 12,
+              paddingBottom: isMulti ? Math.max(insets.bottom + 85, 110) : 40,
+            }}
             renderItem={({ item }) => {
               const key = item.id || item.externalId || "";
               const isSelected = isMulti
@@ -467,30 +473,96 @@ export function RecipePickerModal({
 
         {/* Multi-select bottom action bar */}
         {isMulti && (
-          <View className="border-t border-line bg-surface px-5 py-3.5 dark:border-line-dark dark:bg-surface-dark flex-row items-center justify-between shadow-lg">
+          <View
+            style={{
+              paddingBottom: Math.max(insets.bottom, 16),
+              paddingTop: 14,
+              paddingHorizontal: 20,
+              backgroundColor: isDark ? "#1A241E" : "#FFFFFF",
+              borderTopColor: isDark ? "rgba(255, 255, 255, 0.08)" : "#E5E7EB",
+              borderTopWidth: 1,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: -4 },
+              shadowOpacity: isDark ? 0.35 : 0.08,
+              shadowRadius: 10,
+              elevation: 8,
+            }}
+            className="flex-row items-center justify-between">
             <View className="flex-1 pr-3">
-              <AppText className="text-sm font-bold text-ink dark:text-ink-dark">
-                Đã chọn {selectedMap.size} món
-              </AppText>
+              <View className="flex-row items-center gap-2">
+                <AppText
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "800",
+                    color: palette.ink,
+                  }}>
+                  Đã chọn {selectedMap.size} món
+                </AppText>
+                {selectedMap.size > 0 && (
+                  <View
+                    style={{
+                      backgroundColor: isDark
+                        ? "rgba(16, 185, 129, 0.2)"
+                        : "rgba(46, 125, 79, 0.12)",
+                      paddingHorizontal: 7,
+                      paddingVertical: 1.5,
+                      borderRadius: 8,
+                    }}>
+                    <AppText
+                      style={{
+                        fontSize: 11,
+                        fontWeight: "700",
+                        color: brand,
+                      }}>
+                      Sẵn sàng
+                    </AppText>
+                  </View>
+                )}
+              </View>
               <AppText
-                variant="caption"
-                className="text-muted"
+                style={{
+                  fontSize: 13,
+                  color: palette.muted,
+                  marginTop: 3,
+                }}
                 numberOfLines={1}>
                 {selectedMap.size === 0
                   ? "Chạm vào các món để thêm vào bữa"
                   : "Bấm xác nhận để đưa vào thực đơn"}
               </AppText>
             </View>
+
             <Pressable
               onPress={handleConfirm}
               disabled={selectedMap.size === 0}
               style={{
                 backgroundColor:
-                  selectedMap.size > 0 ? brand : isDark ? "#333" : "#D1D5DB",
+                  selectedMap.size > 0 ? brand : isDark ? "#2A372E" : "#E5E7EB",
                 opacity: selectedMap.size > 0 ? 1 : 0.6,
+                paddingVertical: 12,
+                paddingHorizontal: 20,
+                borderRadius: 16,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 7,
+                shadowColor: brand,
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: selectedMap.size > 0 ? 0.3 : 0,
+                shadowRadius: 6,
+                elevation: selectedMap.size > 0 ? 3 : 0,
               }}
-              className="rounded-xl px-5 py-2.5 active:opacity-80">
-              <AppText className="text-sm font-bold text-white">
+              className="active:scale-[0.97]">
+              <Ionicons
+                name="checkmark-circle"
+                size={18}
+                color={selectedMap.size > 0 ? "#FFFFFF" : palette.muted}
+              />
+              <AppText
+                style={{
+                  fontSize: 15,
+                  fontWeight: "700",
+                  color: selectedMap.size > 0 ? "#FFFFFF" : palette.muted,
+                }}>
                 Xác nhận ({selectedMap.size})
               </AppText>
             </Pressable>

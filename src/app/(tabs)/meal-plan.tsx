@@ -184,11 +184,11 @@ export default function MealPlanHubScreen() {
     }, 200);
   };
 
-  // Nhập tay dd-MM-yyyy -> targetWeekStart luôn là ISO (Thứ Hai) hoặc rỗng nếu chưa hợp lệ
+  // Nhập tay dd/MM/yyyy hoặc dd-MM-yyyy -> targetWeekStart luôn là ISO (Thứ Hai) hoặc rỗng nếu chưa hợp lệ
   const handleManualDateChange = (text: string) => {
     setManualText(text);
     const t = text.trim();
-    if (/^\d{2}-\d{2}-\d{4}$/.test(t)) {
+    if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(t)) {
       const iso = toIsoDate(t);
       const [y, m, d] = iso.split("-").map(Number);
       setSelectedDayFromCalendar(iso);

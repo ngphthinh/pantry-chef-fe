@@ -102,22 +102,26 @@ export function usePantry() {
   const hasNext = useAppSelector((s) => s.pantry?.hasNext);
   const nextCursor = useAppSelector((s) => s.pantry?.nextCursor);
 
-  // Tính nhãn độ tươi ngay trong hook (chống undefined khi nạp dữ liệu)
+  // Tính nhãn độ tươi ngay trong hook (chống undefined khi nạp dữ liệu), lọc bỏ nguyên liệu có số lượng <= 0
   const items: EnrichedPantryItem[] = useMemo(
     () =>
-      (Array.isArray(rawItems) ? rawItems : []).map((item) => ({
-        ...item,
-        freshness: calculateFreshness(item.expiryDate),
-      })),
+      (Array.isArray(rawItems) ? rawItems : [])
+        .filter((item) => Number(item.quantity) > 0)
+        .map((item) => ({
+          ...item,
+          freshness: calculateFreshness(item.expiryDate),
+        })),
     [rawItems],
   );
 
   const expiringItems: EnrichedPantryItem[] = useMemo(
     () =>
-      (Array.isArray(rawExpiringItems) ? rawExpiringItems : []).map((item) => ({
-        ...item,
-        freshness: calculateFreshness(item.expiryDate),
-      })),
+      (Array.isArray(rawExpiringItems) ? rawExpiringItems : [])
+        .filter((item) => Number(item.quantity) > 0)
+        .map((item) => ({
+          ...item,
+          freshness: calculateFreshness(item.expiryDate),
+        })),
     [rawExpiringItems],
   );
 
