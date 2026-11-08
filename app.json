@@ -79,12 +79,8 @@
         "projectId": "7dd783b6-40fc-4f8e-ae0b-ab0a67928771"
       }
     },
-<<<<<<< HEAD
     "runtimeVersion": {
       "policy": "appVersion"
     }
-=======
-    "owner": "vantruong06112005"
->>>>>>> 49211321290fc9008790b421158d15bcde54d795
   }
 }
