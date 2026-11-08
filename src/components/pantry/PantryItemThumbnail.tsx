@@ -147,7 +147,7 @@ export function PantryItemThumbnail({
   const bgColor = isDark ? visual.bgDark : visual.bgLight;
   const fgColor = fallbackIconColor || (isDark ? visual.colorDark : visual.colorLight);
   const icon = fallbackIcon || visual.icon;
-  const initial = name?.trim().charAt(0).toUpperCase();
+  const initial = name?.trim()?.charAt(0)?.toUpperCase();
 
   return (
     <View
