@@ -8,6 +8,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -735,30 +736,34 @@ export default function PantryExpiringScreen() {
         visible={!!consumeTarget}
         transparent
         animationType="slide"
+        statusBarTranslucent
         onRequestClose={() => {
           if (!isConsuming) setConsumeTarget(null);
         }}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        <View
           style={{
             flex: 1,
             justifyContent: "flex-end",
             backgroundColor: "rgba(0, 0, 0, 0.5)",
           }}>
           <Pressable
-            style={{ flex: 1 }}
+            style={StyleSheet.absoluteFill}
             onPress={() => {
               Keyboard.dismiss();
               if (!isConsuming) setConsumeTarget(null);
             }}
           />
-          <Card
-            style={{
-              borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
-              paddingBottom: Platform.OS === "ios" ? 34 : 24,
-            }}
-            className="p-6 gap-4 shadow-2xl">
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "padding"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+            style={{ width: "100%" }}>
+            <Card
+              style={{
+                borderBottomLeftRadius: 0,
+                borderBottomRightRadius: 0,
+                paddingBottom: Platform.OS === "ios" ? 34 : 24,
+              }}
+              className="p-6 gap-4 shadow-2xl">
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-2.5">
                 <View
@@ -897,7 +902,8 @@ export default function PantryExpiringScreen() {
             </View>
           </Card>
         </KeyboardAvoidingView>
-      </Modal>
+      </View>
+    </Modal>
     </View>
   );
 }
