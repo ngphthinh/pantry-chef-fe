@@ -26,6 +26,8 @@ import {
 import { useMealPlan } from "@/features/mealplan/useMealPlan";
 import type { MealPlanEntryResponse, MealType } from "@/types";
 import { toDisplayDate, toIsoDate } from "@/core/format/datetime";
+import { mealPlanService } from "@/core/di/container";
+import { toApiError } from "@/core/http/apiError";
 
 const MEAL_ICONS: Record<
   MealType,
@@ -148,7 +150,47 @@ export default function MealPlanHubScreen() {
   const isTargetSame = Boolean(
     targetWeekStart && targetWeekStart === selectedWeekStart,
   );
-  const isTargetInvalid = isTargetPast || isTargetSame || !targetWeekStart;
+  const [isCheckingTargetWeek, setIsCheckingTargetWeek] = useState(false);
+  const [targetWeekPlanExists, setTargetWeekPlanExists] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (!targetWeekStart || isTargetPast || isTargetSame) {
+      setTargetWeekPlanExists(false);
+      setIsCheckingTargetWeek(false);
+      return;
+    }
+
+    setIsCheckingTargetWeek(true);
+    mealPlanService
+      .getByWeek(targetWeekStart)
+      .then((plan) => {
+        if (isMounted) {
+          setTargetWeekPlanExists(Boolean(plan && plan.id));
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setTargetWeekPlanExists(false);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsCheckingTargetWeek(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [targetWeekStart, isTargetPast, isTargetSame]);
+
+  const isTargetInvalid =
+    isTargetPast ||
+    isTargetSame ||
+    !targetWeekStart ||
+    targetWeekPlanExists ||
+    isCheckingTargetWeek;
 
   const handleOpenCopyModal = () => {
     if (quickNextWeeks.length > 0) {
@@ -217,15 +259,60 @@ export default function MealPlanHubScreen() {
       );
       return;
     }
+    if (targetWeekPlanExists) {
+      Alert.alert(
+        "Thực đơn đã tồn tại",
+        `Tuần ${toDisplayDate(targetWeekStart)} đã có thực đơn. Không thể sao chép đè lên tuần này. Vui lòng chọn tuần khác!`,
+      );
+      return;
+    }
+
     try {
+      // Kiểm tra thực đơn tuần đích trước khi gọi API sao chép
+      try {
+        const existingPlan = await mealPlanService.getByWeek(targetWeekStart);
+        if (existingPlan && existingPlan.id) {
+          setTargetWeekPlanExists(true);
+          Alert.alert(
+            "Thực đơn đã tồn tại",
+            `Tuần ${toDisplayDate(targetWeekStart)} đã có thực đơn. Không thể sao chép đè lên tuần này. Vui lòng chọn tuần khác!`,
+          );
+          return;
+        }
+      } catch {
+        // Tuần đích chưa có thực đơn (404), tiếp tục gọi copy
+      }
+
       await copyToWeek(targetWeekStart);
       setCopyModalVisible(false);
       Alert.alert(
         "Thành công",
         `Đã sao chép thực đơn sang tuần ${toDisplayDate(targetWeekStart)}`,
       );
-    } catch {
-      Alert.alert("Lỗi", "Không thể sao chép thực đơn");
+    } catch (err: unknown) {
+      const apiErr = toApiError(err);
+      const msg = (apiErr.message || "").toLowerCase();
+      const status = apiErr.status;
+
+      if (
+        status === 409 ||
+        msg.includes("exist") ||
+        msg.includes("tồn tại") ||
+        msg.includes("đã có") ||
+        msg.includes("duplicate") ||
+        msg.includes("conflict")
+      ) {
+        setTargetWeekPlanExists(true);
+        Alert.alert(
+          "Thực đơn đã tồn tại",
+          `Tuần ${toDisplayDate(targetWeekStart)} đã có thực đơn. Không thể sao chép đè lên tuần này. Vui lòng chọn tuần khác!`,
+        );
+      } else {
+        Alert.alert(
+          "Lỗi",
+          apiErr.message || "Không thể sao chép thực đơn. Vui lòng thử lại sau.",
+        );
+      }
     }
   };
 
@@ -1154,6 +1241,17 @@ export default function MealPlanHubScreen() {
               </View>
             )}
 
+            {!isTargetPast && !isTargetSame && targetWeekPlanExists && (
+              <View className="flex-row items-center gap-2 rounded-2xl bg-warnBg p-3 dark:bg-warnBg-dark">
+                <Ionicons name="alert-circle" size={18} color={palette.warnInk} />
+                <AppText
+                  variant="caption"
+                  className="flex-1 font-bold text-warnInk">
+                  Tuần {toDisplayDate(targetWeekStart)} đã có thực đơn. Vui lòng chọn tuần khác!
+                </AppText>
+              </View>
+            )}
+
             {!isTargetInvalid && (
               <View className="flex-row items-center gap-2 rounded-2xl bg-successBg p-2.5 dark:bg-successBg-dark">
                 <Ionicons
@@ -1181,7 +1279,13 @@ export default function MealPlanHubScreen() {
                 onPress={() => setCopyModalVisible(false)}
               />
               <Button
-                title={isSaving ? "Đang chép..." : "Xác nhận chép"}
+                title={
+                  isSaving
+                    ? "Đang chép..."
+                    : isCheckingTargetWeek
+                      ? "Đang kiểm tra..."
+                      : "Xác nhận chép"
+                }
                 variant="primary"
                 className="flex-1"
                 onPress={handleCopyWeek}
