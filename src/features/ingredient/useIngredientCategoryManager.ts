@@ -53,11 +53,14 @@ export function useIngredientCategoryManager() {
 
   /** `id = null` là thêm mới, có `id` là sửa. */
   const save = useCallback(
-    (id: string | null, body: IngredientCategoryRequest) =>
-      runAction(
+    async (id: string | null, body: IngredientCategoryRequest) => {
+      const result = await runAction(
         () => dispatch(saveIngredientCategory(id, body)),
         "Không lưu được danh mục.",
-      ),
+      );
+      if (result.ok && id === null) setKeyword("");
+      return result;
+    },
     [dispatch],
   );
 

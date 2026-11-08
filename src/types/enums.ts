@@ -10,6 +10,19 @@ export const Unit = {
 } as const;
 export type Unit = (typeof Unit)[keyof typeof Unit];
 
+export const UNIT_LABEL: Record<Unit, string> = {
+  MG: 'mg',
+  G: 'g',
+  KG: 'kg',
+  ML: 'ml',
+  L: 'Lít',
+  PCS: 'Cái',
+  TBSP: 'Muỗng canh',
+  TSP: 'Muỗng cà phê',
+  CUP: 'Chén',
+  PINCH: 'Nhúm',
+};
+
 export const MediaType = { IMAGE: 'IMAGE', VIDEO: 'VIDEO', FILE: 'FILE', AUDIO: 'AUDIO' } as const;
 export type MediaType = (typeof MediaType)[keyof typeof MediaType];
 

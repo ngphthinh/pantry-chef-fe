@@ -9,6 +9,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   View,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -24,7 +25,7 @@ import { TextField } from "@/components/ui/TextField";
 import { useTheme } from "@/theme";
 import { usePantry } from "@/features/pantry/usePantry";
 import { pantryValidators } from "@/features/pantry/validation";
-import type { StorageLocation, Unit } from "@/types";
+import { UNIT_LABEL, type StorageLocation } from "@/types";
 import { toDisplayDate } from "@/core/format/datetime";
 import { getErrorMessage } from "@/core/http/apiError";
 import { validateImageSize } from "@/core/utils/imageValidation";
@@ -121,7 +122,7 @@ export default function PantryItemDetailScreen() {
       setConsumeAmount("1");
       Alert.alert(
         "Thành công",
-        `Đã dùng ${Math.round(qty)} ${selectedItem.unit}`,
+        `Đã dùng ${Math.round(qty)} ${UNIT_LABEL[selectedItem.unit]}`,
       );
     } catch {
       Alert.alert("Lỗi", "Không thể dùng bớt nguyên liệu");
@@ -260,13 +261,18 @@ export default function PantryItemDetailScreen() {
             <View className="flex-row items-center gap-3 pb-4">
               <Pressable
                 onPress={() => router.back()}
-                className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark">
+                className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark"
+              >
                 <Ionicons name="arrow-back" size={20} color={palette.ink} />
               </Pressable>
               <AppText variant="heading">Chi tiết nguyên liệu</AppText>
             </View>
             <Card className="items-center p-8 text-center shadow-sm">
-              <Ionicons name="alert-circle-outline" size={48} color={palette.warnInk} />
+              <Ionicons
+                name="alert-circle-outline"
+                size={48}
+                color={palette.warnInk}
+              />
               <AppText variant="heading" className="mt-3 text-center">
                 {fetchError || "Không tìm thấy món trong tủ"}
               </AppText>
@@ -303,7 +309,8 @@ export default function PantryItemDetailScreen() {
               borderColor: colors.border,
               borderWidth: 1,
             }}
-            className="h-10 w-10 items-center justify-center rounded-full active:scale-95">
+            className="h-10 w-10 items-center justify-center rounded-full active:scale-95"
+          >
             <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
           </Pressable>
           <AppText variant="heading">Chi tiết nguyên liệu</AppText>
@@ -314,7 +321,8 @@ export default function PantryItemDetailScreen() {
               borderColor: colors.border,
               borderWidth: 1,
             }}
-            className="h-10 w-10 items-center justify-center rounded-full active:scale-95">
+            className="h-10 w-10 items-center justify-center rounded-full active:scale-95"
+          >
             <Ionicons name="pencil" size={18} color={colors.primary} />
           </Pressable>
         </View>
@@ -339,22 +347,30 @@ export default function PantryItemDetailScreen() {
             <Pressable
               onPress={handlePickPhoto}
               style={{
-                backgroundColor: isDark ? "rgba(16, 185, 129, 0.08)" : "#F0FDF4",
-                borderColor: isDark ? "rgba(16, 185, 129, 0.25)" : "rgba(46, 125, 79, 0.2)",
+                backgroundColor: isDark
+                  ? "rgba(16, 185, 129, 0.08)"
+                  : "#F0FDF4",
+                borderColor: isDark
+                  ? "rgba(16, 185, 129, 0.25)"
+                  : "rgba(46, 125, 79, 0.2)",
                 borderWidth: 1.5,
                 borderStyle: "dashed",
               }}
-              className="mb-4 h-48 w-full items-center justify-center rounded-2xl active:opacity-80">
+              className="mb-4 h-48 w-full items-center justify-center rounded-2xl active:opacity-80"
+            >
               <View
                 style={{
-                  backgroundColor: isDark ? "rgba(16, 185, 129, 0.2)" : "#DCFCE7",
+                  backgroundColor: isDark
+                    ? "rgba(16, 185, 129, 0.2)"
+                    : "#DCFCE7",
                   width: 56,
                   height: 56,
                   borderRadius: 28,
                   alignItems: "center",
                   justifyContent: "center",
                   marginBottom: 8,
-                }}>
+                }}
+              >
                 <Ionicons name="camera" size={26} color={colors.primary} />
               </View>
               <AppText
@@ -362,7 +378,8 @@ export default function PantryItemDetailScreen() {
                   color: colors.textPrimary,
                   fontWeight: "700",
                   fontSize: 14,
-                }}>
+                }}
+              >
                 Chưa có ảnh nguyên liệu
               </AppText>
               <AppText
@@ -371,7 +388,8 @@ export default function PantryItemDetailScreen() {
                   fontWeight: "600",
                   fontSize: 12,
                   marginTop: 2,
-                }}>
+                }}
+              >
                 Chạm để chụp hoặc chọn ảnh
               </AppText>
             </Pressable>
@@ -395,14 +413,20 @@ export default function PantryItemDetailScreen() {
                 borderColor: colors.border,
                 borderWidth: 1,
               }}
-              className="rounded-full px-3.5 py-1">
+              className="rounded-full px-3.5 py-1"
+            >
               <AppText
-                style={{ color: colors.textPrimary, fontWeight: "600", fontSize: 12 }}>
+                style={{
+                  color: colors.textPrimary,
+                  fontWeight: "600",
+                  fontSize: 12,
+                }}
+              >
                 {selectedItem.location === "FREEZER"
                   ? "Tủ đông 🧊"
                   : selectedItem.location === "PANTRY_SHELF"
                     ? "Kệ bếp 🥫"
-                    : "Tủ lạnh ❄️"}
+                    : "Tủ mát ❄️"}
               </AppText>
             </View>
           </View>
@@ -415,8 +439,10 @@ export default function PantryItemDetailScreen() {
             <AppText
               variant="title"
               className="mt-1"
-              style={{ color: colors.primary }}>
-              {Math.round(selectedItem.quantity)} {selectedItem.unit}
+              style={{ color: colors.primary }}
+            >
+              {Math.round(selectedItem.quantity)}{" "}
+              {UNIT_LABEL[selectedItem.unit]}
             </AppText>
           </Card>
           <Card className="flex-1 p-4 shadow-sm">
@@ -435,7 +461,13 @@ export default function PantryItemDetailScreen() {
             title="Dùng bớt nguyên liệu"
             onPress={() => setConsumeModalVisible(true)}
             variant="primary"
-            iconLeft={<Ionicons name="remove-circle-outline" size={18} color="#FFFFFF" />}
+            iconLeft={
+              <Ionicons
+                name="remove-circle-outline"
+                size={18}
+                color="#FFFFFF"
+              />
+            }
           />
 
           <View className="flex-row gap-3">
@@ -445,7 +477,13 @@ export default function PantryItemDetailScreen() {
                 onPress={handleTakePhoto}
                 variant="outline"
                 disabled={isUploading}
-                iconLeft={<Ionicons name="camera-outline" size={17} color={colors.textPrimary} />}
+                iconLeft={
+                  <Ionicons
+                    name="camera-outline"
+                    size={17}
+                    color={colors.textPrimary}
+                  />
+                }
               />
             </View>
 
@@ -455,7 +493,13 @@ export default function PantryItemDetailScreen() {
                 onPress={handlePickPhoto}
                 variant="outline"
                 disabled={isUploading}
-                iconLeft={<Ionicons name="images-outline" size={17} color={colors.textPrimary} />}
+                iconLeft={
+                  <Ionicons
+                    name="images-outline"
+                    size={17}
+                    color={colors.textPrimary}
+                  />
+                }
               />
             </View>
           </View>
@@ -463,7 +507,9 @@ export default function PantryItemDetailScreen() {
             title="Xoá khỏi tủ"
             onPress={handleDelete}
             variant="danger"
-            iconLeft={<Ionicons name="trash-outline" size={17} color="#FFFFFF" />}
+            iconLeft={
+              <Ionicons name="trash-outline" size={17} color="#FFFFFF" />
+            }
           />
         </View>
       </Screen>
@@ -473,62 +519,71 @@ export default function PantryItemDetailScreen() {
         visible={consumeModalVisible}
         transparent
         animationType="slide"
-        onRequestClose={() => setConsumeModalVisible(false)}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        statusBarTranslucent
+        onRequestClose={() => setConsumeModalVisible(false)}
+      >
+        <View
           style={{
             flex: 1,
             justifyContent: "flex-end",
             backgroundColor: "rgba(0, 0, 0, 0.5)",
-          }}>
+          }}
+        >
           <Pressable
-            style={{ flex: 1 }}
+            style={StyleSheet.absoluteFill}
             onPress={() => {
               Keyboard.dismiss();
               setConsumeModalVisible(false);
             }}
           />
-          <Card
-            style={{
-              borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
-              paddingBottom: Platform.OS === "ios" ? 34 : 20,
-            }}
-            className="p-6 gap-4 shadow-2xl">
-            <AppText variant="heading">Dùng bớt nguyên liệu</AppText>
-            <AppText variant="caption">
-              Lượng hiện có: {Math.round(selectedItem.quantity)}{" "}
-              {selectedItem.unit}
-            </AppText>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "padding"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+            style={{ width: "100%" }}
+          >
+            <Card
+              style={{
+                borderBottomLeftRadius: 0,
+                borderBottomRightRadius: 0,
+                paddingBottom: Platform.OS === "ios" ? 34 : 24,
+              }}
+              className="p-6 gap-4 shadow-2xl"
+            >
+              <AppText variant="heading">Dùng bớt nguyên liệu</AppText>
+              <AppText variant="caption">
+                Lượng hiện có: {Math.round(selectedItem.quantity)}{" "}
+                {UNIT_LABEL[selectedItem.unit]}
+              </AppText>
 
-            <TextField
-              label="Số lượng muốn dùng"
-              value={consumeAmount}
-              onChangeText={setConsumeAmount}
-              keyboardType="numeric"
-              placeholder="Ví dụ: 1"
-            />
+              <TextField
+                label="Số lượng muốn dùng"
+                value={consumeAmount}
+                onChangeText={setConsumeAmount}
+                keyboardType="numeric"
+                placeholder="Ví dụ: 1"
+              />
 
-            <View className="flex-row gap-3 pt-2">
-              <Button
-                title="Huỷ"
-                variant="outline"
-                className="flex-1"
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setConsumeModalVisible(false);
-                }}
-              />
-              <Button
-                title={isConsuming ? "Đang xử lý..." : "Xác nhận dùng"}
-                variant="primary"
-                className="flex-1"
-                onPress={handleConsume}
-                disabled={isConsuming}
-              />
-            </View>
-          </Card>
-        </KeyboardAvoidingView>
+              <View className="flex-row gap-3 pt-2">
+                <Button
+                  title="Huỷ"
+                  variant="outline"
+                  className="flex-1"
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setConsumeModalVisible(false);
+                  }}
+                />
+                <Button
+                  title={isConsuming ? "Đang xử lý..." : "Xác nhận dùng"}
+                  variant="primary"
+                  className="flex-1"
+                  onPress={handleConsume}
+                  disabled={isConsuming}
+                />
+              </View>
+            </Card>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       {/* Modal Edit */}
@@ -536,242 +591,284 @@ export default function PantryItemDetailScreen() {
         visible={editModalVisible}
         transparent
         animationType="slide"
-        onRequestClose={() => setEditModalVisible(false)}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        statusBarTranslucent
+        onRequestClose={() => setEditModalVisible(false)}
+      >
+        <View
           style={{
             flex: 1,
             justifyContent: "flex-end",
             backgroundColor: "rgba(0, 0, 0, 0.5)",
-          }}>
+          }}
+        >
           <Pressable
-            style={{ flex: 1 }}
+            style={StyleSheet.absoluteFill}
             onPress={() => {
               Keyboard.dismiss();
               setEditModalVisible(false);
             }}
           />
-          <Card
-            style={{
-              maxHeight: "85%",
-              borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
-              paddingBottom: Platform.OS === "ios" ? 34 : 20,
-            }}
-            className="p-5 shadow-2xl">
-            {/* Header Modal */}
-            <View className="flex-row items-center justify-between pb-3 border-b border-line dark:border-line-dark">
-              <AppText variant="heading" className="text-lg font-bold">
-                Chỉnh sửa nguyên liệu
-              </AppText>
-              <Pressable
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setEditModalVisible(false);
-                }}
-                className="h-8 w-8 items-center justify-center rounded-full bg-soft dark:bg-surface-dark active:opacity-70">
-                <Ionicons name="close" size={18} color={palette.muted} />
-              </Pressable>
-            </View>
-
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ gap: 16, paddingTop: 14, paddingBottom: 16 }}>
-              {/* Số lượng */}
-              <View>
-                <TextField
-                  label={`Số lượng (${selectedItem?.unit || "đơn vị"})`}
-                  value={editQty}
-                  onChangeText={setEditQty}
-                  keyboardType="numeric"
-                  placeholder="Ví dụ: 1"
-                />
-              </View>
-
-              {/* Vị trí bảo quản */}
-              <View>
-                <AppText variant="label" className="mb-2">
-                  Vị trí bảo quản
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "padding"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+            style={{ width: "100%" }}
+          >
+            <Card
+              style={{
+                maxHeight: "85%",
+                borderBottomLeftRadius: 0,
+                borderBottomRightRadius: 0,
+                paddingBottom: Platform.OS === "ios" ? 34 : 24,
+              }}
+              className="p-5 shadow-2xl"
+            >
+              {/* Header Modal */}
+              <View className="flex-row items-center justify-between pb-3 border-b border-line dark:border-line-dark">
+                <AppText variant="heading" className="text-lg font-bold">
+                  Chỉnh sửa nguyên liệu
                 </AppText>
-                <View className="flex-row gap-2">
-                  {[
-                    { key: "FRIDGE" as StorageLocation, label: "Tủ mát ❄️" },
-                    { key: "FREEZER" as StorageLocation, label: "Tủ đông 🧊" },
-                    { key: "PANTRY_SHELF" as StorageLocation, label: "Kệ bếp 🥫" },
-                  ].map((loc) => {
-                    const isSelected = editLocation === loc.key;
-                    return (
-                      <Pressable
-                        key={loc.key}
-                        onPress={() => {
-                          Keyboard.dismiss();
-                          setEditLocation(loc.key);
-                        }}
-                        style={{
-                          backgroundColor: isSelected
-                            ? isDark
-                              ? "rgba(16, 185, 129, 0.2)"
-                              : colors.primarySoft
-                            : isDark
-                              ? "rgba(255, 255, 255, 0.05)"
-                              : "#F1F5F9",
-                          borderColor: isSelected
-                            ? colors.primary
-                            : isDark
-                              ? "rgba(255, 255, 255, 0.1)"
-                              : colors.border,
-                          borderWidth: isSelected ? 1.5 : 1,
-                        }}
-                        className="flex-1 py-2.5 px-1 items-center justify-center rounded-xl active:scale-95">
-                        <AppText
-                          style={{
-                            fontSize: 12,
-                            fontWeight: isSelected ? "700" : "500",
-                            color: isSelected ? colors.primary : colors.textPrimary,
-                          }}>
-                          {loc.label}
-                        </AppText>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </View>
-
-              {/* Hạn sử dụng */}
-              <View>
-                <View className="flex-row items-center justify-between mb-2">
-                  <AppText variant="label">Hạn sử dụng</AppText>
-                  <AppText variant="caption" style={{ color: colors.textSecondary, fontSize: 11 }}>
-                    Không chọn ngày quá khứ
-                  </AppText>
-                </View>
-
-                {/* Ô chọn ngày */}
                 <Pressable
-                  onPress={() => {
-                    Keyboard.dismiss();
-                    setShowCalendar((prev) => !prev);
-                  }}
-                  className="flex-row items-center justify-between rounded-2xl border border-line bg-soft p-3.5 dark:border-line-dark dark:bg-soft-dark active:opacity-80">
-                  <View className="flex-row items-center gap-3">
-                    <View className="h-9 w-9 items-center justify-center rounded-xl bg-brandSoft dark:bg-surface-dark">
-                      <Ionicons name="calendar-outline" size={18} color={brand} />
-                    </View>
-                    <View>
-                      <AppText
-                        className={
-                          editExpiry
-                            ? "font-bold text-ink dark:text-ink-dark"
-                            : "text-muted"
-                        }>
-                        {editExpiry
-                          ? toDisplayDate(editExpiry)
-                          : "Chạm để tự chọn ngày từ lịch..."}
-                      </AppText>
-                      <AppText variant="caption" style={{ color: brand, fontWeight: "600" }}>
-                        {showCalendar ? "Thu gọn lịch ▲" : "Mở lịch chọn ngày ▼"}
-                      </AppText>
-                    </View>
-                  </View>
-
-                  {editExpiry ? (
-                    <Pressable
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        setEditExpiry("");
-                      }}
-                      className="p-1">
-                      <Ionicons
-                        name="close-circle"
-                        size={18}
-                        color={palette.muted}
-                      />
-                    </Pressable>
-                  ) : (
-                    <Ionicons
-                      name="chevron-down"
-                      size={18}
-                      color={palette.muted}
-                    />
-                  )}
-                </Pressable>
-
-                {/* Inline Calendar khi mở (đã có ràng buộc minDate = new Date() không cho chọn ngày quá khứ) */}
-                {showCalendar && (
-                  <View className="mt-2 overflow-hidden rounded-2xl border border-line bg-surface dark:border-line-dark dark:bg-surface-dark p-2">
-                    <InlineCalendar
-                      selectedDate={editExpiry}
-                      onSelectDate={(date) => {
-                        setEditExpiry(date);
-                        setShowCalendar(false);
-                      }}
-                      minDate={new Date()}
-                    />
-                  </View>
-                )}
-
-                {/* Quick Presets */}
-                <View className="mt-2.5 flex-row flex-wrap gap-2">
-                  {[
-                    { label: "+3 ngày", days: 3 },
-                    { label: "+1 tuần", days: 7 },
-                    { label: "+2 tuần", days: 14 },
-                    { label: "+1 tháng", days: 30 },
-                  ].map((p) => (
-                    <Pressable
-                      key={p.days}
-                      onPress={() => {
-                        Keyboard.dismiss();
-                        const d = new Date();
-                        d.setDate(d.getDate() + p.days);
-                        const y = d.getFullYear();
-                        const m = String(d.getMonth() + 1).padStart(2, "0");
-                        const day = String(d.getDate()).padStart(2, "0");
-                        setEditExpiry(`${y}-${m}-${day}`);
-                      }}
-                      style={{
-                        backgroundColor: isDark
-                          ? "rgba(16, 185, 129, 0.15)"
-                          : "#E8F5EE",
-                        borderColor: isDark
-                          ? "rgba(16, 185, 129, 0.3)"
-                          : "rgba(46, 125, 79, 0.25)",
-                        borderWidth: 1,
-                      }}
-                      className="rounded-xl px-3 py-1.5 active:scale-95">
-                      <AppText
-                        style={{ color: colors.primary }}
-                        className="text-xs font-bold">
-                        {p.label}
-                      </AppText>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-
-              {/* Action buttons */}
-              <View className="flex-row gap-3 pt-3">
-                <Button
-                  title="Huỷ"
-                  variant="outline"
-                  className="flex-1"
                   onPress={() => {
                     Keyboard.dismiss();
                     setEditModalVisible(false);
                   }}
-                />
-                <Button
-                  title={isSaving ? "Đang lưu..." : "Lưu thay đổi"}
-                  variant="primary"
-                  className="flex-1"
-                  onPress={handleUpdate}
-                  disabled={isSaving}
-                />
+                  className="h-8 w-8 items-center justify-center rounded-full bg-soft dark:bg-surface-dark active:opacity-70"
+                >
+                  <Ionicons name="close" size={18} color={palette.muted} />
+                </Pressable>
               </View>
-            </ScrollView>
-          </Card>
-        </KeyboardAvoidingView>
+
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={{
+                  gap: 16,
+                  paddingTop: 14,
+                  paddingBottom: 16,
+                }}
+              >
+                {/* Số lượng */}
+                <View>
+                  <TextField
+                    label={`Số lượng (${selectedItem ? UNIT_LABEL[selectedItem.unit] : "đơn vị"})`}
+                    value={editQty}
+                    onChangeText={setEditQty}
+                    keyboardType="numeric"
+                    placeholder="Ví dụ: 1"
+                  />
+                </View>
+
+                {/* Vị trí bảo quản */}
+                <View>
+                  <AppText variant="label" className="mb-2">
+                    Vị trí bảo quản
+                  </AppText>
+                  <View className="flex-row gap-2">
+                    {[
+                      { key: "FRIDGE" as StorageLocation, label: "Tủ mát ❄️" },
+                      {
+                        key: "FREEZER" as StorageLocation,
+                        label: "Tủ đông 🧊",
+                      },
+                      {
+                        key: "PANTRY_SHELF" as StorageLocation,
+                        label: "Kệ bếp 🥫",
+                      },
+                    ].map((loc) => {
+                      const isSelected = editLocation === loc.key;
+                      return (
+                        <Pressable
+                          key={loc.key}
+                          onPress={() => {
+                            Keyboard.dismiss();
+                            setEditLocation(loc.key);
+                          }}
+                          style={{
+                            backgroundColor: isSelected
+                              ? isDark
+                                ? "rgba(16, 185, 129, 0.2)"
+                                : colors.primarySoft
+                              : isDark
+                                ? "rgba(255, 255, 255, 0.05)"
+                                : "#F1F5F9",
+                            borderColor: isSelected
+                              ? colors.primary
+                              : isDark
+                                ? "rgba(255, 255, 255, 0.1)"
+                                : colors.border,
+                            borderWidth: isSelected ? 1.5 : 1,
+                          }}
+                          className="flex-1 py-2.5 px-1 items-center justify-center rounded-xl active:scale-95"
+                        >
+                          <AppText
+                            style={{
+                              fontSize: 12,
+                              fontWeight: isSelected ? "700" : "500",
+                              color: isSelected
+                                ? colors.primary
+                                : colors.textPrimary,
+                            }}
+                          >
+                            {loc.label}
+                          </AppText>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {/* Hạn sử dụng */}
+                <View>
+                  <View className="flex-row items-center justify-between mb-2">
+                    <AppText variant="label">Hạn sử dụng</AppText>
+                    <AppText
+                      variant="caption"
+                      style={{ color: colors.textSecondary, fontSize: 11 }}
+                    >
+                      Không chọn ngày quá khứ
+                    </AppText>
+                  </View>
+
+                  {/* Ô chọn ngày */}
+                  <Pressable
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setShowCalendar((prev) => !prev);
+                    }}
+                    className="flex-row items-center justify-between rounded-2xl border border-line bg-soft p-3.5 dark:border-line-dark dark:bg-soft-dark active:opacity-80"
+                  >
+                    <View className="flex-row items-center gap-3">
+                      <View className="h-9 w-9 items-center justify-center rounded-xl bg-brandSoft dark:bg-surface-dark">
+                        <Ionicons
+                          name="calendar-outline"
+                          size={18}
+                          color={brand}
+                        />
+                      </View>
+                      <View>
+                        <AppText
+                          className={
+                            editExpiry
+                              ? "font-bold text-ink dark:text-ink-dark"
+                              : "text-muted"
+                          }
+                        >
+                          {editExpiry
+                            ? toDisplayDate(editExpiry)
+                            : "Chạm để tự chọn ngày từ lịch..."}
+                        </AppText>
+                        <AppText
+                          variant="caption"
+                          style={{ color: brand, fontWeight: "600" }}
+                        >
+                          {showCalendar
+                            ? "Thu gọn lịch ▲"
+                            : "Mở lịch chọn ngày ▼"}
+                        </AppText>
+                      </View>
+                    </View>
+
+                    {editExpiry ? (
+                      <Pressable
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          setEditExpiry("");
+                        }}
+                        className="p-1"
+                      >
+                        <Ionicons
+                          name="close-circle"
+                          size={18}
+                          color={palette.muted}
+                        />
+                      </Pressable>
+                    ) : (
+                      <Ionicons
+                        name="chevron-down"
+                        size={18}
+                        color={palette.muted}
+                      />
+                    )}
+                  </Pressable>
+
+                  {/* Inline Calendar khi mở (đã có ràng buộc minDate = new Date() không cho chọn ngày quá khứ) */}
+                  {showCalendar && (
+                    <View className="mt-2 overflow-hidden rounded-2xl border border-line bg-surface dark:border-line-dark dark:bg-surface-dark p-2">
+                      <InlineCalendar
+                        selectedDate={editExpiry}
+                        onSelectDate={(date) => {
+                          setEditExpiry(date);
+                          setShowCalendar(false);
+                        }}
+                        minDate={new Date()}
+                      />
+                    </View>
+                  )}
+
+                  {/* Quick Presets */}
+                  <View className="mt-2.5 flex-row flex-wrap gap-2">
+                    {[
+                      { label: "+3 ngày", days: 3 },
+                      { label: "+1 tuần", days: 7 },
+                      { label: "+2 tuần", days: 14 },
+                      { label: "+1 tháng", days: 30 },
+                    ].map((p) => (
+                      <Pressable
+                        key={p.days}
+                        onPress={() => {
+                          Keyboard.dismiss();
+                          const d = new Date();
+                          d.setDate(d.getDate() + p.days);
+                          const y = d.getFullYear();
+                          const m = String(d.getMonth() + 1).padStart(2, "0");
+                          const day = String(d.getDate()).padStart(2, "0");
+                          setEditExpiry(`${y}-${m}-${day}`);
+                        }}
+                        style={{
+                          backgroundColor: isDark
+                            ? "rgba(16, 185, 129, 0.15)"
+                            : "#E8F5EE",
+                          borderColor: isDark
+                            ? "rgba(16, 185, 129, 0.3)"
+                            : "rgba(46, 125, 79, 0.25)",
+                          borderWidth: 1,
+                        }}
+                        className="rounded-xl px-3 py-1.5 active:scale-95"
+                      >
+                        <AppText
+                          style={{ color: colors.primary }}
+                          className="text-xs font-bold"
+                        >
+                          {p.label}
+                        </AppText>
+                      </Pressable>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Action buttons */}
+                <View className="flex-row gap-3 pt-3">
+                  <Button
+                    title="Huỷ"
+                    variant="outline"
+                    className="flex-1"
+                    onPress={() => {
+                      Keyboard.dismiss();
+                      setEditModalVisible(false);
+                    }}
+                  />
+                  <Button
+                    title={isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+                    variant="primary"
+                    className="flex-1"
+                    onPress={handleUpdate}
+                    disabled={isSaving}
+                  />
+                </View>
+              </ScrollView>
+            </Card>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
     </View>
   );

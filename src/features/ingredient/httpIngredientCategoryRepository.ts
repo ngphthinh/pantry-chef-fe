@@ -1,7 +1,13 @@
 import type { AxiosInstance } from "axios";
 
-import type { IngredientCategoryRequest, IngredientCategoryResponse } from "@/types";
-import type { IIngredientCategoryAdminApi, IIngredientCategoryApi } from "./types";
+import type {
+  IngredientCategoryRequest,
+  IngredientCategoryResponse,
+} from "@/types";
+import type {
+  IIngredientCategoryAdminApi,
+  IIngredientCategoryApi,
+} from "./types";
 
 export class HttpIngredientCategoryRepository
   implements IIngredientCategoryApi, IIngredientCategoryAdminApi
@@ -12,13 +18,15 @@ export class HttpIngredientCategoryRepository
   ) {}
 
   list = async (): Promise<IngredientCategoryResponse[]> => {
-    const { data } = await this.publicHttp.get<IngredientCategoryResponse[]>(
+    const { data } = await this.privateHttp.get<IngredientCategoryResponse[]>(
       "/v1/ingredient-categories",
     );
     return data;
   };
 
-  create = async (body: IngredientCategoryRequest): Promise<IngredientCategoryResponse> => {
+  create = async (
+    body: IngredientCategoryRequest,
+  ): Promise<IngredientCategoryResponse> => {
     const { data } = await this.privateHttp.post<IngredientCategoryResponse>(
       "/v1/ingredient-categories",
       body,
@@ -38,6 +46,6 @@ export class HttpIngredientCategoryRepository
   };
 
   remove = async (id: string): Promise<void> => {
-    await this.privateHttp.delete(`/v1/ingredient-categories/${id}`); 
+    await this.privateHttp.delete(`/v1/ingredient-categories/${id}`);
   };
 }

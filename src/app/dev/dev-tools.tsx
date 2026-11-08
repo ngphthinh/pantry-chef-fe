@@ -100,11 +100,15 @@ export default function DevToolsScreen() {
         <Card className="gap-2 p-4">
           {dev.isMetaLoading && <ActivityIndicator color={brand.DEFAULT} />}
           {dev.metaError && <AppText variant="error">{dev.metaError}</AppText>}
+          <Row
+            label="units (GET /v1/meta/units)"
+            value={(dev.units ?? []).join(", ")}
+          />
           {dev.enums &&
             Object.entries(dev.enums).map(([key, values]) => (
               <Row
                 key={key}
-                label={key}
+                label={`${key} (GET /v1/meta/enums)`}
                 value={(values as string[]).join(", ")}
               />
             ))}

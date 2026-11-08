@@ -19,7 +19,7 @@ import {
 } from "@/features/ingredient/ingredientPicker";
 import { useIngredientCategories } from "@/features/ingredient/useIngredientCategories";
 import { useIngredientSearch } from "@/features/ingredient/useIngredientSearch";
-import type { IngredientResponse } from "@/types";
+import { UNIT_LABEL, type IngredientResponse } from "@/types";
 
 const ADD_INGREDIENT_ROUTE = "/pantry/new-ingredient";
 
@@ -208,7 +208,9 @@ export default function SelectIngredientScreen() {
                     numberOfLines={1}
                   >
                     {item.category?.name ?? "Nguyên liệu"}
-                    {item.defaultUnit ? ` · Đơn vị: ${item.defaultUnit}` : ""}
+                    {item.defaultUnit
+                      ? ` · Đơn vị: ${UNIT_LABEL[item.defaultUnit]}`
+                      : ""}
                   </AppText>
                 </View>
               </View>

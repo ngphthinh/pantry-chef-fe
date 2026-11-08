@@ -27,7 +27,7 @@ import { barcodePicker } from "@/features/ingredient/barcodePicker";
 import { useIngredientCategories } from "@/features/ingredient/useIngredientCategories";
 import { useIngredientForm } from "@/features/ingredient/useIngredientForm";
 import { useIngredientManager } from "@/features/ingredient/useIngredientManager";
-import type { IngredientResponse, Unit } from "@/types";
+import { UNIT_LABEL, type IngredientResponse, type Unit } from "@/types";
 
 const UNITS: Unit[] = [
   "MG",
@@ -60,11 +60,13 @@ function Chip({
         selected
           ? "border-brand bg-successBg dark:bg-successBg-dark"
           : "border-line bg-surface dark:border-line-dark dark:bg-surface-dark"
-      }`}>
+      }`}
+    >
       <AppText
         className={`text-sm font-medium ${
           selected ? "text-successInk dark:text-successInk-dark" : ""
-        }`}>
+        }`}
+      >
         {label}
       </AppText>
     </Pressable>
@@ -110,7 +112,8 @@ function IngredientEditorSheet({
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="flex-1 justify-end bg-black/40">
+        className="flex-1 justify-end bg-black/40"
+      >
         <Pressable
           className="flex-1"
           onPress={onClose}
@@ -134,7 +137,8 @@ function IngredientEditorSheet({
               hitSlop={10}
               accessibilityRole="button"
               accessibilityLabel="Đóng"
-              className="h-9 w-9 items-center justify-center rounded-full bg-soft dark:bg-surface-dark">
+              className="h-9 w-9 items-center justify-center rounded-full bg-soft dark:bg-surface-dark"
+            >
               <Ionicons name="close" size={18} color={palette.ink} />
             </Pressable>
           </View>
@@ -142,7 +146,8 @@ function IngredientEditorSheet({
           <ScrollView
             style={{ maxHeight: 460 }}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ gap: 16 }}>
+            contentContainerStyle={{ gap: 16 }}
+          >
             <TextField
               label="Tên nguyên liệu"
               placeholder="Ví dụ: Cà chua"
@@ -178,7 +183,7 @@ function IngredientEditorSheet({
                 {UNITS.map((unit) => (
                   <Chip
                     key={unit}
-                    label={unit}
+                    label={UNIT_LABEL[unit]}
                     selected={form.unit === unit}
                     onPress={() => form.setUnit(form.unit === unit ? "" : unit)}
                   />
@@ -256,6 +261,7 @@ export default function IngredientsScreen() {
   const closeEditor = () => setEditor({ open: false });
 
   const handleSaved = () => {
+    if (!editor.ingredient) manager.setKeyword("");
     closeEditor();
     manager.reload();
   };
@@ -282,7 +288,8 @@ export default function IngredientsScreen() {
           onPress={goBack}
           accessibilityRole="button"
           accessibilityLabel="Quay lại"
-          className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark">
+          className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark"
+        >
           <Ionicons name="arrow-back" size={20} color={palette.ink} />
         </Pressable>
         <View className="flex-1">
@@ -307,7 +314,8 @@ export default function IngredientsScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ gap: 8 }}>
+        contentContainerStyle={{ gap: 8 }}
+      >
         <Chip
           label="Tất cả"
           selected={manager.categoryId === undefined}
@@ -396,7 +404,8 @@ export default function IngredientsScreen() {
             <Pressable
               disabled={!editable}
               onPress={() => setEditor({ open: true, ingredient })}
-              className="active:scale-[0.985]">
+              className="active:scale-[0.985]"
+            >
               <Card className="flex-row items-center gap-3.5 p-4 shadow-sm">
                 <View className="h-10 w-10 items-center justify-center rounded-2xl bg-brandSoft dark:bg-successBg-dark">
                   <Ionicons
@@ -410,7 +419,8 @@ export default function IngredientsScreen() {
                   <AppText
                     variant="heading"
                     className="text-base font-semibold"
-                    numberOfLines={1}>
+                    numberOfLines={1}
+                  >
                     {ingredient.name}
                   </AppText>
                   <View className="flex-row flex-wrap gap-2">
@@ -423,7 +433,7 @@ export default function IngredientsScreen() {
                     <AppText variant="caption" numberOfLines={1}>
                       {[
                         ingredient.defaultUnit &&
-                          `Đơn vị: ${ingredient.defaultUnit}`,
+                          `Đơn vị: ${UNIT_LABEL[ingredient.defaultUnit]}`,
                         ingredient.barcode && `Mã vạch: ${ingredient.barcode}`,
                       ]
                         .filter(Boolean)
@@ -439,7 +449,8 @@ export default function IngredientsScreen() {
                       hitSlop={10}
                       accessibilityRole="button"
                       accessibilityLabel={`Sửa ${ingredient.name}`}
-                      className="h-9 w-9 items-center justify-center rounded-full bg-successBg active:opacity-70 dark:bg-successBg-dark">
+                      className="h-9 w-9 items-center justify-center rounded-full bg-successBg active:opacity-70 dark:bg-successBg-dark"
+                    >
                       <Ionicons
                         name="create-outline"
                         size={18}
@@ -451,7 +462,8 @@ export default function IngredientsScreen() {
                       hitSlop={10}
                       accessibilityRole="button"
                       accessibilityLabel={`Xoá ${ingredient.name}`}
-                      className="h-9 w-9 items-center justify-center rounded-full bg-dangerBg active:opacity-70 dark:bg-dangerBg-dark">
+                      className="h-9 w-9 items-center justify-center rounded-full bg-dangerBg active:opacity-70 dark:bg-dangerBg-dark"
+                    >
                       <Ionicons
                         name="trash-outline"
                         size={18}

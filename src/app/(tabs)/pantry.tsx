@@ -21,7 +21,7 @@ import {
   usePantry,
   type EnrichedPantryItem,
 } from "@/features/pantry/usePantry";
-import type { StorageLocation } from "@/types";
+import { UNIT_LABEL, type StorageLocation } from "@/types";
 
 const TONE_MAP = {
   fresh: "success",
@@ -225,8 +225,13 @@ export default function PantryHubScreen() {
           borderColor: colors.border,
           borderWidth: 1.2,
         }}
-        className="flex-row items-center gap-2.5 rounded-2xl px-3.5 py-2.5 shadow-xs">
-        <Ionicons name="search-outline" size={18} color={colors.textSecondary} />
+        className="flex-row items-center gap-2.5 rounded-2xl px-3.5 py-2.5 shadow-xs"
+      >
+        <Ionicons
+          name="search-outline"
+          size={18}
+          color={colors.textSecondary}
+        />
         <TextInput
           placeholder="Tìm kiếm theo tên nguyên liệu..."
           placeholderTextColor={colors.textSecondary}
@@ -244,8 +249,13 @@ export default function PantryHubScreen() {
           <Pressable
             onPress={() => setKeyword("")}
             hitSlop={8}
-            className="p-0.5">
-            <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+            className="p-0.5"
+          >
+            <Ionicons
+              name="close-circle"
+              size={18}
+              color={colors.textSecondary}
+            />
           </Pressable>
         ) : null}
       </View>
@@ -261,7 +271,8 @@ export default function PantryHubScreen() {
               : "rgba(217, 119, 6, 0.25)",
             borderWidth: 1.2,
           }}
-          className="overflow-hidden rounded-3xl p-3.5 shadow-sm active:scale-[0.99]">
+          className="overflow-hidden rounded-3xl p-3.5 shadow-sm active:scale-[0.99]"
+        >
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-3 flex-1 pr-2">
               <View
@@ -270,7 +281,8 @@ export default function PantryHubScreen() {
                     ? "rgba(245, 158, 11, 0.25)"
                     : "rgba(217, 119, 6, 0.15)",
                 }}
-                className="h-10 w-10 items-center justify-center rounded-2xl">
+                className="h-10 w-10 items-center justify-center rounded-2xl"
+              >
                 <Ionicons
                   name="warning"
                   size={20}
@@ -283,7 +295,8 @@ export default function PantryHubScreen() {
                     color: isDark ? "#FDE68A" : "#92400E",
                     fontWeight: "800",
                     fontSize: 14,
-                  }}>
+                  }}
+                >
                   {expiringItems.length} nguyên liệu sắp hết hạn!
                 </AppText>
                 <AppText
@@ -291,7 +304,8 @@ export default function PantryHubScreen() {
                     color: isDark ? "rgba(253, 230, 138, 0.8)" : "#B45309",
                     fontSize: 12,
                     marginTop: 1,
-                  }}>
+                  }}
+                >
                   Chạm để xem chi tiết & ưu tiên nấu
                 </AppText>
               </View>
@@ -302,7 +316,8 @@ export default function PantryHubScreen() {
                   ? "rgba(245, 158, 11, 0.2)"
                   : "rgba(217, 119, 6, 0.1)",
               }}
-              className="h-7 w-7 items-center justify-center rounded-full">
+              className="h-7 w-7 items-center justify-center rounded-full"
+            >
               <Ionicons
                 name="chevron-forward"
                 size={16}
@@ -323,7 +338,8 @@ export default function PantryHubScreen() {
           padding: 3,
           flexDirection: "row",
           alignItems: "center",
-        }}>
+        }}
+      >
         {LOCATIONS.map((loc) => {
           const isSelected = selectedLocation === loc.value;
           return (
@@ -349,7 +365,8 @@ export default function PantryHubScreen() {
                       elevation: 2,
                     }
                   : {}),
-              }}>
+              }}
+            >
               <Ionicons
                 name={loc.icon}
                 size={14}
@@ -361,7 +378,8 @@ export default function PantryHubScreen() {
                   fontWeight: isSelected ? "700" : "500",
                   color: isSelected ? colors.primary : colors.textSecondary,
                 }}
-                numberOfLines={1}>
+                numberOfLines={1}
+              >
                 {loc.label}
               </AppText>
             </Pressable>
@@ -375,7 +393,8 @@ export default function PantryHubScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           className="-mx-4 px-4 py-0.5"
-          contentContainerStyle={{ gap: 8, alignItems: "center" }}>
+          contentContainerStyle={{ gap: 8, alignItems: "center" }}
+        >
           {categories.map((cat) => {
             const isSelected = selectedCategory === cat;
             const count = categoryCounts[cat] ?? 0;
@@ -397,7 +416,8 @@ export default function PantryHubScreen() {
                   borderColor: isSelected ? colors.primary : colors.border,
                   borderWidth: isSelected ? 1.5 : 1,
                   gap: 6,
-                }}>
+                }}
+              >
                 {isSelected && (
                   <View
                     style={{
@@ -413,7 +433,8 @@ export default function PantryHubScreen() {
                     fontSize: 12.5,
                     fontWeight: isSelected ? "700" : "500",
                     color: isSelected ? colors.primary : colors.textPrimary,
-                  }}>
+                  }}
+                >
                   {cat}
                 </AppText>
                 <View
@@ -428,13 +449,15 @@ export default function PantryHubScreen() {
                       : isDark
                         ? "rgba(255, 255, 255, 0.08)"
                         : "#F0F2F1",
-                  }}>
+                  }}
+                >
                   <AppText
                     style={{
                       fontSize: 10.5,
                       fontWeight: isSelected ? "700" : "600",
                       color: isSelected ? colors.primary : colors.textSecondary,
-                    }}>
+                    }}
+                  >
                     {count}
                   </AppText>
                 </View>
@@ -482,7 +505,8 @@ export default function PantryHubScreen() {
 
         <Pressable
           onPress={() => router.push(`/pantry/${item.id}` as Href)}
-          className="active:scale-[0.985]">
+          className="active:scale-[0.985]"
+        >
           <Card className="flex-row items-center justify-between p-4 shadow-sm">
             <View className="flex-row items-center gap-3.5 flex-1 pr-2">
               <PantryItemThumbnail
@@ -495,16 +519,17 @@ export default function PantryHubScreen() {
                 <AppText
                   variant="heading"
                   className="text-base font-semibold"
-                  numberOfLines={1}>
+                  numberOfLines={1}
+                >
                   {item.ingredientName}
                 </AppText>
                 <AppText variant="caption" className="mt-0.5">
-                  {Math.round(item.quantity)} {item.unit} ·{" "}
+                  {Math.round(item.quantity)} {UNIT_LABEL[item.unit]} ·{" "}
                   {item.location === "FREEZER"
                     ? "Tủ đông"
                     : item.location === "PANTRY_SHELF"
                       ? "Kệ bếp"
-                      : "Tủ lạnh"}
+                      : "Tủ mát"}
                 </AppText>
               </View>
             </View>
@@ -573,7 +598,8 @@ export default function PantryHubScreen() {
       {/* Floating Action Button & 3D Menu */}
       <View
         className="absolute bottom-6 right-6 items-end gap-3"
-        pointerEvents="box-none">
+        pointerEvents="box-none"
+      >
         {fabOpen &&
           ACTIONS.map((action) => (
             <Pressable
@@ -582,7 +608,8 @@ export default function PantryHubScreen() {
                 setFabOpen(false);
                 router.push(action.route as Href);
               }}
-              className="flex-row items-center gap-2 rounded-2xl border border-line bg-surface px-4 py-2.5 shadow-lg active:scale-95 dark:border-line-dark dark:bg-surface-dark">
+              className="flex-row items-center gap-2 rounded-2xl border border-line bg-surface px-4 py-2.5 shadow-lg active:scale-95 dark:border-line-dark dark:bg-surface-dark"
+            >
               <Ionicons name={action.icon} size={18} color={brand} />
               <AppText className="text-xs font-bold">{action.title}</AppText>
             </Pressable>
@@ -598,7 +625,8 @@ export default function PantryHubScreen() {
             shadowRadius: 8,
             elevation: 6,
           }}
-          className="h-14 w-14 items-center justify-center rounded-3xl active:scale-90">
+          className="h-14 w-14 items-center justify-center rounded-3xl active:scale-90"
+        >
           <Ionicons
             name={fabOpen ? "close" : "add"}
             size={28}

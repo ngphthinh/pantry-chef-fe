@@ -10,7 +10,7 @@ import { Screen } from "@/components/ui/Screen";
 import { TextField } from "@/components/ui/TextField";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { usePantryForm } from "@/features/pantry/usePantryForm";
-import type { StorageLocation, Unit } from "@/types";
+import { UNIT_LABEL, type StorageLocation, type Unit } from "@/types";
 
 const UNITS: Unit[] = ["G", "KG", "ML", "L", "PCS", "TBSP", "TSP", "CUP"];
 const LOCATIONS: {
@@ -175,7 +175,7 @@ export default function NewPantryItemScreen() {
                           : "text-ink dark:text-ink-dark"
                       }`}
                     >
-                      {u}
+                      {UNIT_LABEL[u]}
                     </AppText>
                   </Pressable>
                 );
@@ -241,7 +241,12 @@ export default function NewPantryItemScreen() {
                         : "text-muted"
                     }
                   >
-                    {values.expiryDate || "Chạm để chọn từ lịch..."}
+                    {values.expiryDate
+                      ? (() => {
+                          const [y, m, d] = values.expiryDate.split("-");
+                          return `${d}/${m}/${y.slice(-2)}`;
+                        })()
+                      : "Chạm để chọn từ lịch..."}
                   </AppText>
                   <AppText variant="caption">
                     Không cho phép chọn ngày trong quá khứ

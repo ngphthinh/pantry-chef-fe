@@ -34,7 +34,8 @@ export default function ExcludedIngredientsScreen() {
   return (
     <PageScreen title="Nguyên liệu loại trừ">
       <AppText variant="caption">
-        Những nguyên liệu bạn không ăn được hoặc không muốn dùng (dị ứng, ăn kiêng). Gợi ý món và AI sẽ tránh chúng.
+        Những nguyên liệu bạn không ăn được hoặc không muốn dùng (dị ứng, ăn
+        kiêng). Gợi ý món và AI sẽ tránh chúng.
       </AppText>
       <View className="gap-3">
         <TextField
@@ -53,13 +54,21 @@ export default function ExcludedIngredientsScreen() {
             <AppText variant="label">Gợi ý từ danh mục</AppText>
             <View className="flex-row flex-wrap gap-2">
               {form.suggestions.map((s) => (
-                <Chip key={s.id} label={s.name} onPress={() => void form.submit(s.name)} />
+                <Chip
+                  key={s.id}
+                  label={s.name}
+                  onPress={() => void form.submit(s.name)}
+                />
               ))}
             </View>
           </View>
         )}
 
-        <Button title="Thêm vào danh sách" loading={form.isSaving} onPress={() => void form.submit()} />
+        <Button
+          title="Thêm vào danh sách"
+          loading={form.isSaving}
+          onPress={() => void form.submit()}
+        />
       </View>
       <View className="gap-2">
         <AppText variant="label">Đang loại trừ ({list.items.length})</AppText>
@@ -71,7 +80,11 @@ export default function ExcludedIngredientsScreen() {
             <AppText variant="error" className="text-center">
               {list.error}
             </AppText>
-            <Button title="Thử lại" variant="outline" onPress={() => void list.load()} />
+            <Button
+              title="Thử lại"
+              variant="outline"
+              onPress={() => void list.load()}
+            />
           </Card>
         )}
 
@@ -96,7 +109,11 @@ export default function ExcludedIngredientsScreen() {
               accessibilityLabel={`Bỏ ${item.name}`}
               className="h-9 w-9 items-center justify-center rounded-full bg-dangerBg active:opacity-70 dark:bg-dangerBg-dark"
             >
-              <Ionicons name="trash-outline" size={18} color={palette.dangerInk} />
+              <Ionicons
+                name="trash-outline"
+                size={18}
+                color={palette.dangerInk}
+              />
             </Pressable>
           </Card>
         ))}

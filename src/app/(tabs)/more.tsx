@@ -7,7 +7,7 @@ import { Screen } from "@/components/ui/Screen";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "@/theme";
 import { useAdminAccess } from "@/features/admin/useAdminAccess";
-import { notify } from "@/core/ui/dialogs";
+import { confirmAction, notify } from "@/core/ui/dialogs";
 import { useMoreMenu } from "@/features/more/useMoreMenu";
 
 interface Section {
@@ -66,7 +66,7 @@ const SECTIONS: Section[] = [
     items: [
       {
         icon: "contrast-outline",
-        title: "Giao diện sáng / tối / hệ thống, hệ đo",
+        title: "Giao diện ",
         route: "settings/preferences",
       },
       {
@@ -149,7 +149,7 @@ export default function MoreHub() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const { isAdmin } = useAdminAccess();
-  const { profile, signOut } = useMoreMenu();
+  const { profile, signOut, deleteAccount } = useMoreMenu();
   const go = (route: string) => router.push(`/${route}` as Href);
 
   const handleSignOut = async () => {
@@ -180,8 +180,7 @@ export default function MoreHub() {
 
       <Pressable
         onPress={() => go("settings/profile")}
-        className="active:scale-[0.99]"
-      >
+        className="active:scale-[0.99]">
         <Card
           style={{
             flexDirection: "row",
@@ -189,8 +188,7 @@ export default function MoreHub() {
             padding: 16,
             gap: 16,
             borderRadius: 22,
-          }}
-        >
+          }}>
           {/* Avatar with Emerald Ring */}
           <View
             style={{
@@ -202,8 +200,7 @@ export default function MoreHub() {
               backgroundColor: isDark ? "rgba(16, 185, 129, 0.2)" : "#DCFCE7",
               borderColor: colors.primary,
               borderWidth: 2,
-            }}
-          >
+            }}>
             {profile?.avatarUri ? (
               <Image
                 source={{ uri: profile.avatarUri }}
@@ -216,8 +213,7 @@ export default function MoreHub() {
                   fontSize: 22,
                   fontWeight: "800",
                   color: colors.primary,
-                }}
-              >
+                }}>
                 {profile?.initial?.trim()?.charAt(0)?.toUpperCase() ?? "P"}
               </AppText>
             )}
@@ -226,16 +222,14 @@ export default function MoreHub() {
           {/* User information */}
           <View style={{ flex: 1, gap: 2 }}>
             <View
-              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
-            >
+              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               <AppText
                 style={{
                   fontSize: 16,
                   fontWeight: "700",
                   color: colors.textPrimary,
                 }}
-                numberOfLines={1}
-              >
+                numberOfLines={1}>
                 {profile?.name?.trim() || "Người dùng"}
               </AppText>
               <View
@@ -244,18 +238,12 @@ export default function MoreHub() {
                   paddingHorizontal: 7,
                   paddingVertical: 2,
                   borderRadius: 8,
-                }}
-              >
-                {/* <AppText style={{ fontSize: 10, fontWeight: "800", color: colors.primary }}>
-                  BẾP TRƯỞNG
-                </AppText> */}
-              </View>
+                }}></View>
             </View>
 
             <AppText
               style={{ fontSize: 13, color: colors.textSecondary }}
-              numberOfLines={1}
-            >
+              numberOfLines={1}>
               {profile?.email || "Chưa cập nhật email"}
             </AppText>
 
@@ -265,8 +253,7 @@ export default function MoreHub() {
                 fontWeight: "600",
                 color: colors.primary,
                 marginTop: 2,
-              }}
-            >
+              }}>
               Xem & chỉnh sửa hồ sơ →
             </AppText>
           </View>
@@ -282,8 +269,7 @@ export default function MoreHub() {
               backgroundColor: isDark
                 ? "rgba(255, 255, 255, 0.06)"
                 : "rgba(0, 0, 0, 0.04)",
-            }}
-          >
+            }}>
             <Ionicons
               name="chevron-forward"
               size={16}

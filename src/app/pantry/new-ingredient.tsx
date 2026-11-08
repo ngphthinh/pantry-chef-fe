@@ -17,7 +17,7 @@ import {
 } from "@/features/ingredient/ingredientPicker";
 import { useIngredientCategories } from "@/features/ingredient/useIngredientCategories";
 import { useIngredientForm } from "@/features/ingredient/useIngredientForm";
-import type { IngredientResponse, Unit } from "@/types";
+import { UNIT_LABEL, type IngredientResponse, type Unit } from "@/types";
 
 const UNITS: Unit[] = ["G", "KG", "ML", "L", "PCS", "TBSP", "TSP", "CUP"];
 
@@ -88,7 +88,7 @@ export default function NewIngredientScreen() {
       <View className="gap-2">
         <AppText variant="label">Đơn vị mặc định (không bắt buộc)</AppText>
         <ChipGroup
-          options={UNITS.map((u) => ({ value: u, label: u }))}
+          options={UNITS.map((u) => ({ value: u, label: UNIT_LABEL[u] }))}
           value={form.unit}
           onChange={(value) => form.setUnit(value as Unit)}
           onClear={() => form.setUnit("")}

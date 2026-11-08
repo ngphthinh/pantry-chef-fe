@@ -19,7 +19,12 @@ import { ingredientPicker } from "@/features/ingredient/ingredientPicker";
 import { ingredientCatalog } from "@/features/ingredient/ingredientCatalog";
 import { bestMatch, normalize } from "@/features/ingredient/ingredientMatch";
 import { usePantry } from "@/features/pantry/usePantry";
-import type { PantryItemCreateRequest, StorageLocation, Unit } from "@/types";
+import {
+  UNIT_LABEL,
+  type PantryItemCreateRequest,
+  type StorageLocation,
+  type Unit,
+} from "@/types";
 
 /** Dữ liệu `pantry/scan` truyền sang (một phần tử của `RecognizedIngredientResponse`). */
 interface ScannedParamItem {
@@ -287,7 +292,8 @@ export default function PantryScanReviewScreen() {
           <View className="flex-row items-center gap-3">
             <Pressable
               onPress={() => router.back()}
-              className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark">
+              className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark"
+            >
               <Ionicons name="arrow-back" size={20} color={palette.ink} />
             </Pressable>
             <View>
@@ -329,7 +335,8 @@ export default function PantryScanReviewScreen() {
                   onPress={() => removeItem(item.key)}
                   accessibilityRole="button"
                   accessibilityLabel={`Bỏ ${item.name}`}
-                  className="h-8 w-8 items-center justify-center rounded-full bg-dangerBg dark:bg-dangerBg-dark">
+                  className="h-8 w-8 items-center justify-center rounded-full bg-dangerBg dark:bg-dangerBg-dark"
+                >
                   <Ionicons
                     name="trash-outline"
                     size={16}
@@ -347,7 +354,8 @@ export default function PantryScanReviewScreen() {
                   item.ingredientId
                     ? "bg-brandSoft dark:bg-surface-dark"
                     : "border border-dashed border-line dark:border-line-dark"
-                }`}>
+                }`}
+              >
                 <View className="flex-1 flex-row items-center gap-2">
                   {isMatching && !item.ingredientId ? (
                     <ActivityIndicator size="small" color={brand} />
@@ -368,7 +376,8 @@ export default function PantryScanReviewScreen() {
                       item.ingredientId
                         ? "flex-1 font-bold text-brand"
                         : "flex-1 text-muted"
-                    }>
+                    }
+                  >
                     {isMatching && !item.ingredientId
                       ? "Đang khớp với danh mục..."
                       : item.ingredientId
@@ -397,15 +406,17 @@ export default function PantryScanReviewScreen() {
                 <View className="flex-row items-center gap-2 rounded-2xl bg-soft p-1 dark:bg-soft-dark">
                   <Pressable
                     onPress={() => updateItemQty(item.key, -1)}
-                    className="h-7 w-7 items-center justify-center rounded-xl bg-white shadow-xs active:scale-95 dark:bg-surface-dark">
+                    className="h-7 w-7 items-center justify-center rounded-xl bg-white shadow-xs active:scale-95 dark:bg-surface-dark"
+                  >
                     <Ionicons name="remove" size={16} color={palette.ink} />
                   </Pressable>
                   <AppText className="min-w-16 text-center font-bold">
-                    {item.quantity} {item.unit}
+                    {item.quantity} {UNIT_LABEL[item.unit]}
                   </AppText>
                   <Pressable
                     onPress={() => updateItemQty(item.key, 1)}
-                    className="h-7 w-7 items-center justify-center rounded-xl bg-white shadow-xs active:scale-95 dark:bg-surface-dark">
+                    className="h-7 w-7 items-center justify-center rounded-xl bg-white shadow-xs active:scale-95 dark:bg-surface-dark"
+                  >
                     <Ionicons name="add" size={16} color={palette.ink} />
                   </Pressable>
                 </View>
