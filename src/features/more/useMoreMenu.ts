@@ -18,12 +18,12 @@ export function useMoreMenu() {
 
     const profile = useMemo(() => {
         if (!user) return null;
-        const name = user.displayName?.trim() || user.email;
+        const name = user.displayName?.trim() || user.email?.trim() || "Người dùng";
         return {
             name,
-            email: user.email,
+            email: user.email ?? "",
             avatarUri: user.avatarUri ?? undefined,
-            initial: name.charAt(0).toUpperCase(),
+            initial: (name.charAt(0) || "U").toUpperCase(),
         };
     }, [user]);
 
