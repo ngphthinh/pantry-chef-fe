@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -8,19 +8,22 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { AppText } from "@/components/ui/AppText";
-import { Card } from "@/components/ui/Card";
-import { DatePickerField } from "@/components/ui/DatePickerField";
-import { Screen } from "@/components/ui/Screen";
-import { TactileButton } from "@/components/ui/TactileButton";
-import { RecipePickerModal } from "@/components/recipe/RecipePickerModal";
-import { recipeService } from "@/core/di/container";
-import { useAppTheme } from "@/core/theme/useAppTheme";
-import { formatLocalDate, getMondayOfWeek } from "@/features/mealplan/mealPlanSlice";
-import { useMealPlan } from "@/features/mealplan/useMealPlan";
-import { palette } from "@/theme";
+import {Ionicons} from "@expo/vector-icons";
+import {useLocalSearchParams, useRouter} from "expo-router";
+import {AppText} from "@/components/ui/AppText";
+import {Card} from "@/components/ui/Card";
+import {DatePickerField} from "@/components/ui/DatePickerField";
+import {Screen} from "@/components/ui/Screen";
+import {TactileButton} from "@/components/ui/TactileButton";
+import {RecipePickerModal} from "@/components/recipe/RecipePickerModal";
+import {recipeService} from "@/core/di/container";
+import {useAppTheme} from "@/core/theme/useAppTheme";
+import {
+  formatLocalDate,
+  getMondayOfWeek,
+} from "@/features/mealplan/mealPlanSlice";
+import {useMealPlan} from "@/features/mealplan/useMealPlan";
+import {palette} from "@/theme";
 import type {
   MealPlanEntryCreateRequest,
   MealType,
@@ -63,7 +66,7 @@ interface SelectedDish {
 
 export default function AddMealPlanEntryScreen() {
   const router = useRouter();
-  const { brand, palette, colors, isDark } = useAppTheme();
+  const {brand, palette, colors, isDark} = useAppTheme();
   const params = useLocalSearchParams<{
     defaultDate?: string;
     defaultMealType?: MealType;
@@ -71,7 +74,7 @@ export default function AddMealPlanEntryScreen() {
     recipeTitle?: string;
   }>();
 
-  const { addEntries, loadWeek } = useMealPlan();
+  const {addEntries, loadWeek} = useMealPlan();
 
   const todayStr = useMemo(() => formatLocalDate(new Date()), []);
 
@@ -189,7 +192,7 @@ export default function AddMealPlanEntryScreen() {
     setSelectedDishes((prev) =>
       prev.map((dish, i) =>
         i === index
-          ? { ...dish, servings: Math.max(1, dish.servings + delta) }
+          ? {...dish, servings: Math.max(1, dish.servings + delta)}
           : dish,
       ),
     );
@@ -199,9 +202,7 @@ export default function AddMealPlanEntryScreen() {
     const nextVal = Math.max(1, servings + delta);
     setServings(nextVal);
     // Đồng bộ khẩu phần cho tất cả các món đang có
-    setSelectedDishes((prev) =>
-      prev.map((d) => ({ ...d, servings: nextVal })),
-    );
+    setSelectedDishes((prev) => prev.map((d) => ({...d, servings: nextVal})));
   };
 
   const handleSubmit = async () => {
@@ -244,7 +245,7 @@ export default function AddMealPlanEntryScreen() {
       Alert.alert(
         "Thành công",
         `Đã thêm ${entries.length} món vào ${mealLabel.toLowerCase()} ngày ${date}!`,
-        [{ text: "OK", onPress: () => router.back() }],
+        [{text: "OK", onPress: () => router.back()}],
       );
     } catch (err: unknown) {
       const msg =
@@ -269,18 +270,19 @@ export default function AddMealPlanEntryScreen() {
   }, [selectedDishes]);
 
   return (
-    <View className="flex-1 bg-canvas dark:bg-canvas-dark">
+    <View className='flex-1 bg-canvas dark:bg-canvas-dark'>
       <Screen>
         {/* Header */}
-        <View className="flex-row items-center gap-3 pb-3 border-b border-line dark:border-line-dark">
+        <View className='flex-row items-center gap-3 pb-3 border-b border-line dark:border-line-dark'>
           <Pressable
             onPress={() => router.back()}
-            className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark active:opacity-70">
-            <Ionicons name="arrow-back" size={20} color={palette.ink} />
+            className='h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark active:opacity-70'
+          >
+            <Ionicons name='arrow-back' size={20} color={palette.ink} />
           </Pressable>
           <View>
-            <AppText variant="title">Thêm bữa ăn</AppText>
-            <AppText variant="caption" className="text-muted">
+            <AppText variant='title'>Thêm bữa ăn</AppText>
+            <AppText variant='caption' className='text-muted'>
               Lập kế hoạch nhiều món cho bữa ăn gia đình
             </AppText>
           </View>
@@ -292,26 +294,27 @@ export default function AddMealPlanEntryScreen() {
             paddingBottom: 40,
             gap: 16,
             paddingTop: 16,
-          }}>
+          }}
+        >
           {/* Submit Error Banner */}
           {submitError ? (
-            <View className="flex-row items-center gap-2 rounded-2xl bg-red-50 p-3.5 border border-red-200 dark:bg-red-950/30 dark:border-red-800">
-              <Ionicons name="alert-circle" size={20} color="#EF4444" />
-              <AppText className="flex-1 text-xs font-semibold text-red-600 dark:text-red-400">
+            <View className='flex-row items-center gap-2 rounded-2xl bg-red-50 p-3.5 border border-red-200 dark:bg-red-950/30 dark:border-red-800'>
+              <Ionicons name='alert-circle' size={20} color='#EF4444' />
+              <AppText className='flex-1 text-xs font-semibold text-red-600 dark:text-red-400'>
                 {submitError}
               </AppText>
             </View>
           ) : null}
 
           {/* 1. Meal Type Selector */}
-          <Card className="p-4 shadow-sm">
-            <View className="flex-row items-center justify-between mb-2">
-              <AppText variant="label" className="font-bold">
-                Loại bữa ăn <AppText className="text-red-500">*</AppText>
+          <Card className='p-4 shadow-sm'>
+            <View className='flex-row items-center justify-between mb-2'>
+              <AppText variant='label' className='font-bold'>
+                Loại bữa ăn <AppText className='text-red-500'>*</AppText>
               </AppText>
             </View>
 
-            <View className="flex-row gap-2.5">
+            <View className='flex-row gap-2.5'>
               {MEAL_TYPES.map((m) => {
                 const isSelected = mealType === m.type;
                 return (
@@ -322,7 +325,8 @@ export default function AddMealPlanEntryScreen() {
                       isSelected
                         ? "border-brand bg-brandSoft dark:bg-surface-dark"
                         : "border-line bg-soft dark:border-line-dark dark:bg-soft-dark"
-                    }`}>
+                    }`}
+                  >
                     <Ionicons
                       name={m.icon}
                       size={24}
@@ -331,7 +335,8 @@ export default function AddMealPlanEntryScreen() {
                     <AppText
                       className={`text-xs font-bold ${
                         isSelected ? "text-brand" : "text-muted"
-                      }`}>
+                      }`}
+                    >
                       {m.label}
                     </AppText>
                   </Pressable>
@@ -341,10 +346,10 @@ export default function AddMealPlanEntryScreen() {
           </Card>
 
           {/* 2. Date Picker (Ràng buộc minDate không cho chọn ngày trong quá khứ) */}
-          <Card className="p-4 shadow-sm">
-            <View className="flex-row items-center justify-between mb-2">
-              <AppText variant="label" className="font-bold">
-                Ngày dùng bữa <AppText className="text-red-500">*</AppText>
+          <Card className='p-4 shadow-sm'>
+            <View className='flex-row items-center justify-between mb-2'>
+              <AppText variant='label' className='font-bold'>
+                Ngày dùng bữa <AppText className='text-red-500'>*</AppText>
               </AppText>
             </View>
 
@@ -356,21 +361,20 @@ export default function AddMealPlanEntryScreen() {
           </Card>
 
           {/* 3. Global Servings Stepper */}
-          <Card className="p-4 shadow-sm">
-            <View className="flex-row items-center justify-between mb-2">
-              <AppText variant="label" className="font-bold">
-                Số khẩu phần mặc định (người ăn)
+          <Card className='p-4 shadow-sm'>
+            <View className='flex-row items-center justify-between mb-2'>
+              <AppText variant='label' className='font-bold'>
+                Số khẩu phần mặc định
               </AppText>
-              <AppText variant="caption" className="text-muted">
-                Áp dụng cho các món
-              </AppText>
+              <AppText variant='caption' className='text-muted'></AppText>
             </View>
 
-            <View className="flex-row items-center gap-3">
+            <View className='flex-row items-center gap-3'>
               <Pressable
                 onPress={() => changeGlobalServings(-1)}
-                className="h-11 w-11 items-center justify-center rounded-xl border border-line bg-soft active:opacity-70 dark:border-line-dark dark:bg-surface-dark">
-                <Ionicons name="remove" size={18} color={palette.ink} />
+                className='h-11 w-11 items-center justify-center rounded-xl border border-line bg-soft active:opacity-70 dark:border-line-dark dark:bg-surface-dark'
+              >
+                <Ionicons name='remove' size={18} color={palette.ink} />
               </Pressable>
 
               <TextInput
@@ -380,34 +384,36 @@ export default function AddMealPlanEntryScreen() {
                   if (!Number.isNaN(num) && num > 0) {
                     setServings(num);
                     setSelectedDishes((prev) =>
-                      prev.map((d) => ({ ...d, servings: num })),
+                      prev.map((d) => ({...d, servings: num})),
                     );
                   }
                 }}
-                keyboardType="numeric"
-                placeholder="Ví dụ: 2"
+                keyboardType='numeric'
+                placeholder='Ví dụ: 2'
                 placeholderTextColor={palette.muted}
-                className="h-11 flex-1 rounded-xl border border-line bg-soft px-3 py-0 text-center text-sm font-bold text-ink dark:border-line-dark dark:bg-surface-dark dark:text-white"
+                className='h-11 flex-1 rounded-xl border border-line bg-soft px-3 py-0 text-center text-sm font-bold text-ink dark:border-line-dark dark:bg-surface-dark dark:text-white'
               />
 
               <Pressable
                 onPress={() => changeGlobalServings(1)}
-                className="h-11 w-11 items-center justify-center rounded-xl border border-line bg-soft active:opacity-70 dark:border-line-dark dark:bg-surface-dark">
-                <Ionicons name="add" size={18} color={palette.ink} />
+                className='h-11 w-11 items-center justify-center rounded-xl border border-line bg-soft active:opacity-70 dark:border-line-dark dark:bg-surface-dark'
+              >
+                <Ionicons name='add' size={18} color={palette.ink} />
               </Pressable>
             </View>
           </Card>
 
           {/* 4. Selected Dishes Section (Hỗ trợ chọn nhiều món) */}
-          <Card className="p-4 shadow-sm">
-            <View className="flex-row items-center justify-between mb-3">
-              <View className="flex-row items-center gap-2">
-                <AppText variant="label" className="font-bold">
-                  Các món trong bữa ăn <AppText className="text-red-500">*</AppText>
+          <Card className='p-4 shadow-sm'>
+            <View className='flex-row items-center justify-between mb-3'>
+              <View className='flex-row items-center gap-2'>
+                <AppText variant='label' className='font-bold'>
+                  Các món trong bữa ăn{" "}
+                  <AppText className='text-red-500'>*</AppText>
                 </AppText>
                 {selectedDishes.length > 0 && (
-                  <View className="rounded-full bg-brand/15 px-2.5 py-0.5">
-                    <AppText className="text-xs font-bold text-brand">
+                  <View className='rounded-full bg-brand/15 px-2.5 py-0.5'>
+                    <AppText className='text-xs font-bold text-brand'>
                       {selectedDishes.length} món
                     </AppText>
                   </View>
@@ -417,9 +423,10 @@ export default function AddMealPlanEntryScreen() {
               {selectedDishes.length > 0 && (
                 <Pressable
                   onPress={() => setPickerVisible(true)}
-                  className="flex-row items-center gap-1 active:opacity-70">
-                  <Ionicons name="add-circle" size={16} color={brand} />
-                  <AppText className="text-xs font-bold text-brand">
+                  className='flex-row items-center gap-1 active:opacity-70'
+                >
+                  <Ionicons name='add-circle' size={16} color={brand} />
+                  <AppText className='text-xs font-bold text-brand'>
                     Thêm món
                   </AppText>
                 </Pressable>
@@ -427,14 +434,14 @@ export default function AddMealPlanEntryScreen() {
             </View>
 
             {isLoadingRecipe ? (
-              <View className="items-center justify-center p-6 rounded-2xl bg-soft dark:bg-soft-dark">
-                <ActivityIndicator size="small" color={brand} />
-                <AppText className="mt-2 text-xs text-muted">
+              <View className='items-center justify-center p-6 rounded-2xl bg-soft dark:bg-soft-dark'>
+                <ActivityIndicator size='small' color={brand} />
+                <AppText className='mt-2 text-xs text-muted'>
                   Đang đồng bộ thông tin các món đã chọn...
                 </AppText>
               </View>
             ) : selectedDishes.length > 0 ? (
-              <View className="gap-3">
+              <View className='gap-3'>
                 {selectedDishes.map((dish, idx) => (
                   <View
                     key={dish.recipeId || dish.externalId || `dish-${idx}`}
@@ -447,20 +454,21 @@ export default function AddMealPlanEntryScreen() {
                         : "rgba(0,0,0,0.08)",
                       borderWidth: 1.2,
                     }}
-                    className="rounded-2xl p-3 gap-2.5">
-                    <View className="flex-row items-center gap-3">
+                    className='rounded-2xl p-3 gap-2.5'
+                  >
+                    <View className='flex-row items-center gap-3'>
                       {/* Dish Thumbnail */}
-                      <View className="h-14 w-14 overflow-hidden rounded-xl bg-canvas dark:bg-canvas-dark">
+                      <View className='h-14 w-14 overflow-hidden rounded-xl bg-canvas dark:bg-canvas-dark'>
                         {dish.recipeImageUrl ? (
                           <Image
-                            source={{ uri: dish.recipeImageUrl }}
-                            className="h-full w-full"
-                            resizeMode="cover"
+                            source={{uri: dish.recipeImageUrl}}
+                            className='h-full w-full'
+                            resizeMode='cover'
                           />
                         ) : (
-                          <View className="h-full w-full items-center justify-center">
+                          <View className='h-full w-full items-center justify-center'>
                             <Ionicons
-                              name="restaurant"
+                              name='restaurant'
                               size={22}
                               color={brand}
                             />
@@ -469,19 +477,20 @@ export default function AddMealPlanEntryScreen() {
                       </View>
 
                       {/* Dish Title & Recipe Link */}
-                      <View className="flex-1 justify-center">
+                      <View className='flex-1 justify-center'>
                         <AppText
                           numberOfLines={1}
-                          className="text-sm font-bold text-ink dark:text-ink-dark">
+                          className='text-sm font-bold text-ink dark:text-ink-dark'
+                        >
                           {dish.recipeTitle}
                         </AppText>
-                        <View className="mt-1 flex-row items-center gap-1">
+                        <View className='mt-1 flex-row items-center gap-1'>
                           <Ionicons
-                            name="checkmark-circle"
+                            name='checkmark-circle'
                             size={13}
-                            color="#10B981"
+                            color='#10B981'
                           />
-                          <AppText className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                          <AppText className='text-xs text-emerald-600 dark:text-emerald-400 font-semibold'>
                             Đã liên kết Recipe
                           </AppText>
                         </View>
@@ -491,39 +500,43 @@ export default function AddMealPlanEntryScreen() {
                       <Pressable
                         onPress={() => handleRemoveDish(idx)}
                         hitSlop={8}
-                        className="h-8 w-8 items-center justify-center rounded-full bg-red-50 active:opacity-70 dark:bg-red-950/30">
+                        className='h-8 w-8 items-center justify-center rounded-full bg-red-50 active:opacity-70 dark:bg-red-950/30'
+                      >
                         <Ionicons
-                          name="trash-outline"
+                          name='trash-outline'
                           size={16}
-                          color="#EF4444"
+                          color='#EF4444'
                         />
                       </Pressable>
                     </View>
 
                     {/* Per-dish Servings adjustment */}
-                    <View className="flex-row items-center justify-between border-t border-line/60 pt-2 dark:border-line-dark/60">
+                    <View className='flex-row items-center justify-between border-t border-line/60 pt-2 dark:border-line-dark/60'>
                       <AppText
-                        variant="caption"
-                        className="text-muted font-medium">
+                        variant='caption'
+                        className='text-muted font-medium'
+                      >
                         Khẩu phần món này:
                       </AppText>
-                      <View className="flex-row items-center gap-2">
+                      <View className='flex-row items-center gap-2'>
                         <Pressable
                           onPress={() => changeDishServings(idx, -1)}
-                          className="h-7 w-7 items-center justify-center rounded-lg border border-line bg-surface active:opacity-70 dark:border-line-dark dark:bg-surface-dark">
+                          className='h-7 w-7 items-center justify-center rounded-lg border border-line bg-surface active:opacity-70 dark:border-line-dark dark:bg-surface-dark'
+                        >
                           <Ionicons
-                            name="remove"
+                            name='remove'
                             size={14}
                             color={palette.ink}
                           />
                         </Pressable>
-                        <AppText className="w-8 text-center text-xs font-bold text-ink dark:text-ink-dark">
+                        <AppText className='w-8 text-center text-xs font-bold text-ink dark:text-ink-dark'>
                           {dish.servings}
                         </AppText>
                         <Pressable
                           onPress={() => changeDishServings(idx, 1)}
-                          className="h-7 w-7 items-center justify-center rounded-lg border border-line bg-surface active:opacity-70 dark:border-line-dark dark:bg-surface-dark">
-                          <Ionicons name="add" size={14} color={palette.ink} />
+                          className='h-7 w-7 items-center justify-center rounded-lg border border-line bg-surface active:opacity-70 dark:border-line-dark dark:bg-surface-dark'
+                        >
+                          <Ionicons name='add' size={14} color={palette.ink} />
                         </Pressable>
                       </View>
                     </View>
@@ -533,9 +546,10 @@ export default function AddMealPlanEntryScreen() {
                 {/* Button to add more dishes */}
                 <Pressable
                   onPress={() => setPickerVisible(true)}
-                  className="mt-1 flex-row items-center justify-center gap-1.5 rounded-xl border border-line bg-surface py-2.5 active:opacity-70 dark:border-line-dark dark:bg-surface-dark">
-                  <Ionicons name="add-circle-outline" size={17} color={brand} />
-                  <AppText className="text-xs font-bold text-brand">
+                  className='mt-1 flex-row items-center justify-center gap-1.5 rounded-xl border border-line bg-surface py-2.5 active:opacity-70 dark:border-line-dark dark:bg-surface-dark'
+                >
+                  <Ionicons name='add-circle-outline' size={17} color={brand} />
+                  <AppText className='text-xs font-bold text-brand'>
                     Chọn thêm món khác từ kho công thức
                   </AppText>
                 </Pressable>
@@ -544,21 +558,22 @@ export default function AddMealPlanEntryScreen() {
               // Empty State - Select recipe required
               <Pressable
                 onPress={() => setPickerVisible(true)}
-                className="flex-row items-center justify-between rounded-2xl border border-dashed border-brand/60 bg-brandSoft/40 p-4 active:opacity-80 dark:bg-surface-dark">
-                <View className="flex-row items-center gap-3">
-                  <View className="h-10 w-10 items-center justify-center rounded-xl bg-brand">
-                    <Ionicons name="restaurant" size={20} color="#fff" />
+                className='flex-row items-center justify-between rounded-2xl border border-dashed border-brand/60 bg-brandSoft/40 p-4 active:opacity-80 dark:bg-surface-dark'
+              >
+                <View className='flex-row items-center gap-3'>
+                  <View className='h-10 w-10 items-center justify-center rounded-xl bg-brand'>
+                    <Ionicons name='restaurant' size={20} color='#fff' />
                   </View>
-                  <View className="flex-1 pr-2">
-                    <AppText className="text-sm font-bold text-ink dark:text-ink-dark">
+                  <View className='flex-1 pr-2'>
+                    <AppText className='text-sm font-bold text-ink dark:text-ink-dark'>
                       Chọn các món từ kho công thức
                     </AppText>
-                    <AppText variant="caption" className="text-muted">
+                    <AppText variant='caption' className='text-muted'>
                       Hỗ trợ chọn nhiều món cùng lúc cho bữa ăn này
                     </AppText>
                   </View>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color={brand} />
+                <Ionicons name='chevron-forward' size={18} color={brand} />
               </Pressable>
             )}
           </Card>

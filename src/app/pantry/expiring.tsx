@@ -2,6 +2,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   View,
@@ -56,6 +60,14 @@ export default function PantryExpiringScreen() {
   const [selectedDays, setSelectedDays] = useState(3);
   // Text đang gõ số ngày; null = đang dùng chip nhanh
   const [customText, setCustomText] = useState<string | null>(null);
+
+  // Quản lý Modal Dùng bớt nguyên liệu (hỗ trợ cả Android, iOS & Web)
+  const [consumeTarget, setConsumeTarget] = useState<
+    (typeof expiringItems)[number] | null
+  >(null);
+  const [consumeAmount, setConsumeAmount] = useState<string>("1");
+  const [isConsuming, setIsConsuming] = useState(false);
+  const [consumeError, setConsumeError] = useState<string | null>(null);
 
   useEffect(() => {
     if (params.tab === "expired") {
@@ -114,48 +126,55 @@ export default function PantryExpiringScreen() {
     (isNaN(customNum) || customNum < 1 || customNum > MAX_DAYS);
 
   const handleQuickConsume = (item: (typeof expiringItems)[number]) => {
-    Alert.prompt
-      ? Alert.prompt(
-          "Dùng bớt nguyên liệu",
-          `Nhập số lượng bạn muốn dùng (hiện có: ${item.quantity} ${item.unit}):`,
-          [
-            { text: "Huỷ", style: "cancel" },
-            {
-              text: "Dùng",
-              onPress: async (val) => {
-                const qty = parseFloat(val || "1");
-                if (isNaN(qty) || qty <= 0) return;
-                try {
-                  await consume(item.id, qty);
-                  await Promise.all([loadExpiring(selectedDays), loadItems()]);
-                  Alert.alert("Thành công", `Đã dùng ${qty} ${item.unit}`);
-                } catch {
-                  Alert.alert("Lỗi", "Không thể dùng bớt");
-                }
-              },
-            },
-          ],
-          "plain-text",
-          "1",
-        )
-      : Alert.alert(
-          "Dùng hết món này?",
-          `Bạn có muốn đánh dấu dùng hết ${item.ingredientName}?`,
-          [
-            { text: "Huỷ", style: "cancel" },
-            {
-              text: "Dùng hết",
-              onPress: async () => {
-                try {
-                  await consume(item.id, item.quantity);
-                  await Promise.all([loadExpiring(selectedDays), loadItems()]);
-                } catch {
-                  Alert.alert("Lỗi", "Không thể thao tác");
-                }
-              },
-            },
-          ],
-        );
+    if (item.quantity <= 0) {
+      Alert.alert(
+        "Đã hết nguyên liệu",
+        `"${item.ingredientName}" hiện còn 0 ${item.unit}. Bạn có muốn bỏ món này khỏi tủ không?`,
+        [
+          { text: "Để sau", style: "cancel" },
+          {
+            text: "Bỏ khỏi tủ",
+            style: "destructive",
+            onPress: () => handleQuickRemove(item.id, item.ingredientName),
+          },
+        ],
+      );
+      return;
+    }
+    setConsumeTarget(item);
+    setConsumeAmount(item.quantity < 1 ? String(item.quantity) : "1");
+    setConsumeError(null);
+  };
+
+  const handleConfirmConsume = async () => {
+    if (!consumeTarget) return;
+    const qty = parseFloat(consumeAmount.replace(",", "."));
+    if (isNaN(qty) || qty <= 0) {
+      setConsumeError("Vui lòng nhập số lượng hợp lệ lớn hơn 0");
+      return;
+    }
+    if (qty > consumeTarget.quantity) {
+      setConsumeError(
+        `Số lượng dùng (${qty} ${consumeTarget.unit}) không thể lớn hơn lượng hiện có (${consumeTarget.quantity} ${consumeTarget.unit})`,
+      );
+      return;
+    }
+
+    try {
+      setIsConsuming(true);
+      await consume(consumeTarget.id, qty);
+      const consumedItem = consumeTarget;
+      setConsumeTarget(null);
+      await Promise.all([loadExpiring(selectedDays), loadItems()]);
+      Alert.alert(
+        "Thành công",
+        `Đã dùng ${qty} ${consumedItem.unit} ${consumedItem.ingredientName}.`,
+      );
+    } catch {
+      Alert.alert("Lỗi", "Không thể dùng bớt nguyên liệu. Vui lòng thử lại.");
+    } finally {
+      setIsConsuming(false);
+    }
   };
 
   const handleQuickRemove = (id: string, name?: string) => {
@@ -710,6 +729,175 @@ export default function PantryExpiringScreen() {
           </View>
         )}
       </Screen>
+
+      {/* Modal Dùng bớt nguyên liệu (hỗ trợ hoàn hảo Android, iOS & Web) */}
+      <Modal
+        visible={!!consumeTarget}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          if (!isConsuming) setConsumeTarget(null);
+        }}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{
+            flex: 1,
+            justifyContent: "flex-end",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          }}>
+          <Pressable
+            style={{ flex: 1 }}
+            onPress={() => {
+              Keyboard.dismiss();
+              if (!isConsuming) setConsumeTarget(null);
+            }}
+          />
+          <Card
+            style={{
+              borderBottomLeftRadius: 0,
+              borderBottomRightRadius: 0,
+              paddingBottom: Platform.OS === "ios" ? 34 : 24,
+            }}
+            className="p-6 gap-4 shadow-2xl">
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center gap-2.5">
+                <View
+                  style={{
+                    backgroundColor: isDark
+                      ? "rgba(16, 185, 129, 0.2)"
+                      : colors.primarySoft,
+                  }}
+                  className="h-10 w-10 items-center justify-center rounded-2xl">
+                  <Ionicons
+                    name="restaurant-outline"
+                    size={20}
+                    color={colors.primary}
+                  />
+                </View>
+                <View>
+                  <AppText variant="heading">Dùng bớt nguyên liệu</AppText>
+                  <AppText variant="caption">
+                    {consumeTarget?.ingredientName}
+                  </AppText>
+                </View>
+              </View>
+              <Pressable
+                onPress={() => {
+                  Keyboard.dismiss();
+                  if (!isConsuming) setConsumeTarget(null);
+                }}
+                className="h-8 w-8 items-center justify-center rounded-full bg-soft dark:bg-surface-dark">
+                <Ionicons name="close" size={18} color={palette.ink} />
+              </Pressable>
+            </View>
+
+            {/* Thông tin lượng hiện có */}
+            <View
+              style={{
+                backgroundColor: isDark
+                  ? "rgba(255, 255, 255, 0.05)"
+                  : "#F8FAFC",
+                borderColor: colors.border,
+                borderWidth: 1,
+              }}
+              className="rounded-2xl p-3 flex-row items-center justify-between">
+              <AppText variant="caption" className="font-medium">
+                Lượng còn trong tủ:
+              </AppText>
+              <AppText
+                className="font-bold text-base"
+                style={{ color: colors.primary }}>
+                {consumeTarget
+                  ? Math.round(consumeTarget.quantity * 100) / 100
+                  : 0}{" "}
+                {consumeTarget?.unit}
+              </AppText>
+            </View>
+
+            {/* Input số lượng */}
+            <TextField
+              label={`Số lượng muốn dùng (${consumeTarget?.unit ?? ""})`}
+              value={consumeAmount}
+              onChangeText={(text) => {
+                setConsumeAmount(text);
+                if (consumeError) setConsumeError(null);
+              }}
+              keyboardType="decimal-pad"
+              placeholder={`Ví dụ: ${
+                consumeTarget && consumeTarget.quantity >= 100 ? "100" : "1"
+              }`}
+              error={consumeError}
+            />
+
+            {/* Các phím chọn nhanh */}
+            {consumeTarget && consumeTarget.quantity > 0 ? (
+              <View className="flex-row items-center gap-2 flex-wrap">
+                <Pressable
+                  onPress={() => {
+                    setConsumeAmount(
+                      consumeTarget.quantity >= 1
+                        ? "1"
+                        : String(consumeTarget.quantity),
+                    );
+                    if (consumeError) setConsumeError(null);
+                  }}
+                  className="rounded-xl px-3 py-1.5 bg-soft dark:bg-surface-dark border border-line dark:border-line-dark active:scale-95">
+                  <AppText variant="caption" className="font-semibold">
+                    1 {consumeTarget.unit}
+                  </AppText>
+                </Pressable>
+
+                {consumeTarget.quantity > 1 ? (
+                  <Pressable
+                    onPress={() => {
+                      const half =
+                        Math.round((consumeTarget.quantity / 2) * 100) / 100;
+                      setConsumeAmount(String(half));
+                      if (consumeError) setConsumeError(null);
+                    }}
+                    className="rounded-xl px-3 py-1.5 bg-soft dark:bg-surface-dark border border-line dark:border-line-dark active:scale-95">
+                    <AppText variant="caption" className="font-semibold">
+                      Dùng 50% ({Math.round((consumeTarget.quantity / 2) * 10) / 10})
+                    </AppText>
+                  </Pressable>
+                ) : null}
+
+                <Pressable
+                  onPress={() => {
+                    setConsumeAmount(String(consumeTarget.quantity));
+                    if (consumeError) setConsumeError(null);
+                  }}
+                  className="rounded-xl px-3 py-1.5 bg-soft dark:bg-surface-dark border border-line dark:border-line-dark active:scale-95">
+                  <AppText variant="caption" className="font-semibold">
+                    Dùng hết ({consumeTarget.quantity})
+                  </AppText>
+                </Pressable>
+              </View>
+            ) : null}
+
+            {/* Action buttons */}
+            <View className="flex-row gap-3 pt-2">
+              <Button
+                title="Huỷ"
+                variant="outline"
+                className="flex-1"
+                disabled={isConsuming}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setConsumeTarget(null);
+                }}
+              />
+              <Button
+                title={isConsuming ? "Đang xử lý..." : "Xác nhận dùng"}
+                variant="primary"
+                className="flex-1"
+                onPress={handleConfirmConsume}
+                disabled={isConsuming}
+              />
+            </View>
+          </Card>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
