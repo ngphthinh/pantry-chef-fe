@@ -9,6 +9,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   View,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -473,62 +474,67 @@ export default function PantryItemDetailScreen() {
         visible={consumeModalVisible}
         transparent
         animationType="slide"
+        statusBarTranslucent
         onRequestClose={() => setConsumeModalVisible(false)}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        <View
           style={{
             flex: 1,
             justifyContent: "flex-end",
             backgroundColor: "rgba(0, 0, 0, 0.5)",
           }}>
           <Pressable
-            style={{ flex: 1 }}
+            style={StyleSheet.absoluteFill}
             onPress={() => {
               Keyboard.dismiss();
               setConsumeModalVisible(false);
             }}
           />
-          <Card
-            style={{
-              borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
-              paddingBottom: Platform.OS === "ios" ? 34 : 20,
-            }}
-            className="p-6 gap-4 shadow-2xl">
-            <AppText variant="heading">Dùng bớt nguyên liệu</AppText>
-            <AppText variant="caption">
-              Lượng hiện có: {Math.round(selectedItem.quantity)}{" "}
-              {selectedItem.unit}
-            </AppText>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "padding"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+            style={{ width: "100%" }}>
+            <Card
+              style={{
+                borderBottomLeftRadius: 0,
+                borderBottomRightRadius: 0,
+                paddingBottom: Platform.OS === "ios" ? 34 : 24,
+              }}
+              className="p-6 gap-4 shadow-2xl">
+              <AppText variant="heading">Dùng bớt nguyên liệu</AppText>
+              <AppText variant="caption">
+                Lượng hiện có: {Math.round(selectedItem.quantity)}{" "}
+                {selectedItem.unit}
+              </AppText>
 
-            <TextField
-              label="Số lượng muốn dùng"
-              value={consumeAmount}
-              onChangeText={setConsumeAmount}
-              keyboardType="numeric"
-              placeholder="Ví dụ: 1"
-            />
+              <TextField
+                label="Số lượng muốn dùng"
+                value={consumeAmount}
+                onChangeText={setConsumeAmount}
+                keyboardType="numeric"
+                placeholder="Ví dụ: 1"
+              />
 
-            <View className="flex-row gap-3 pt-2">
-              <Button
-                title="Huỷ"
-                variant="outline"
-                className="flex-1"
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setConsumeModalVisible(false);
-                }}
-              />
-              <Button
-                title={isConsuming ? "Đang xử lý..." : "Xác nhận dùng"}
-                variant="primary"
-                className="flex-1"
-                onPress={handleConsume}
-                disabled={isConsuming}
-              />
-            </View>
-          </Card>
-        </KeyboardAvoidingView>
+              <View className="flex-row gap-3 pt-2">
+                <Button
+                  title="Huỷ"
+                  variant="outline"
+                  className="flex-1"
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setConsumeModalVisible(false);
+                  }}
+                />
+                <Button
+                  title={isConsuming ? "Đang xử lý..." : "Xác nhận dùng"}
+                  variant="primary"
+                  className="flex-1"
+                  onPress={handleConsume}
+                  disabled={isConsuming}
+                />
+              </View>
+            </Card>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       {/* Modal Edit */}
@@ -536,29 +542,33 @@ export default function PantryItemDetailScreen() {
         visible={editModalVisible}
         transparent
         animationType="slide"
+        statusBarTranslucent
         onRequestClose={() => setEditModalVisible(false)}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        <View
           style={{
             flex: 1,
             justifyContent: "flex-end",
             backgroundColor: "rgba(0, 0, 0, 0.5)",
           }}>
           <Pressable
-            style={{ flex: 1 }}
+            style={StyleSheet.absoluteFill}
             onPress={() => {
               Keyboard.dismiss();
               setEditModalVisible(false);
             }}
           />
-          <Card
-            style={{
-              maxHeight: "85%",
-              borderBottomLeftRadius: 0,
-              borderBottomRightRadius: 0,
-              paddingBottom: Platform.OS === "ios" ? 34 : 20,
-            }}
-            className="p-5 shadow-2xl">
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "padding"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+            style={{ width: "100%" }}>
+            <Card
+              style={{
+                maxHeight: "85%",
+                borderBottomLeftRadius: 0,
+                borderBottomRightRadius: 0,
+                paddingBottom: Platform.OS === "ios" ? 34 : 24,
+              }}
+              className="p-5 shadow-2xl">
             {/* Header Modal */}
             <View className="flex-row items-center justify-between pb-3 border-b border-line dark:border-line-dark">
               <AppText variant="heading" className="text-lg font-bold">
@@ -772,7 +782,8 @@ export default function PantryItemDetailScreen() {
             </ScrollView>
           </Card>
         </KeyboardAvoidingView>
-      </Modal>
+      </View>
+    </Modal>
     </View>
   );
 }
