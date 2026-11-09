@@ -30,7 +30,26 @@ export default function ExternalRecipeDetailScreen() {
     setSaving(true);
     const result = await recipe.saveRecipe();
     setSaving(false);
-    Alert.alert(result.ok ? 'Đã lưu' : 'Chưa thể lưu', result.ok ? 'Công thức đã được lưu vào mục Đã lưu.' : result.message);
+    if (result.ok) {
+      Alert.alert('Thành công', 'Công thức đã được lưu vào mục Đã lưu.');
+    } else {
+      const msg = (result.message || '').toLowerCase();
+      const isAlreadyExists =
+        msg.includes('already') ||
+        msg.includes('exist') ||
+        msg.includes('duplicate') ||
+        msg.includes('conflict') ||
+        msg.includes('409') ||
+        msg.includes('tồn tại') ||
+        msg.includes('đã có');
+
+      Alert.alert(
+        isAlreadyExists ? 'Công thức đã tồn tại' : 'Chưa thể lưu',
+        isAlreadyExists
+          ? 'Công thức này đã có trong danh sách Đã lưu của bạn.'
+          : result.message || 'Không thể lưu công thức này. Vui lòng thử lại sau.'
+      );
+    }
   };
 
   if (recipe.isLoading || (!detail && !recipe.error)) {
@@ -174,11 +193,6 @@ export default function ExternalRecipeDetailScreen() {
           onPress={() => detail.id && openAdapted(detail.id)}
         />
         <Button title="Lưu công thức" variant="outline" loading={saving} onPress={save} />
-        <Button
-          title="Món tương tự"
-          variant="outline"
-          onPress={() => router.push({ pathname: '/recipe/similar', params: { externalId: detail.externalId ?? externalId, title: detail.title } })}
-        />
       </View>
     </Screen>
   );
