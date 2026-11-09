@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ActivityIndicator, Pressable, View } from "react-native";
+import { ActivityIndicator, Keyboard, Pressable, View } from "react-native";
 
 import { AppText } from "@/components/ui/AppText";
 import { TextField } from "@/components/ui/TextField";
@@ -46,6 +46,7 @@ export function IngredientNameField({
   };
 
   const handleSelect = (item: IngredientResponse) => {
+    Keyboard.dismiss();
     setOpen(false);
     onSelect(item);
   };
@@ -60,6 +61,9 @@ export function IngredientNameField({
             label={label}
             placeholder="Ví dụ: Thịt bò, Cà chua..."
             autoCapitalize="sentences"
+            returnKeyType="done"
+            onSubmitEditing={() => Keyboard.dismiss()}
+            blurOnSubmit={true}
             value={value}
             onChangeText={handleChange}
             onBlur={handleBlur}

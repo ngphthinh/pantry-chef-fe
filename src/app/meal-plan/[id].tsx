@@ -21,6 +21,7 @@ import { useAppTheme } from "@/core/theme/useAppTheme";
 import { palette } from "@/theme";
 import { useMealPlan } from "@/features/mealplan/useMealPlan";
 import type { MealPlanEntryResponse, MealType } from "@/types";
+import { toApiError } from "@/core/http/apiError";
 
 const MEAL_ICONS: Record<
   MealType,
@@ -39,6 +40,7 @@ export default function MealPlanDetailScreen() {
     currentPlan,
     isLoading,
     isSaving,
+    isDeleting,
     loadPlanById,
     toggleCooked,
     removeEntry,
@@ -132,9 +134,17 @@ export default function MealPlanDetailScreen() {
   };
 
   const handleDeletePlan = () => {
+    const targetId = id || plan?.id;
+    if (!targetId) {
+      Alert.alert("Lỗi", "Không tìm thấy mã thực đơn cần xoá.");
+      return;
+    }
+
     Alert.alert(
       "Xoá toàn bộ thực đơn",
-      "Bạn có chắc muốn xoá toàn bộ thực đơn tuần này?",
+      `Bạn có chắc chắn muốn xoá toàn bộ thực đơn tuần ${
+        plan?.weekStart ? `từ ${toDisplayDate(plan.weekStart)}` : "này"
+      }? Toàn bộ bữa ăn đã lên lịch trong tuần sẽ bị xoá vĩnh viễn và không thể khôi phục.`,
       [
         { text: "Huỷ", style: "cancel" },
         {
@@ -142,12 +152,25 @@ export default function MealPlanDetailScreen() {
           style: "destructive",
           onPress: async () => {
             try {
-              await removePlan();
-              Alert.alert("Thành công", "Đã xoá thực đơn tuần", [
-                { text: "OK", onPress: () => router.back() },
+              await removePlan(targetId);
+              Alert.alert("Thành công", "Đã xoá thực đơn tuần thành công", [
+                {
+                  text: "OK",
+                  onPress: () => {
+                    if (router.canGoBack()) {
+                      router.back();
+                    } else {
+                      router.replace("/(tabs)/meal-plan" as Href);
+                    }
+                  },
+                },
               ]);
-            } catch {
-              Alert.alert("Lỗi", "Không thể xoá thực đơn");
+            } catch (err: unknown) {
+              const apiErr = toApiError(err);
+              Alert.alert(
+                "Lỗi",
+                apiErr.message || "Không thể xoá thực đơn. Vui lòng thử lại sau.",
+              );
             }
           },
         },
@@ -218,8 +241,14 @@ export default function MealPlanDetailScreen() {
 
         <Pressable
           onPress={handleDeletePlan}
+          disabled={isDeleting}
+          accessibilityLabel="Xoá thực đơn tuần"
           className="h-10 w-10 items-center justify-center rounded-full bg-dangerBg active:scale-95 dark:bg-dangerBg-dark">
-          <Ionicons name="trash-outline" size={18} color={palette.dangerInk} />
+          {isDeleting ? (
+            <ActivityIndicator size="small" color={palette.dangerInk} />
+          ) : (
+            <Ionicons name="trash-outline" size={18} color={palette.dangerInk} />
+          )}
         </Pressable>
       </View>
 
@@ -399,12 +428,48 @@ export default function MealPlanDetailScreen() {
       <AppText variant="caption" className="mt-1 text-center">
         Hãy bắt đầu lên kế hoạch các bữa ăn cho tuần này nhé
       </AppText>
-      <Button
-        title="Thêm bữa ăn đầu tiên"
-        onPress={() => router.push("/meal-plan/add-entry" as Href)}
-        className="mt-4 w-full max-w-xs"
-      />
+      <View className="mt-4 w-full max-w-xs gap-3">
+        <Button
+          title="Thêm bữa ăn đầu tiên"
+          onPress={() => router.push("/meal-plan/add-entry" as Href)}
+        />
+        <Button
+          title="Xoá thực đơn tuần này"
+          variant="danger"
+          loading={isDeleting}
+          disabled={isDeleting}
+          onPress={handleDeletePlan}
+        />
+      </View>
     </Card>
+  );
+
+  const renderFooter = () => (
+    <View className="pt-2 pb-6">
+      <Card className="p-4 shadow-sm border border-dangerBg dark:border-dangerBg-dark">
+        <View className="flex-row items-center gap-2 mb-1.5">
+          <Ionicons name="alert-circle-outline" size={18} color={palette.dangerInk} />
+          <AppText variant="label" className="font-bold text-danger">
+            Vùng nguy hiểm
+          </AppText>
+        </View>
+        <AppText variant="caption" className="text-muted mb-3">
+          Xoá thực đơn tuần sẽ loại bỏ toàn bộ {sortedEntries.length} bữa ăn đã lên lịch. Hành động này không thể hoàn tác.
+        </AppText>
+        <Button
+          title="Xoá thực đơn tuần này"
+          variant="danger"
+          loading={isDeleting}
+          disabled={isDeleting}
+          iconLeft={
+            !isDeleting ? (
+              <Ionicons name="trash-outline" size={16} color="#FFFFFF" />
+            ) : undefined
+          }
+          onPress={handleDeletePlan}
+        />
+      </Card>
+    </View>
   );
 
   return (
@@ -414,6 +479,7 @@ export default function MealPlanDetailScreen() {
       renderItem={renderItem}
       header={renderHeader()}
       empty={renderEmpty()}
+      footer={sortedEntries.length > 0 ? renderFooter() : undefined}
       isLoading={isFetching || (isLoading && !plan)}
       loadingMessage="Đang tải chi tiết thực đơn..."
       onRefresh={onRefresh}

@@ -29,6 +29,7 @@ import type {
   MealType,
   RecipeSummaryResponse,
 } from "@/types";
+import {toDisplayDate} from "@/core/format/datetime";
 
 const MEAL_TYPES: {
   type: MealType;
@@ -244,7 +245,7 @@ export default function AddMealPlanEntryScreen() {
 
       Alert.alert(
         "Thành công",
-        `Đã thêm ${entries.length} món vào ${mealLabel.toLowerCase()} ngày ${date}!`,
+        `Đã thêm ${entries.length} món vào ${mealLabel.toLowerCase()} ngày ${toDisplayDate(date)}!`,
         [{text: "OK", onPress: () => router.back()}],
       );
     } catch (err: unknown) {

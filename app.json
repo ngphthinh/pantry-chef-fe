@@ -21,6 +21,7 @@
         "android.permission.RECORD_AUDIO"
       ],
       "package": "com.ngphthinh0710.pantrychef",
+      "softwareKeyboardLayoutMode": "resize"
     },
     "ios": {
       "bundleIdentifier": "com.ngphthinh0710.pantrychef",

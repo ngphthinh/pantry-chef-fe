@@ -30,26 +30,22 @@ export function PageScreen({
   };
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1"
-      behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <Screen className={className}>
-        <View className="flex-row items-center gap-2">
-          <Pressable
-            onPress={goBack}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel="Quay lại"
-            className="h-10 w-10 items-center justify-center rounded-full active:opacity-70">
-            <Ionicons name="chevron-back" size={24} color={palette.ink} />
-          </Pressable>
-          <AppText variant="heading" className="flex-1" numberOfLines={1}>
-            {title}
-          </AppText>
-          {right}
-        </View>
-        {children}
-      </Screen>
-    </KeyboardAvoidingView>
+    <Screen className={className}>
+      <View className="flex-row items-center gap-2">
+        <Pressable
+          onPress={goBack}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel="Quay lại"
+          className="h-10 w-10 items-center justify-center rounded-full active:opacity-70">
+          <Ionicons name="chevron-back" size={24} color={palette.ink} />
+        </Pressable>
+        <AppText variant="heading" className="flex-1" numberOfLines={1}>
+          {title}
+        </AppText>
+        {right}
+      </View>
+      {children}
+    </Screen>
   );
 }

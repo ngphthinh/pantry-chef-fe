@@ -18,6 +18,8 @@ interface ListScreenProps<T> {
   header?: ReactElement;
   /** Hiện khi danh sách rỗng (chỉ truyền khi đã tải xong). */
   empty?: ReactElement | null;
+  /** Phần cuối danh sách (nút hành động phụ, thông tin cảnh báo...). */
+  footer?: ReactElement;
   /** Trạng thái đang tải dữ liệu lần đầu */
   isLoading?: boolean;
   /** Dòng chữ thông báo khi đang tải */
@@ -47,6 +49,7 @@ export function ListScreen<T>({
   renderItem,
   header,
   empty,
+  footer,
   isLoading = false,
   loadingMessage = "Đang tải dữ liệu...",
   onEndReached,
@@ -93,6 +96,23 @@ export function ListScreen<T>({
             className="mt-2 text-xs font-medium">
             Đang tải thêm...
           </AppText>
+        </View>
+      );
+    }
+    if (footer) {
+      return (
+        <View>
+          {footer}
+          {hasNext === false && data.length > 0 && (
+            <View className="items-center justify-center py-4">
+              <AppText
+                variant="caption"
+                style={{ color: colors.textDisabled }}
+                className="text-xs">
+                Đã hiển thị tất cả ({data.length}) món
+              </AppText>
+            </View>
+          )}
         </View>
       );
     }

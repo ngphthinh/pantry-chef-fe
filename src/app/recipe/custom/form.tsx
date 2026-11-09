@@ -1,4 +1,10 @@
-import { ActivityIndicator, Image, Pressable, View } from "react-native";
+import {
+  ActivityIndicator,
+  Image,
+  Keyboard,
+  Pressable,
+  View,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
@@ -29,6 +35,7 @@ export default function CustomRecipeFormScreen() {
   };
 
   const handleSubmit = async () => {
+    Keyboard.dismiss();
     const result = await form.submit();
     if (!result.ok) {
       showAlert("Chưa lưu được", result.message);
@@ -102,6 +109,9 @@ export default function CustomRecipeFormScreen() {
         label="Tên món"
         placeholder="Ví dụ: Thịt kho tàu"
         autoCapitalize="sentences"
+        returnKeyType="done"
+        onSubmitEditing={() => Keyboard.dismiss()}
+        blurOnSubmit={true}
         value={form.values.title}
         onChangeText={(t) => form.setField("title", t)}
         error={form.errors.title}
@@ -112,6 +122,9 @@ export default function CustomRecipeFormScreen() {
           <TextField
             label="Khẩu phần"
             keyboardType="number-pad"
+            returnKeyType="done"
+            onSubmitEditing={() => Keyboard.dismiss()}
+            blurOnSubmit={true}
             value={form.values.servings}
             onChangeText={(t) => form.setField("servings", t)}
             error={form.errors.servings}
@@ -121,6 +134,9 @@ export default function CustomRecipeFormScreen() {
           <TextField
             label="Thời gian (phút)"
             keyboardType="number-pad"
+            returnKeyType="done"
+            onSubmitEditing={() => Keyboard.dismiss()}
+            blurOnSubmit={true}
             value={form.values.readyInMinutes}
             onChangeText={(t) => form.setField("readyInMinutes", t)}
             error={form.errors.readyInMinutes}
@@ -190,6 +206,9 @@ export default function CustomRecipeFormScreen() {
             <TextField
               label="Số lượng (bỏ trống = vừa đủ)"
               keyboardType="decimal-pad"
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
+              blurOnSubmit={true}
               value={row.amount}
               onChangeText={(t) =>
                 form.updateIngredient(row.key, { amount: t })
@@ -210,7 +229,10 @@ export default function CustomRecipeFormScreen() {
         <Button
           title="Thêm nguyên liệu"
           variant="outline"
-          onPress={form.addIngredient}
+          onPress={() => {
+            Keyboard.dismiss();
+            form.addIngredient();
+          }}
         />
       </View>
 
@@ -241,6 +263,9 @@ export default function CustomRecipeFormScreen() {
             <TextField
               label="Hẹn giờ (phút, tuỳ chọn)"
               keyboardType="decimal-pad"
+              returnKeyType="done"
+              onSubmitEditing={() => Keyboard.dismiss()}
+              blurOnSubmit={true}
               value={row.timerMinutes}
               onChangeText={(t) =>
                 form.updateStep(row.key, { timerMinutes: t })
@@ -251,7 +276,14 @@ export default function CustomRecipeFormScreen() {
         {form.errors.steps ? (
           <AppText variant="error">{form.errors.steps}</AppText>
         ) : null}
-        <Button title="Thêm bước" variant="outline" onPress={form.addStep} />
+        <Button
+          title="Thêm bước"
+          variant="outline"
+          onPress={() => {
+            Keyboard.dismiss();
+            form.addStep();
+          }}
+        />
       </View>
 
       <Button

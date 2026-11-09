@@ -244,10 +244,16 @@ export function useMealPlan() {
     [dispatch, currentPlan],
   );
 
-  const removePlan = useCallback(() => {
-    if (!currentPlan) return;
-    return dispatch(deleteMealPlan(currentPlan.id));
-  }, [dispatch, currentPlan]);
+  const removePlan = useCallback(
+    async (planId?: string) => {
+      const targetId = planId ?? currentPlan?.id;
+      if (!targetId) {
+        throw new Error('Không tìm thấy ID thực đơn để xoá');
+      }
+      return dispatch(deleteMealPlan(targetId));
+    },
+    [dispatch, currentPlan],
+  );
 
   const loadShoppingList = useCallback(async () => {
     if (!currentPlan) return [];
@@ -290,6 +296,7 @@ export function useMealPlan() {
     daysOfWeek,
     isLoading: status === 'loading',
     isSaving: status === 'saving',
+    isDeleting: status === 'deleting',
     isGeneratingAi: status === 'generatingAi',
     loadWeek,
     loadPlanById,
