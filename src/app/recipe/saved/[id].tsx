@@ -17,6 +17,11 @@ import { confirmAction, notify } from "@/core/ui/dialogs";
 import { useAppTheme } from "@/core/theme/useAppTheme";
 import { useSavedRecipeForm } from "@/features/savedRecipes/useSavedRecipeForm";
 import { useResolvedSavedRecipeId } from "@/features/savedRecipes/useResolvedSavedRecipeId";
+import { UNIT_LABEL, type Unit } from "@/types";
+
+/** Đơn vị của BE (PCS, TBSP...) thì đổi sang tiếng Việt; đơn vị tự do (g, quả...) giữ nguyên. */
+const unitLabel = (unit?: string | null) =>
+  unit && unit in UNIT_LABEL ? UNIT_LABEL[unit as Unit] : unit;
 
 function SectionTitle({
   icon,
@@ -142,7 +147,8 @@ export default function SavedRecipeScreen() {
                   className="active:scale-90"
                   onPress={() =>
                     setField("rating", values.rating === n ? 0 : n)
-                  }>
+                  }
+                >
                   <Ionicons
                     name={n <= values.rating ? "star" : "star-outline"}
                     size={26}
@@ -154,7 +160,8 @@ export default function SavedRecipeScreen() {
             <Pressable
               hitSlop={8}
               className="h-10 w-10 items-center justify-center rounded-full bg-brandSoft active:scale-90 dark:bg-surface-dark"
-              onPress={() => setField("favorite", !values.favorite)}>
+              onPress={() => setField("favorite", !values.favorite)}
+            >
               <Ionicons
                 name={values.favorite ? "heart" : "heart-outline"}
                 size={22}
@@ -196,7 +203,7 @@ export default function SavedRecipeScreen() {
               </AppText>
             ) : (
               ingredients.map((ing, index) => {
-                const amount = [ing.amount, ing.unit]
+                const amount = [ing.amount, unitLabel(ing.unit)]
                   .filter((v) => v != null && String(v).trim() !== "")
                   .join(" ");
                 return (
@@ -205,7 +212,8 @@ export default function SavedRecipeScreen() {
                     className={cn(
                       "flex-row items-center justify-between gap-3 px-4 py-3",
                       index > 0 && "border-t border-line dark:border-line-dark",
-                    )}>
+                    )}
+                  >
                     <AppText className="flex-1 font-semibold">
                       {ing.name}
                     </AppText>
@@ -256,7 +264,8 @@ export default function SavedRecipeScreen() {
         />
         <Pressable
           className="items-center py-3"
-          onPress={() => void handleRemove()}>
+          onPress={() => void handleRemove()}
+        >
           <AppText className="font-bold text-danger">Bỏ lưu món này</AppText>
         </Pressable>
       </View>

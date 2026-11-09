@@ -20,9 +20,17 @@ import { showAlert } from "@/components/ui/dialogs";
 import { useMealPlan } from "@/features/mealplan/useMealPlan";
 import { useShopping } from "@/features/shopping/useShopping";
 import { toDisplayDate } from "@/core/format/datetime";
-import type { ShoppingItemResponse, ShoppingListResponse } from "@/types";
+import {
+  UNIT_LABEL,
+  type ShoppingItemResponse,
+  type ShoppingListResponse,
+  type Unit,
+} from "@/types";
 
 const PAGE_SIZE = 8;
+
+const unitLabel = (unit?: string | null) =>
+  unit && unit in UNIT_LABEL ? UNIT_LABEL[unit as Unit] : unit;
 
 /** Kiểm tra xem tên danh sách mua sắm có thuộc tuần thực đơn đang chọn không */
 function isShoppingListForWeek(listName: string, weekStart?: string): boolean {
@@ -210,7 +218,7 @@ export default function MealPlanShoppingPreviewScreen() {
   const formatQuantity = (item: ShoppingItemResponse) => {
     if (item.quantity === null || item.quantity === undefined) return "Vừa đủ";
     const rounded = Math.round(item.quantity * 100) / 100;
-    return `${rounded} ${item.unit || ""}`.trim();
+    return `${rounded} ${unitLabel(item.unit) || ""}`.trim();
   };
 
   // Tạo mảng số trang để nhảy nhanh
@@ -237,7 +245,8 @@ export default function MealPlanShoppingPreviewScreen() {
           <View className="flex-row items-center gap-3">
             <Pressable
               onPress={() => router.back()}
-              className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark active:opacity-70">
+              className="h-10 w-10 items-center justify-center rounded-full bg-soft dark:bg-surface-dark active:opacity-70"
+            >
               <Ionicons name="arrow-back" size={20} color={palette.ink} />
             </Pressable>
             <View>
@@ -258,7 +267,8 @@ export default function MealPlanShoppingPreviewScreen() {
             paddingTop: 14,
             paddingBottom: 24,
             gap: 12,
-          }}>
+          }}
+        >
           {/* Summary Card */}
           <Card className="flex-row items-center justify-between bg-brandSoft/40 p-4 shadow-sm dark:bg-surface-dark">
             <View className="flex-row items-center gap-3">
@@ -285,7 +295,8 @@ export default function MealPlanShoppingPreviewScreen() {
                 borderColor: colors.border,
                 borderWidth: 1.2,
               }}
-              className="flex-row items-center gap-2.5 rounded-2xl px-3.5 py-2.5 shadow-xs">
+              className="flex-row items-center gap-2.5 rounded-2xl px-3.5 py-2.5 shadow-xs"
+            >
               <Ionicons name="search-outline" size={18} color={palette.muted} />
               <TextInput
                 placeholder="Tìm nhanh nguyên liệu cần mua..."
@@ -309,7 +320,8 @@ export default function MealPlanShoppingPreviewScreen() {
                     setCurrentPage(1);
                   }}
                   hitSlop={8}
-                  className="p-0.5">
+                  className="p-0.5"
+                >
                   <Ionicons
                     name="close-circle"
                     size={18}
@@ -334,7 +346,10 @@ export default function MealPlanShoppingPreviewScreen() {
               <AppText variant="heading" className="mt-2 text-center">
                 Đủ nguyên liệu!
               </AppText>
-              <AppText variant="caption" className="mt-1 text-center text-muted">
+              <AppText
+                variant="caption"
+                className="mt-1 text-center text-muted"
+              >
                 Tủ lạnh của bạn đã có đủ nguyên liệu cho các bữa ăn tuần này,
                 không cần mua thêm.
               </AppText>
@@ -345,7 +360,10 @@ export default function MealPlanShoppingPreviewScreen() {
               <AppText variant="heading" className="mt-2 text-center text-sm">
                 Không tìm thấy nguyên liệu
               </AppText>
-              <AppText variant="caption" className="mt-1 text-center text-muted">
+              <AppText
+                variant="caption"
+                className="mt-1 text-center text-muted"
+              >
                 Không có món nào khớp với &quot;{searchQuery}&quot;
               </AppText>
             </Card>
@@ -355,20 +373,18 @@ export default function MealPlanShoppingPreviewScreen() {
               {paginatedItems.map((item) => (
                 <Card
                   key={item.id}
-                  className="flex-row items-center justify-between p-3.5 shadow-sm">
+                  className="flex-row items-center justify-between p-3.5 shadow-sm"
+                >
                   <View className="flex-row items-center gap-3 flex-1 pr-2">
                     <View className="h-10 w-10 items-center justify-center rounded-2xl bg-soft shadow-inner dark:bg-soft-dark">
-                      <Ionicons
-                        name="basket-outline"
-                        size={19}
-                        color={brand}
-                      />
+                      <Ionicons name="basket-outline" size={19} color={brand} />
                     </View>
                     <View className="flex-1">
                       <AppText
                         variant="heading"
                         numberOfLines={1}
-                        className="text-sm font-bold text-ink dark:text-ink-dark">
+                        className="text-sm font-bold text-ink dark:text-ink-dark"
+                      >
                         {item.name}
                       </AppText>
                       <AppText variant="caption" className="mt-0.5 text-muted">
@@ -389,13 +405,15 @@ export default function MealPlanShoppingPreviewScreen() {
                     borderColor: colors.border,
                     borderWidth: 1,
                   }}
-                  className="mt-2 rounded-2xl p-3 shadow-xs gap-2.5">
+                  className="mt-2 rounded-2xl p-3 shadow-xs gap-2.5"
+                >
                   <View className="flex-row items-center justify-between">
                     <Pressable
                       onPress={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage <= 1}
                       style={{ opacity: currentPage <= 1 ? 0.35 : 1 }}
-                      className="flex-row items-center gap-1 rounded-xl bg-soft px-3 py-1.5 dark:bg-soft-dark active:opacity-70">
+                      className="flex-row items-center gap-1 rounded-xl bg-soft px-3 py-1.5 dark:bg-soft-dark active:opacity-70"
+                    >
                       <Ionicons
                         name="chevron-back"
                         size={15}
@@ -421,13 +439,15 @@ export default function MealPlanShoppingPreviewScreen() {
                                   ? "rgba(255,255,255,0.06)"
                                   : "#F1F5F9",
                             }}
-                            className="h-7 w-7 items-center justify-center rounded-lg active:scale-95">
+                            className="h-7 w-7 items-center justify-center rounded-lg active:scale-95"
+                          >
                             <AppText
                               style={{
                                 color: isCurrent ? "#fff" : palette.ink,
                                 fontSize: 11,
                                 fontWeight: isCurrent ? "800" : "600",
-                              }}>
+                              }}
+                            >
                               {pageNum}
                             </AppText>
                           </Pressable>
@@ -443,7 +463,8 @@ export default function MealPlanShoppingPreviewScreen() {
                       style={{
                         opacity: currentPage >= totalPages ? 0.35 : 1,
                       }}
-                      className="flex-row items-center gap-1 rounded-xl bg-soft px-3 py-1.5 dark:bg-soft-dark active:opacity-70">
+                      className="flex-row items-center gap-1 rounded-xl bg-soft px-3 py-1.5 dark:bg-soft-dark active:opacity-70"
+                    >
                       <AppText className="text-xs font-bold text-ink dark:text-ink-dark">
                         Sau
                       </AppText>
@@ -459,7 +480,8 @@ export default function MealPlanShoppingPreviewScreen() {
                   <View className="items-center">
                     <AppText
                       variant="caption"
-                      className="text-[11px] text-muted">
+                      className="text-[11px] text-muted"
+                    >
                       Hiển thị {(currentPage - 1) * PAGE_SIZE + 1} -{" "}
                       {Math.min(currentPage * PAGE_SIZE, filteredItems.length)}{" "}
                       trong tổng số {filteredItems.length} nguyên liệu
