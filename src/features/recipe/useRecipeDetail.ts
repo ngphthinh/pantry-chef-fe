@@ -98,6 +98,19 @@ export function useRecipeDetail(externalId: string | undefined) {
       : { externalId: current.externalId ?? externalId ?? '' };
 
     const result = await add(body);
+    if (!result.ok) {
+      const msg = (result.message || '').toLowerCase();
+      if (
+        msg.includes('already') ||
+        msg.includes('exist') ||
+        msg.includes('duplicate') ||
+        msg.includes('conflict') ||
+        msg.includes('409') ||
+        msg.includes('tồn tại')
+      ) {
+        return { ok: false, message: 'Công thức này đã có trong danh sách Đã lưu của bạn.' };
+      }
+    }
     return result.ok ? { ok: true } : { ok: false, message: result.message };
   }, [add, base, scaled, externalId]);
 

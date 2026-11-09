@@ -73,10 +73,7 @@ export default function ProfileScreen() {
 
       Alert.alert("Thành công", "Hồ sơ đã được cập nhật.");
     } catch (error) {
-      Alert.alert(
-        "Lỗi",
-        error instanceof Error ? error.message : "Không thể cập nhật hồ sơ.",
-      );
+      Alert.alert("Lỗi", getErrorMessage(error));
     } finally {
       setLoading(false);
     }

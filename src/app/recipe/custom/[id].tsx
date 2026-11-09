@@ -247,16 +247,6 @@ export default function CustomRecipeDetailScreen() {
           variant="outline"
           onPress={() => openAdapted(recipe.id)}
         />
-        <Button
-          title="Món tương tự"
-          variant="outline"
-          onPress={() =>
-            router.push({
-              pathname: "/recipe/similar",
-              params: { id: recipe.id, custom: "1", title: recipe.title },
-            })
-          }
-        />
 
         {/* Riêng cho công thức tự tạo */}
         <Button
