@@ -40,8 +40,7 @@ export class HttpMealPlanRepository implements IMealPlanApi {
   };
 
   remove = async (id: string): Promise<void> => {
-    console.log("Meal plan removed:");
-    const res = await this.privateHttp.delete(`/v1/meal-plans/${id}`);
+    await this.privateHttp.delete(`/v1/meal-plans/${id}`);
   };
 
   copy = async (id: string, toWeekStart: string): Promise<MealPlanResponse> => {

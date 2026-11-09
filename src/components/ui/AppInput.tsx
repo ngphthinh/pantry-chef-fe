@@ -28,6 +28,8 @@ export const AppInput = forwardRef<any, AppInputProps>(function AppInput(
     onChangeText,
     containerStyle,
     style,
+    onFocus,
+    onBlur,
     ...props
   },
   ref,
@@ -94,8 +96,14 @@ export const AppInput = forwardRef<any, AppInputProps>(function AppInput(
           secureTextEntry={hidden}
           value={value}
           onChangeText={onChangeText}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={(e) => {
+            setIsFocused(true);
+            onFocus?.(e);
+          }}
+          onBlur={(e) => {
+            setIsFocused(false);
+            onBlur?.(e);
+          }}
           {...props}
         />
 

@@ -55,6 +55,7 @@ export default function MealPlanHubScreen() {
     daysOfWeek,
     isLoading,
     isSaving,
+    isDeleting,
     loadWeek,
     goToPrevWeek,
     goToNextWeek,
@@ -63,6 +64,7 @@ export default function MealPlanHubScreen() {
     toggleCooked,
     removeEntry,
     copyToWeek,
+    removePlan,
   } = useMealPlan();
 
   const [activeDayIndex, setActiveDayIndex] = useState(0);
@@ -129,7 +131,7 @@ export default function MealPlanHubScreen() {
   }, [selectedWeekStart, currentMonday]);
 
   useEffect(() => {
-    loadWeek(selectedWeekStart).catch(() => {});
+    loadWeek(selectedWeekStart).catch(() => { });
   }, [loadWeek, selectedWeekStart]);
 
   // Tìm ngày hôm nay để chọn mặc định
@@ -350,6 +352,46 @@ export default function MealPlanHubScreen() {
     );
   };
 
+  const handleDeleteCurrentPlan = () => {
+    if (!currentPlan?.id) {
+      Alert.alert(
+        "Chưa có thực đơn",
+        "Tuần này chưa có kế hoạch thực đơn nào để xoá.",
+      );
+      return;
+    }
+
+    Alert.alert(
+      "Xoá thực đơn tuần",
+      `Bạn có chắc chắn muốn xoá toàn bộ thực đơn tuần từ ${toDisplayDate(
+        selectedWeekStart,
+      )} không? Tất cả các bữa ăn trong tuần này sẽ bị xoá và không thể hoàn tác.`,
+      [
+        { text: "Huỷ", style: "cancel" },
+        {
+          text: "Xoá thực đơn",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await removePlan(currentPlan.id);
+              Alert.alert(
+                "Thành công",
+                `Đã xoá thực đơn tuần từ ${toDisplayDate(selectedWeekStart)}.`,
+              );
+            } catch (err: unknown) {
+              const apiErr = toApiError(err);
+              Alert.alert(
+                "Lỗi",
+                apiErr.message ||
+                "Không thể xoá thực đơn tuần. Vui lòng thử lại sau.",
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const handleOpenRecipe = (entry: MealPlanEntryResponse) => {
     if (!entry.recipeId) {
       Alert.alert(
@@ -377,33 +419,70 @@ export default function MealPlanHubScreen() {
         {/* Header Title & Week Navigation */}
         <View className="mb-2">
           <View className="flex-row items-center justify-between">
-            <View>
-              <AppText variant="title">Kế hoạch bữa ăn</AppText>
+            <View className="flex-1 mr-2">
+              <AppText variant="title">
+                Kế hoạch bữa ăn
+              </AppText>
               <AppText variant="caption">
                 Tuần từ: {toDisplayDate(selectedWeekStart)}
               </AppText>
             </View>
 
-            {/* Copy Week Button */}
-            <Pressable
-              onPress={handleOpenCopyModal}
-              style={{
-                backgroundColor: isDark
-                  ? "rgba(16, 185, 129, 0.16)"
-                  : colors.primarySoft,
-                borderColor: isDark
-                  ? "rgba(16, 185, 129, 0.3)"
-                  : "rgba(46, 125, 79, 0.2)",
-                borderWidth: 1,
-              }}
-              className="flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5 shadow-xs active:scale-95">
-              <Ionicons name="copy-outline" size={15} color={colors.primary} />
-              <AppText
-                style={{ color: colors.primary }}
-                className="text-xs font-bold">
-                Sao chép tuần
-              </AppText>
-            </Pressable>
+            {/* Action Buttons: Xoá tuần & Sao chép tuần */}
+            <View className="flex-row items-center gap-1.5 flex-shrink-0">
+              {currentPlan?.id ? (
+                <Pressable
+                  onPress={handleDeleteCurrentPlan}
+                  disabled={isDeleting}
+                  accessibilityLabel="Xoá thực đơn tuần"
+                  style={{
+                    backgroundColor: isDark
+                      ? "rgba(239, 68, 68, 0.16)"
+                      : "#FEE2E2",
+                    borderColor: isDark
+                      ? "rgba(239, 68, 68, 0.35)"
+                      : "#FECACA",
+                    borderWidth: 1,
+                  }}
+                  className="flex-row items-center gap-1 rounded-full px-2.5 py-1.5 shadow-xs active:scale-95">
+                  {isDeleting ? (
+                    <ActivityIndicator size="small" color={palette.dangerInk} />
+                  ) : (
+                    <Ionicons
+                      name="trash-outline"
+                      size={13}
+                      color={palette.dangerInk}
+                    />
+                  )}
+                  <AppText
+                    style={{ color: palette.dangerInk }}
+                    className="text-xs font-bold">
+                    Xoá
+                  </AppText>
+                </Pressable>
+              ) : null}
+
+              {/* Copy Week Button */}
+              <Pressable
+                onPress={handleOpenCopyModal}
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(16, 185, 129, 0.16)"
+                    : colors.primarySoft,
+                  borderColor: isDark
+                    ? "rgba(16, 185, 129, 0.3)"
+                    : "rgba(46, 125, 79, 0.2)",
+                  borderWidth: 1,
+                }}
+                className="flex-row items-center gap-1 rounded-full px-2.5 py-1.5 shadow-xs active:scale-95">
+                <Ionicons name="copy-outline" size={13} color={colors.primary} />
+                <AppText
+                  style={{ color: colors.primary }}
+                  className="text-xs font-bold">
+                  Sao chép
+                </AppText>
+              </Pressable>
+            </View>
           </View>
         </View>
 
@@ -535,28 +614,54 @@ export default function MealPlanHubScreen() {
                   }}>
                   {day.formattedDate}
                 </AppText>
-                {day.isToday && (
-                  <View
-                    style={{
-                      backgroundColor: colors.primary,
-                      width: 6,
-                      height: 6,
-                      borderRadius: 3,
-                      marginTop: 4,
-                    }}
-                  />
-                )}
-                {day.entries.length > 0 && !day.isToday && (
-                  <View
-                    style={{
-                      backgroundColor: isDark ? "#4B5550" : "#CBD5E1",
-                      width: 5,
-                      height: 5,
-                      borderRadius: 2.5,
-                      marginTop: 4,
-                    }}
-                  />
-                )}
+                <View className="flex-row items-center justify-center gap-1 mt-1.5 h-4">
+                  {day.isToday && (
+                    <View
+                      style={{
+                        backgroundColor: colors.primary,
+                        width: 5,
+                        height: 5,
+                        borderRadius: 2.5,
+                      }}
+                    />
+                  )}
+                  {day.entries.length > 0 && (
+                    <View
+                      style={{
+                        backgroundColor: isSelected
+                          ? isDark
+                            ? "#FFFFFF"
+                            : colors.primary
+                          : isDark
+                            ? "rgba(16, 185, 129, 0.25)"
+                            : "#DCFCE7",
+                        borderColor: isSelected ? colors.primary : "#10B981",
+                        borderWidth: 1,
+                        minWidth: 15,
+                        height: 15,
+                        borderRadius: 7.5,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        paddingHorizontal: 2,
+                      }}>
+                      <AppText
+                        style={{
+                          fontSize: 8.5,
+                          fontWeight: "800",
+                          lineHeight: 11,
+                          color: isSelected
+                            ? isDark
+                              ? colors.primary
+                              : "#FFFFFF"
+                            : isDark
+                              ? "#34D399"
+                              : "#047857",
+                        }}>
+                        {day.entries.length}
+                      </AppText>
+                    </View>
+                  )}
+                </View>
               </Pressable>
             );
           })}
@@ -1144,17 +1249,15 @@ export default function MealPlanHubScreen() {
                         setSelectedDayFromCalendar(item.weekStart);
                         setManualText(null);
                       }}
-                      className={`rounded-2xl border px-3.5 py-2 ${
-                        isSelected
+                      className={`rounded-2xl border px-3.5 py-2 ${isSelected
                           ? "border-brand bg-brandSoft dark:bg-surface-dark"
                           : "border-line bg-soft dark:border-line-dark dark:bg-soft-dark"
-                      }`}>
+                        }`}>
                       <AppText
-                        className={`text-xs font-bold ${
-                          isSelected
+                        className={`text-xs font-bold ${isSelected
                             ? "text-brand"
                             : "text-ink dark:text-ink-dark"
-                        }`}>
+                          }`}>
                         {item.label}
                       </AppText>
                       <AppText variant="caption">{item.dateRange}</AppText>

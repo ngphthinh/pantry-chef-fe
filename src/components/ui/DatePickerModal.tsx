@@ -1,13 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useAppTheme } from '@/core/theme/useAppTheme';
+import React, {useMemo, useState} from "react";
+import {Modal, Pressable, StyleSheet, Text, View} from "react-native";
+import {Ionicons} from "@expo/vector-icons";
+import {useAppTheme} from "@/core/theme/useAppTheme";
+import {toDisplayDate} from "@/core/format/datetime";
 
 interface DatePickerModalProps {
   visible: boolean;
@@ -18,10 +13,10 @@ interface DatePickerModalProps {
   title?: string;
 }
 
-const WEEKDAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+const WEEKDAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
 function pad2(n: number) {
-  return String(n).padStart(2, '0');
+  return String(n).padStart(2, "0");
 }
 
 function formatDate(y: number, m: number, d: number) {
@@ -34,9 +29,9 @@ export function DatePickerModal({
   onSelectDate,
   currentValue,
   minDate = new Date(),
-  title = 'Chọn hạn sử dụng',
+  title = "Chọn hạn sử dụng",
 }: DatePickerModalProps) {
-  const { brand, palette, isDark } = useAppTheme();
+  const {brand, palette, isDark} = useAppTheme();
   const brandSoft = isDark ? palette.surface : palette.soft;
 
   // Mốc tối thiểu (ngày hôm nay lúc 00:00:00, nếu minDate là null thì không giới hạn)
@@ -50,13 +45,15 @@ export function DatePickerModal({
   // Tháng và năm đang xem
   const [viewDate, setViewDate] = useState(() => {
     if (currentValue) {
-      const [y, m, d] = currentValue.split('-').map(Number);
+      const [y, m, d] = currentValue.split("-").map(Number);
       if (y && m && d) return new Date(y, m - 1, d);
     }
     return new Date();
   });
 
-  const [selectedDateStr, setSelectedDateStr] = useState<string>(currentValue || '');
+  const [selectedDateStr, setSelectedDateStr] = useState<string>(
+    currentValue || "",
+  );
 
   const viewYear = viewDate.getFullYear();
   const viewMonth = viewDate.getMonth();
@@ -64,7 +61,10 @@ export function DatePickerModal({
   const handlePrevMonth = () => {
     const prevMonthDate = new Date(viewYear, viewMonth - 1, 1);
     const lastDayOfPrevMonth = new Date(viewYear, viewMonth, 0);
-    if (normalizedMinDate && lastDayOfPrevMonth.getTime() < normalizedMinDate.getTime()) {
+    if (
+      normalizedMinDate &&
+      lastDayOfPrevMonth.getTime() < normalizedMinDate.getTime()
+    ) {
       return;
     }
     setViewDate(prevMonthDate);
@@ -93,7 +93,7 @@ export function DatePickerModal({
       cells.push({
         key: `empty-${i}`,
         dayNumber: 0,
-        dateStr: '',
+        dateStr: "",
         isDisabled: true,
         isToday: false,
       });
@@ -110,7 +110,9 @@ export function DatePickerModal({
     for (let d = 1; d <= totalDaysInMonth; d++) {
       const cellDate = new Date(viewYear, viewMonth, d, 23, 59, 59);
       const dateStr = formatDate(viewYear, viewMonth, d);
-      const isDisabled = normalizedMinDate ? cellDate.getTime() < normalizedMinDate.getTime() : false;
+      const isDisabled = normalizedMinDate
+        ? cellDate.getTime() < normalizedMinDate.getTime()
+        : false;
       const isToday = dateStr === todayStr;
 
       cells.push({
@@ -130,7 +132,7 @@ export function DatePickerModal({
         cells.push({
           key: `trailing-empty-${i}`,
           dayNumber: 0,
-          dateStr: '',
+          dateStr: "",
           isDisabled: true,
           isToday: false,
         });
@@ -160,37 +162,44 @@ export function DatePickerModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType='fade'
+      onRequestClose={onClose}
+    >
       <View style={styles.overlay}>
         <View
           style={[
             styles.card,
             {
-              backgroundColor: isDark ? palette.surface : '#FFFFFF',
+              backgroundColor: isDark ? palette.surface : "#FFFFFF",
               borderColor: palette.line,
             },
           ]}
         >
           {/* Header */}
-          <View style={[styles.header, { borderBottomColor: palette.line }]}>
+          <View style={[styles.header, {borderBottomColor: palette.line}]}>
             <View style={styles.headerTitleWrap}>
-              <View style={[styles.iconBadge, { backgroundColor: brandSoft }]}>
-                <Ionicons name="calendar" size={18} color={brand} />
+              <View style={[styles.iconBadge, {backgroundColor: brandSoft}]}>
+                <Ionicons name='calendar' size={18} color={brand} />
               </View>
-              <Text style={[styles.headerTitle, { color: palette.ink }]}>{title}</Text>
+              <Text style={[styles.headerTitle, {color: palette.ink}]}>
+                {title}
+              </Text>
             </View>
             <Pressable onPress={onClose} hitSlop={8} style={styles.closeBtn}>
-              <Ionicons name="close" size={20} color={palette.muted} />
+              <Ionicons name='close' size={20} color={palette.muted} />
             </Pressable>
           </View>
 
           {/* Quick Presets */}
           <View style={styles.presetsRow}>
             {[
-              { label: '+3 ngày', days: 3 },
-              { label: '+1 tuần', days: 7 },
-              { label: '+2 tuần', days: 14 },
-              { label: '+1 tháng', days: 30 },
+              {label: "+3 ngày", days: 3},
+              {label: "+1 tuần", days: 7},
+              {label: "+2 tuần", days: 14},
+              {label: "+1 tháng", days: 30},
             ].map((preset) => (
               <Pressable
                 key={preset.days}
@@ -203,7 +212,9 @@ export function DatePickerModal({
                   },
                 ]}
               >
-                <Text style={[styles.presetText, { color: brand }]}>{preset.label}</Text>
+                <Text style={[styles.presetText, {color: brand}]}>
+                  {preset.label}
+                </Text>
               </Pressable>
             ))}
           </View>
@@ -212,27 +223,30 @@ export function DatePickerModal({
           <View style={styles.monthNav}>
             <Pressable
               onPress={handlePrevMonth}
-              style={[styles.navArrow, { backgroundColor: palette.soft }]}
+              style={[styles.navArrow, {backgroundColor: palette.soft}]}
             >
-              <Ionicons name="chevron-back" size={16} color={palette.ink} />
+              <Ionicons name='chevron-back' size={16} color={palette.ink} />
             </Pressable>
 
-            <Text style={[styles.monthYearText, { color: palette.ink }]}>
+            <Text style={[styles.monthYearText, {color: palette.ink}]}>
               Tháng {viewMonth + 1}, {viewYear}
             </Text>
 
             <Pressable
               onPress={handleNextMonth}
-              style={[styles.navArrow, { backgroundColor: palette.soft }]}
+              style={[styles.navArrow, {backgroundColor: palette.soft}]}
             >
-              <Ionicons name="chevron-forward" size={16} color={palette.ink} />
+              <Ionicons name='chevron-forward' size={16} color={palette.ink} />
             </Pressable>
           </View>
 
           {/* Weekday Labels */}
-          <View style={[styles.weekdaysRow, { borderBottomColor: palette.line }]}>
+          <View style={[styles.weekdaysRow, {borderBottomColor: palette.line}]}>
             {WEEKDAYS.map((w) => (
-              <Text key={w} style={[styles.weekdayLabel, { color: palette.muted }]}>
+              <Text
+                key={w}
+                style={[styles.weekdayLabel, {color: palette.muted}]}
+              >
                 {w}
               </Text>
             ))}
@@ -259,15 +273,16 @@ export function DatePickerModal({
                     style={[
                       styles.dayCell,
                       cell.isDisabled && styles.dayCellDisabled,
-                      cell.isToday && !isSelected && {
-                        borderColor: brand,
-                        borderWidth: 1.5,
-                        backgroundColor: brandSoft,
-                      },
+                      cell.isToday &&
+                        !isSelected && {
+                          borderColor: brand,
+                          borderWidth: 1.5,
+                          backgroundColor: brandSoft,
+                        },
                       isSelected && {
                         backgroundColor: brand,
                         shadowColor: brand,
-                        shadowOffset: { width: 0, height: 3 },
+                        shadowOffset: {width: 0, height: 3},
                         shadowOpacity: 0.35,
                         shadowRadius: 5,
                         elevation: 4,
@@ -277,10 +292,11 @@ export function DatePickerModal({
                     <Text
                       style={[
                         styles.dayText,
-                        { color: palette.ink },
-                        cell.isDisabled && { color: palette.muted, opacity: 0.4 },
-                        cell.isToday && !isSelected && { color: brand, fontWeight: '700' },
-                        isSelected && { color: '#FFFFFF', fontWeight: '800' },
+                        {color: palette.ink},
+                        cell.isDisabled && {color: palette.muted, opacity: 0.4},
+                        cell.isToday &&
+                          !isSelected && {color: brand, fontWeight: "700"},
+                        isSelected && {color: "#FFFFFF", fontWeight: "800"},
                       ]}
                     >
                       {cell.dayNumber}
@@ -292,20 +308,24 @@ export function DatePickerModal({
           </View>
 
           {/* Footer: Selected Value & Buttons */}
-          <View style={[styles.footer, { borderTopColor: palette.line }]}>
+          <View style={[styles.footer, {borderTopColor: palette.line}]}>
             <View>
-              <Text style={[styles.footerLabel, { color: palette.muted }]}>Đã chọn:</Text>
-              <Text style={[styles.footerSelectedDate, { color: brand }]}>
-                {selectedDateStr || 'Chưa chọn'}
+              <Text style={[styles.footerLabel, {color: palette.muted}]}>
+                Đã chọn:
+              </Text>
+              <Text style={[styles.footerSelectedDate, {color: brand}]}>
+                {toDisplayDate(selectedDateStr) || "Chưa chọn"}
               </Text>
             </View>
 
             <View style={styles.footerButtons}>
               <Pressable
                 onPress={onClose}
-                style={[styles.btnOutline, { borderColor: palette.line }]}
+                style={[styles.btnOutline, {borderColor: palette.line}]}
               >
-                <Text style={[styles.btnOutlineText, { color: palette.ink }]}>Huỷ</Text>
+                <Text style={[styles.btnOutlineText, {color: palette.ink}]}>
+                  Huỷ
+                </Text>
               </Pressable>
 
               <Pressable
@@ -313,8 +333,8 @@ export function DatePickerModal({
                 disabled={!selectedDateStr}
                 style={[
                   styles.btnPrimary,
-                  { backgroundColor: brand },
-                  !selectedDateStr && { opacity: 0.5 },
+                  {backgroundColor: brand},
+                  !selectedDateStr && {opacity: 0.5},
                 ]}
               >
                 <Text style={styles.btnPrimaryText}>Xác nhận</Text>
@@ -330,52 +350,52 @@ export function DatePickerModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.55)",
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 20,
   },
   card: {
-    width: '100%',
+    width: "100%",
     maxWidth: 360,
     borderRadius: 28,
     borderWidth: 1,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
+    shadowColor: "#000",
+    shadowOffset: {width: 0, height: 12},
     shadowOpacity: 0.25,
     shadowRadius: 20,
     elevation: 12,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingBottom: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   headerTitleWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
   },
   iconBadge: {
     width: 34,
     height: 34,
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   headerTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   closeBtn: {
     padding: 4,
   },
   presetsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
     marginTop: 14,
   },
@@ -387,12 +407,12 @@ const styles = StyleSheet.create({
   },
   presetText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   monthNav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginTop: 14,
     paddingHorizontal: 4,
   },
@@ -400,34 +420,34 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   monthYearText: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   weekdaysRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginTop: 12,
     paddingBottom: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   weekdayLabel: {
     width: `${100 / 7}%`,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   daysGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     marginTop: 8,
   },
   dayCellWrapper: {
     width: `${100 / 7}%`,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginVertical: 2,
   },
   dayCellPlaceholder: {
@@ -438,35 +458,35 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   dayCellDisabled: {
     opacity: 0.35,
   },
   dayText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginTop: 16,
     paddingTop: 14,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   footerLabel: {
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   footerSelectedDate: {
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: "800",
     marginTop: 2,
   },
   footerButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
   },
   btnOutline: {
@@ -477,7 +497,7 @@ const styles = StyleSheet.create({
   },
   btnOutlineText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   btnPrimary: {
     borderRadius: 14,
@@ -485,8 +505,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   btnPrimaryText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });

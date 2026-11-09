@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppText } from "@/components/ui/AppText";
 import { TactileButton } from "@/components/ui/TactileButton";
@@ -30,7 +31,7 @@ export function PantryPickerModal({
   onApply,
   onClose,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState<Set<string>>(() => new Set(selected));
@@ -82,7 +83,14 @@ export function PantryPickerModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}>
       <View style={[styles.root, { backgroundColor: colors.background }]}>
-        <View style={styles.header}>
+        <StatusBar style={isDark ? "light" : "dark"} />
+        <View
+          style={[
+            styles.header,
+            {
+              paddingTop: Math.max(insets.top + 8, 20),
+            },
+          ]}>
           <View style={{ flex: 1 }}>
             <AppText style={styles.title}>Chọn nguyên liệu</AppText>
             <AppText variant="caption">

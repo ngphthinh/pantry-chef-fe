@@ -66,6 +66,9 @@ const mealPlanSlice = createSlice({
     },
     planReceived(state, action: PayloadAction<MealPlanResponse | null>) {
       state.currentPlan = action.payload;
+      if (!action.payload) {
+        state.shoppingPreview = [];
+      }
       state.error = null;
     },
     entryAdded(state, action: PayloadAction<MealPlanEntryResponse>) {
